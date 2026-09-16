@@ -5,18 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Registrazione — Gestionale Affitti</title>
   <link rel="stylesheet" href="/css/style.css">
-  <script type="module" src="/js/proprietario.js"></script>
+  <script type="module" src="/js/layout.js"></script>
 </head>
-<body>
-  <header class="site-header">
-    <div class="container">
-      <a class="brand" href="/">Gestionale Affitti</a>
-      <nav aria-label="Navigazione principale">
-        <a href="/">Home</a>
-        <a href="/proprietario.html" aria-current="page">Registrati</a>
-      </nav>
-    </div>
-  </header>
+<body data-menu="public" data-page-script="/js/proprietario.js">
+  <header id="site-header" class="site-header"></header>
   <main class="container">
     <div class="content-column">
       <section class="status-card" aria-labelledby="register-title">
@@ -84,8 +76,6 @@
       <noscript><p>Abilita JavaScript nel browser per utilizzare l'autenticazione.</p></noscript>
     </div>
   </main>
-  <footer class="site-footer">
-    <div class="container"><small>&copy; 2026 Gestionale Affitti</small></div>
-  </footer>
+  <footer id="site-footer" class="site-footer"></footer>
 </body>
 </html>

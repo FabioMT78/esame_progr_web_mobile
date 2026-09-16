@@ -5,19 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Immobili — Gestionale Affitti</title>
   <link rel="stylesheet" href="/css/style.css">
-  <script type="module" src="/js/immobile.js"></script>
+  <script type="module" src="/js/layout.js"></script>
 </head>
-<body>
-  <header class="site-header">
-    <div class="container">
-      <a class="brand" href="/">Gestionale Affitti</a>
-      <nav aria-label="Navigazione principale">
-        <a href="/dashboard.html">Area riservata</a>
-        <a href="/immobile.html" aria-current="page">Immobili</a>
-        <button id="logout" type="button">Esci</button>
-      </nav>
-    </div>
-  </header>
+<body data-menu="private" data-page-script="/js/immobile.js">
+  <header id="site-header" class="site-header"></header>
   <main class="container immobili-page">
     <div class="content-column">
       <h1>Immobili</h1>
@@ -90,8 +81,6 @@
       <noscript><p>Abilita JavaScript nel browser per gestire gli immobili.</p></noscript>
     </div>
   </main>
-  <footer class="site-footer">
-    <div class="container"><small>&copy; 2026 Gestionale Affitti</small></div>
-  </footer>
+  <footer id="site-footer" class="site-footer"></footer>
 </body>
 </html>
