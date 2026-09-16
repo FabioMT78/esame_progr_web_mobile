@@ -1,3 +1,7 @@
+if (!process.env.JWT_SECRET?.trim()) {
+  throw new Error('Configurare JWT_SECRET prima di avviare il server.');
+}
+
 const app = require('./app');
 const pool = require('./db/pool');
 

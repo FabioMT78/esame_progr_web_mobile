@@ -1,4 +1,6 @@
 :root {
+  font-size: 1rem;
+  line-height: 1.5;
   font-family: Arial, Helvetica, sans-serif;
   color: #1f2937;
   background: #f5f7fa;
@@ -62,5 +64,128 @@ main {
   .site-footer .container {
     align-items: flex-start;
     flex-direction: column;
+  }
+}
+
+[hidden] {
+  display: none !important;
+}
+
+nav, .actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+a {
+  color: #15385f;
+  text-underline-offset: 0.2em;
+}
+
+h1, h2 {
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+h1 {
+  margin-top: 0;
+}
+
+small, input, button {
+  font: inherit;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.25rem;
+}
+
+.field {
+  min-width: 0;
+  margin-bottom: 1rem;
+}
+
+label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0.65rem;
+  border: 1px solid #64748b;
+  border-radius: 0.35rem;
+  color: #1f2937;
+  background: #fff;
+}
+
+button, .button-link {
+  display: inline-block;
+  min-height: 2.75rem;
+  padding: 0.65rem 1.2rem;
+  border: 2px solid #15385f;
+  border-radius: 0.35rem;
+  background: #15385f;
+  color: #fff;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+}
+
+button:hover, .button-link:hover {
+  background: #244e7c;
+}
+
+button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+:focus-visible {
+  outline: 3px solid #995000;
+  outline-offset: 3px;
+}
+
+.site-header :focus-visible {
+  outline-color: #fff;
+}
+
+.field-hint, .field-error {
+  margin: 0.35rem 0 0;
+}
+
+.field-error {
+  color: #9f1c1c;
+  font-weight: 700;
+}
+
+.field-error:empty, .message:empty {
+  display: none;
+}
+
+input[aria-invalid="true"] {
+  border: 2px solid #9f1c1c;
+}
+
+.message {
+  overflow-wrap: anywhere;
+  padding: 0.75rem;
+  border-left: 4px solid #15385f;
+  background: #eef2f7;
+}
+
+@media (max-width: 40rem) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .status-card {
+    padding: 1rem;
   }
 }

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Area riservata — Gestionale Affitti</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/dashboard.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="/">Gestionale Affitti</a>
+      <nav aria-label="Navigazione principale">
+        <a href="/">Home</a>
+        <a href="/proprietario.html">Registrati</a>
+      </nav>
+    </div>
+  </header>
+  <main class="container">
+    <section class="status-card" aria-labelledby="area-title">
+      <h1 id="area-title">Area riservata</h1>
+      <p id="session-message" class="message" role="status" aria-live="polite">Verifica della sessione in corso…</p>
+      <div id="protected-content" hidden>
+        <h2 id="welcome"></h2>
+        <p>Hai effettuato l'accesso al tuo account proprietario.</p>
+      </div>
+      <div class="actions">
+        <button id="retry" type="button" hidden>Riprova</button>
+        <button id="logout" type="button">Esci</button>
+        <a href="/">Torna alla Home</a>
+      </div>
+    </section>
+    <noscript><p>Abilita JavaScript nel browser per utilizzare l'autenticazione.</p></noscript>
+  </main>
+  <footer class="site-footer">
+    <div class="container"><small>&copy; 2026 Gestionale Affitti</small></div>
+  </footer>
+</body>
+</html>

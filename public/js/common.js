@@ -1,23 +1,45 @@
-async function checkHealth() {
-  const statusElement = document.querySelector('#health-status');
+const tokenKey = 'gestionaleAffitti.jwt';
 
-  if (!statusElement) {
-    return;
-  }
-
-  try {
-    const response = await fetch('/api/health');
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Servizio non disponibile');
-    }
-
-    statusElement.textContent = 'Server Node.js attivo e database MySQL connesso.';
-  } catch (error) {
-    console.error('Health check fallito:', error);
-    statusElement.textContent = 'Impossibile collegarsi correttamente al backend o al database.';
-  }
+export function readToken() {
+  return sessionStorage.getItem(tokenKey);
 }
 
-checkHealth();
+export function saveToken(token) {
+  sessionStorage.setItem(tokenKey, token);
+}
+
+export function clearToken() {
+  sessionStorage.removeItem(tokenKey);
+}
+
+export async function postForm(url, form) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.fromEntries(new FormData(form)))
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw Object.assign(new Error(data.error || 'Operazione non riuscita.'), { fields: data.fields });
+  }
+  return data;
+}
+
+export function clearFieldErrors(form) {
+  form.querySelectorAll('[aria-invalid]').forEach((field) => field.removeAttribute('aria-invalid'));
+  form.querySelectorAll('.field-error').forEach((element) => { element.textContent = ''; });
+}
+
+export function showFormError(form, message, error) {
+  message.textContent = `Errore: ${error instanceof TypeError
+    ? 'Impossibile contattare il server. Riprova tra poco.' : error.message}`;
+  for (const [name, text] of Object.entries(error.fields || {})) {
+    const field = form.elements.namedItem(name);
+    const hint = document.getElementById(`${name}-error`);
+    if (field && hint) {
+      field.setAttribute('aria-invalid', 'true');
+      hint.textContent = text;
+    }
+  }
+  (form.querySelector('[aria-invalid]') || message).focus();
+}

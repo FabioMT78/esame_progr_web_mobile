@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrazione — Gestionale Affitti</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/proprietario.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="/">Gestionale Affitti</a>
+      <nav aria-label="Navigazione principale">
+        <a href="/">Home</a>
+        <a href="/proprietario.html" aria-current="page">Registrati</a>
+      </nav>
+    </div>
+  </header>
+  <main class="container">
+    <section class="status-card" aria-labelledby="register-title">
+      <h1 id="register-title">Registrazione proprietario</h1>
+      <p>Crea il tuo account. Tutti i campi sono obbligatori, tranne l'immagine.</p>
+      <form id="register-form" method="post" action="/api/auth/register">
+        <div class="form-grid">
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" required autocomplete="email" maxlength="255" aria-describedby="email-error">
+          <p class="field-error" id="email-error"></p>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" required autocomplete="new-password" minlength="8" maxlength="128" aria-describedby="password-error password-hint">
+          <p class="field-hint" id="password-hint">Da 8 a 128 caratteri.</p>
+          <p class="field-error" id="password-error"></p>
+        </div>
+        <div class="field">
+          <label for="nome">Nome</label>
+          <input id="nome" name="nome" type="text" required autocomplete="given-name" maxlength="100" aria-describedby="nome-error">
+          <p class="field-error" id="nome-error"></p>
+        </div>
+        <div class="field">
+          <label for="cognome">Cognome</label>
+          <input id="cognome" name="cognome" type="text" required autocomplete="family-name" maxlength="100" aria-describedby="cognome-error">
+          <p class="field-error" id="cognome-error"></p>
+        </div>
+        <div class="field">
+          <label for="codiceFiscale">Codice fiscale</label>
+          <input id="codiceFiscale" name="codiceFiscale" type="text" required minlength="16" maxlength="16" autocapitalize="characters" spellcheck="false" aria-describedby="codiceFiscale-error codiceFiscale-hint">
+          <p class="field-hint" id="codiceFiscale-hint">Esattamente 16 caratteri.</p>
+          <p class="field-error" id="codiceFiscale-error"></p>
+        </div>
+        <div class="field">
+          <label for="dataNascita">Data di nascita</label>
+          <input id="dataNascita" name="dataNascita" type="date" required autocomplete="bday" min="1000-01-01" max="9999-12-31" aria-describedby="dataNascita-error">
+          <p class="field-error" id="dataNascita-error"></p>
+        </div>
+        <div class="field">
+          <label for="indirizzoResidenza">Indirizzo di residenza</label>
+          <input id="indirizzoResidenza" name="indirizzoResidenza" type="text" required autocomplete="street-address" maxlength="255" aria-describedby="indirizzoResidenza-error">
+          <p class="field-error" id="indirizzoResidenza-error"></p>
+        </div>
+        <div class="field">
+          <label for="comuneResidenza">Comune di residenza</label>
+          <input id="comuneResidenza" name="comuneResidenza" type="text" required autocomplete="address-level2" maxlength="100" aria-describedby="comuneResidenza-error">
+          <p class="field-error" id="comuneResidenza-error"></p>
+        </div>
+        <div class="field">
+          <label for="immagineUrl">URL immagine (facoltativo)</label>
+          <input id="immagineUrl" name="immagineUrl" type="url"  maxlength="500" aria-describedby="immagineUrl-error immagineUrl-hint">
+          <p class="field-hint" id="immagineUrl-hint">Indirizzo http o https di un’immagine.</p>
+          <p class="field-error" id="immagineUrl-error"></p>
+        </div>
+        </div>
+        <button type="submit">Crea account</button>
+      </form>
+      <p id="form-message" class="message" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"></p>
+      <p id="login-link" hidden><a class="button-link" href="/">Accedi con il tuo account</a></p>
+      <p><a href="/">Torna alla Home</a></p>
+    </section>
+    <noscript><p>Abilita JavaScript nel browser per utilizzare l'autenticazione.</p></noscript>
+  </main>
+  <footer class="site-footer">
+    <div class="container"><small>&copy; 2026 Gestionale Affitti</small></div>
+  </footer>
+</body>
+</html>
