@@ -38,7 +38,7 @@ async function loadProfile() {
     message.textContent = 'Accesso autenticato.';
   } catch (error) {
     if (error.name === 'AbortError') return;
-    message.textContent = 'Errore: impossibile caricare il profilo. Riprova o torna alla Home.';
+    message.textContent = 'Errore: impossibile caricare il profilo. Riprova.';
     retry.hidden = false;
   }
 }

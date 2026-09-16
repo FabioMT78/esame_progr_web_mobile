@@ -1,3 +1,9 @@
+let pageShowOccurred = false;
+
+window.addEventListener('pageshow', () => {
+  pageShowOccurred = true;
+}, { once: true });
+
 async function fetchPartial(path) {
   const response = await fetch(path, { cache: 'no-cache' });
 
@@ -10,6 +16,18 @@ async function fetchPartial(path) {
 
 function normalizePath(pathname) {
   return pathname === '/index.html' ? '/' : pathname;
+}
+
+function configureBrand(header) {
+  const brand = header.querySelector('.brand');
+
+  if (!brand) {
+    return;
+  }
+
+  brand.href = document.body.dataset.menu === 'private'
+    ? '/dashboard.html'
+    : '/';
 }
 
 function configureMenu(nav) {
@@ -54,6 +72,8 @@ async function loadLayout() {
   header.innerHTML = headerHtml;
   footer.innerHTML = footerHtml;
 
+  configureBrand(header);
+
   const nav = header.querySelector('#site-nav');
 
   if (!nav) {
@@ -97,6 +117,10 @@ async function bootstrap() {
 
   try {
     await import(pageScript);
+
+    if (pageShowOccurred) {
+      window.dispatchEvent(new Event('pageshow'));
+    }
   } catch (error) {
     console.error('Avvio pagina fallito:', error);
     showBootstrapError(
