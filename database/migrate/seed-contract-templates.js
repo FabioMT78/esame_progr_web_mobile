@@ -1,6 +1,6 @@
 const { readdir, readFile } = require('node:fs/promises');
 const path = require('node:path');
-const pool = require('../src/db/pool');
+const pool = require('../../src/db/pool');
 
 function invalid(context) {
   throw new TypeError(`Template non valido: ${context}`);
@@ -68,7 +68,7 @@ async function readTemplates(directory) {
   return templates;
 }
 
-async function seedTemplates(directory = path.join(__dirname, '..', 'database', 'seed', 'templates')) {
+async function seedTemplates(directory = path.join(__dirname, '..', 'seed', 'templates')) {
   const templates = await readTemplates(directory);
   const connection = await pool.getConnection();
   let transactionStarted = false;

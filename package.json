@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "db:seed:templates": "node scripts/seed-contract-templates.js"
+    "db:seed:templates": "node database/migrate/seed-contract-templates.js"
   },
   "engines": {
     "node": ">=24"
