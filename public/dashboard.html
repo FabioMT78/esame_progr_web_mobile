@@ -3,25 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Area riservata — Gestionale Affitti</title>
+  <title>Dashboard — Gestionale Affitti</title>
   <link rel="stylesheet" href="/css/style.css">
   <script type="module" src="/js/layout.js"></script>
 </head>
 <body data-menu="private" data-page-script="/js/dashboard.js">
   <header id="site-header" class="site-header"></header>
-  <main class="container">
-    <div class="content-column">
-      <section class="status-card" aria-labelledby="area-title">
-        <h1 id="area-title">Area riservata</h1>
-        <p id="session-message" class="message" role="status" aria-live="polite">Verifica della sessione in corso…</p>
-        <div id="protected-content" hidden>
-          <h2 id="welcome"></h2>
-          <p>Hai effettuato l'accesso al tuo account proprietario.</p>
-        </div>
-        <button id="retry" class="action-right" type="button" hidden>Riprova</button>
-      </section>
-      <noscript><p>Abilita JavaScript nel browser per utilizzare l'autenticazione.</p></noscript>
+  <main class="container dashboard-container" aria-labelledby="dashboard-title">
+    <h1 id="dashboard-title" class="visually-hidden">I tuoi immobili</h1>
+    <p id="session-message" class="message" role="status" aria-live="polite" aria-atomic="true">Caricamento immobili…</p>
+    <button id="retry" class="dashboard-retry" type="button" hidden>Riprova</button>
+    <div id="protected-content" class="dashboard-content" hidden>
+      <div id="empty-state" class="dashboard-empty" hidden>
+        <a class="button-link" href="/immobile.html">Nuovo immobile</a>
+      </div>
+      <div id="immobili-grid" class="immobili-grid" hidden></div>
     </div>
+    <noscript><p>Abilita JavaScript nel browser per accedere e visualizzare i tuoi immobili.</p></noscript>
   </main>
   <footer id="site-footer" class="site-footer"></footer>
 </body>
