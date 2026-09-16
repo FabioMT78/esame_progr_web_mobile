@@ -2,6 +2,7 @@ const path = require('node:path');
 const express = require('express');
 const pool = require('./db/pool');
 const authRoutes = require('./routes/auth-routes');
+const inquiliniRoutes = require('./routes/inquilini-routes');
 
 const app = express();
 
@@ -10,6 +11,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.use('/api/auth', authRoutes);
+app.use('/api/inquilini', inquiliniRoutes);
 
 app.get('/api/health', async (_req, res) => {
   try {
@@ -46,7 +48,7 @@ app.use((error, _req, res, _next) => {
   if (error.type === 'entity.too.large') {
     return res.status(400).json({ error: 'La richiesta contiene troppi dati.' });
   }
-  if ([400, 401, 409].includes(error.status)) {
+  if ([400, 401, 404, 409].includes(error.status)) {
     return res.status(error.status).json({ error: error.message, fields: error.fields });
   }
   console.error('Errore API inatteso:', error);
