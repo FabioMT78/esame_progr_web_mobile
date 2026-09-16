@@ -18,22 +18,28 @@
     </div>
   </header>
   <main class="container">
-    <section class="status-card" aria-labelledby="area-title">
-      <h1 id="area-title">Area riservata</h1>
-      <p id="session-message" class="message" role="status" aria-live="polite">Verifica della sessione in corso…</p>
-      <div id="protected-content" hidden>
-        <h2 id="welcome"></h2>
-        <p>Hai effettuato l'accesso al tuo account proprietario.</p>
-        <a class="button-link" href="/immobile.html">Immobili</a>
-        <a href="/inquilino.html">Inquilini</a>
-      </div>
-      <div class="actions">
-        <button id="retry" type="button" hidden>Riprova</button>
-        <button id="logout" type="button">Esci</button>
-        <a href="/">Torna alla Home</a>
-      </div>
-    </section>
-    <noscript><p>Abilita JavaScript nel browser per utilizzare l'autenticazione.</p></noscript>
+    <div class="content-column">
+      <section class="status-card" aria-labelledby="area-title">
+        <h1 id="area-title">Area riservata</h1>
+        <p id="session-message" class="message" role="status" aria-live="polite">Verifica della sessione in corso…</p>
+        <div id="protected-content" hidden>
+          <h2 id="welcome"></h2>
+          <p>Hai effettuato l'accesso al tuo account proprietario.</p>
+          <div class="section-actions" aria-label="Gestione dati">
+            <a class="button-link" href="/immobile.html">Immobili</a>
+            <a href="/inquilino.html">Inquilini</a>
+          </div>
+        </div>
+        <div class="actions page-actions">
+          <a href="/">Torna alla Home</a>
+          <div class="action-group action-group--end">
+            <button id="retry" type="button" hidden>Riprova</button>
+            <button id="logout" type="button">Esci</button>
+          </div>
+        </div>
+      </section>
+      <noscript><p>Abilita JavaScript nel browser per utilizzare l'autenticazione.</p></noscript>
+    </div>
   </main>
   <footer class="site-footer">
     <div class="container"><small>&copy; 2026 Gestionale Affitti</small></div>
