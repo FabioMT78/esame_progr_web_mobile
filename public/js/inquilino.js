@@ -1,4 +1,4 @@
-import { readToken, clearToken, clearFieldErrors, showFormError } from './common.js';
+import { readToken, clearToken, clearFieldErrors, showFormError, readIdParameter } from './common.js';
 
 const content = document.querySelector('#protected-content');
 const sessionMessage = document.querySelector('#session-message');
@@ -9,6 +9,9 @@ const formMessage = document.querySelector('#form-message');
 const listMessage = document.querySelector('#list-message');
 const list = document.querySelector('#tenant-list');
 const warning = document.querySelector('#prerequisite-warning');
+const immobileContext = readIdParameter('immobileId');
+const newTenantUrl = immobileContext
+  ? `/inquilino.html?immobileId=${encodeURIComponent(immobileContext)}` : '/inquilino.html';
 let editId = new URLSearchParams(window.location.search).get('id');
 let hasImmobili = false;
 let editorReady = false;
@@ -103,6 +106,7 @@ async function loadEditor() {
   document.querySelector('#form-title').textContent = editId !== null ? 'Modifica inquilino' : 'Nuovo inquilino';
   document.querySelector('#save').textContent = editId !== null ? 'Salva modifiche' : 'Crea inquilino';
   document.querySelector('#new-tenant').hidden = editId === null;
+  document.querySelector('#new-tenant').href = newTenantUrl;
   editorReady = false;
   syncControls();
   if (editId !== null) {
@@ -162,6 +166,11 @@ form.addEventListener('submit', async (event) => {
     const tenant = await api(creating ? '/api/inquilini' : `/api/inquilini/${encodeURIComponent(editId)}`, {
       method: creating ? 'POST' : 'PUT', body: JSON.stringify(input)
     });
+    if (creating && immobileContext) {
+      const params = new URLSearchParams({ immobileId: immobileContext, inquilinoId: tenant.id });
+      window.location.assign(`/contratto.html?${params}`);
+      return;
+    }
     if (creating) form.reset();
     else form.elements.codiceFiscale.value = tenant.codiceFiscale;
     formMessage.textContent = creating ? 'Inquilino creato.' : 'Modifiche salvate.';
@@ -191,7 +200,7 @@ async function archiveTenant(tenant) {
     await api(`/api/inquilini/${encodeURIComponent(tenant.id)}`, { method: 'DELETE' });
     if (editId === tenant.id) {
       editId = null;
-      window.history.replaceState(null, '', '/inquilino.html');
+      window.history.replaceState(null, '', newTenantUrl);
       form.reset();
       clearFieldErrors(form);
       await loadEditor();

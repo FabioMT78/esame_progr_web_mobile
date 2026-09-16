@@ -43,3 +43,11 @@ export function showFormError(form, message, error) {
   }
   (form.querySelector('[aria-invalid]') || message).focus();
 }
+
+// Contesto di navigazione opzionale; l'appartenenza viene sempre verificata dalle API.
+export function readIdParameter(name) {
+  const values = new URLSearchParams(window.location.search).getAll(name);
+  const id = values.length === 1 ? values[0] : null;
+  return typeof id === 'string' && /^[1-9]\d{0,19}$/.test(id)
+    && BigInt(id) <= 18446744073709551615n ? id : null;
+}

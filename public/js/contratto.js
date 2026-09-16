@@ -1,4 +1,4 @@
-import { readToken, clearToken, clearFieldErrors, showFormError } from './common.js';
+import { readToken, clearToken, clearFieldErrors, showFormError, readIdParameter } from './common.js';
 
 const content = document.querySelector('#protected-content');
 const sessionMessage = document.querySelector('#session-message');
@@ -23,6 +23,7 @@ let step = 1;
 let ready = false;
 let busy = false;
 let completed = false;
+let contextApplied = false;
 let request;
 
 function logout() {
@@ -89,6 +90,8 @@ function updateDetails() {
   const tipologia = selected(prerequisites.tipologie, 'tipologiaId');
   document.querySelector('#immobile-detail').textContent = immobile
     ? `${immobileLabel(immobile)}. Dati catastali: ${immobile.datiCatastali?.trim() || 'non presenti'}` : '';
+  document.querySelector('#inquilini-empty a').href = immobile
+    ? `/inquilino.html?immobileId=${encodeURIComponent(immobile.id)}` : '/inquilino.html';
   const missingCatasto = immobile && !hasDatiCatastali(immobile);
   document.querySelector('#immobileId-error').textContent = missingCatasto
     ? 'Completa i dati catastali dell’immobile prima di proseguire.' : '';
@@ -152,6 +155,17 @@ function fillSelect(name, items, label) {
   select.value = items.some((item) => item.id === previousValue) ? previousValue : '';
 }
 
+function applyNavigationContext() {
+  if (contextApplied) return;
+  contextApplied = true;
+  const immobile = prerequisites.immobili.find((item) => item.id === readIdParameter('immobileId'));
+  if (!immobile) return;
+  form.elements.immobileId.value = immobile.id;
+  const inquilino = prerequisites.inquilini.find((item) => item.id === readIdParameter('inquilinoId'));
+  if (inquilino) form.elements.inquilinoId.value = inquilino.id;
+  if (hasDatiCatastali(immobile)) showStep(inquilino ? 3 : 2, false);
+}
+
 function renderPrerequisites(data) {
   prerequisites = data;
   fillSelect('immobileId', data.immobili, immobileLabel);
@@ -160,6 +174,10 @@ function renderPrerequisites(data) {
   for (const key of ['immobili', 'inquilini', 'tipologie']) {
     document.querySelector(`#${key}-empty`).hidden = data[key].length > 0;
   }
+  applyNavigationContext();
+  const immobile = selected(prerequisites.immobili, 'immobileId');
+  if (step > 1 && !hasDatiCatastali(immobile)) showStep(1, false);
+  else if (step > 2 && !selected(prerequisites.inquilini, 'inquilinoId')) showStep(2, false);
   updateDetails();
   if (step === 4) renderSummary();
 }

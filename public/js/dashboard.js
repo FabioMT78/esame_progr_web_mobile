@@ -1,13 +1,21 @@
 import { readToken, clearToken } from './common.js';
+import { createIcon, createTenantsDialog, createPaymentsDialog, paymentDescription } from './dashboard-dialogs.js';
 
 const content = document.querySelector('#protected-content');
 const message = document.querySelector('#session-message');
 const retry = document.querySelector('#retry');
 const emptyState = document.querySelector('#empty-state');
 const grid = document.querySelector('#immobili-grid');
+const feedback = document.querySelector('#dashboard-feedback');
+const tenantsDialog = createTenantsDialog(api);
+const paymentsDialog = createPaymentsDialog(api, (payment) => {
+  feedback.textContent = `Pagamento registrato: ${paymentDescription(payment)}.`;
+});
 let request;
 
 function logout() {
+  tenantsDialog.close();
+  paymentsDialog.close();
   request?.abort();
   content.hidden = true;
   try {
@@ -17,9 +25,14 @@ function logout() {
   }
 }
 
-async function getData(path, token, signal) {
+async function api(path, signal, options = {}) {
+  const token = readToken();
+  if (!token) {
+    logout();
+    throw new DOMException('Sessione terminata', 'AbortError');
+  }
   const response = await fetch(path, {
-    headers: { Authorization: `Bearer ${token}` },
+    ...options, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     cache: 'no-store', signal
   });
   signal.throwIfAborted();
@@ -27,8 +40,10 @@ async function getData(path, token, signal) {
     logout();
     throw new DOMException('Sessione terminata', 'AbortError');
   }
-  if (!response.ok) throw new Error('Servizio temporaneamente non disponibile. Riprova.');
-  return response.json();
+  const data = response.status === 204 ? null : await response.json();
+  signal.throwIfAborted();
+  if (!response.ok) throw Object.assign(new Error(data.error || 'Operazione non riuscita. Riprova.'), { status: response.status });
+  return data;
 }
 
 function createCard(immobile) {
@@ -62,6 +77,13 @@ function createCard(immobile) {
     media.append(image);
   }
 
+  const edit = document.createElement('a');
+  edit.className = 'icon-button property-card-edit';
+  edit.href = `/immobile.html?id=${encodeURIComponent(immobile.id)}`;
+  edit.setAttribute('aria-label', `Modifica ${title.textContent}`);
+  edit.append(createIcon('edit'));
+  media.append(edit);
+
   const address = document.createElement('p');
   address.className = 'property-card-address';
   const street = [immobile.via, immobile.numeroCivico].filter(Boolean).join(' ');
@@ -69,7 +91,29 @@ function createCard(immobile) {
   const locality = [town, immobile.provincia ? `(${immobile.provincia})` : ''].filter(Boolean).join(' ');
   address.textContent = [street, locality].filter(Boolean).join(', ') || 'Indirizzo non disponibile';
 
-  card.append(title, media, address);
+  const payments = document.createElement('div');
+  payments.className = 'property-card-payments';
+  const label = document.createElement('p');
+  label.className = 'property-card-payments-label';
+  label.textContent = 'Pagamenti';
+  const status = document.createElement('span');
+  status.className = 'property-card-payment-status';
+  status.hidden = true;
+  label.append(status);
+  const actions = document.createElement('div');
+  actions.className = 'property-card-actions';
+  const payment = document.createElement('button');
+  payment.type = 'button';
+  payment.textContent = 'Registra pagamento';
+  payment.addEventListener('click', () => paymentsDialog.open(immobile));
+  const tenants = document.createElement('button');
+  tenants.type = 'button';
+  tenants.className = 'button-secondary';
+  tenants.textContent = 'Gestisci inquilini';
+  tenants.addEventListener('click', () => tenantsDialog.open(immobile));
+  actions.append(payment, tenants);
+  payments.append(label, actions);
+  card.append(title, media, address, payments);
   return card;
 }
 
@@ -85,7 +129,10 @@ function renderImmobili(immobili) {
 }
 
 async function loadDashboard() {
+  tenantsDialog.close();
+  paymentsDialog.close();
   request?.abort();
+  feedback.textContent = '';
   const controller = new AbortController();
   request = controller;
   content.hidden = true;
@@ -95,11 +142,11 @@ async function loadDashboard() {
   try {
     const token = readToken();
     if (!token) return logout();
-    const owner = await getData('/api/auth/me', token, controller.signal);
+    const owner = await api('/api/auth/me', controller.signal);
     controller.signal.throwIfAborted();
     if (!owner?.nome || !owner?.cognome) throw new Error('Dati del profilo non disponibili. Riprova.');
 
-    const immobili = await getData('/api/immobili', token, controller.signal);
+    const immobili = await api('/api/immobili', controller.signal);
     controller.signal.throwIfAborted();
     if (!Array.isArray(immobili)) throw new Error('Elenco immobili non disponibile. Riprova.');
     renderImmobili(immobili);
@@ -117,6 +164,8 @@ document.querySelector('#logout').addEventListener('click', logout);
 retry.addEventListener('click', loadDashboard);
 window.addEventListener('pageshow', loadDashboard);
 window.addEventListener('pagehide', () => {
+  tenantsDialog.close();
+  paymentsDialog.close();
   request?.abort();
   content.hidden = true;
 });

@@ -116,6 +116,8 @@ CREATE TABLE pagamenti (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   proprietario_id BIGINT UNSIGNED NOT NULL,
   contratto_id BIGINT UNSIGNED NOT NULL,
+  anno_competenza SMALLINT UNSIGNED NOT NULL,
+  mese_competenza TINYINT UNSIGNED NOT NULL,
   importo DECIMAL(10, 2) NOT NULL,
   data_pagamento DATE NOT NULL,
   metodo VARCHAR(50) NULL,
@@ -123,6 +125,10 @@ CREATE TABLE pagamenti (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL DEFAULT NULL,
+  CONSTRAINT uq_pagamenti_competenza
+    UNIQUE (contratto_id, anno_competenza, mese_competenza),
+  CONSTRAINT chk_pagamenti_mese
+    CHECK (mese_competenza BETWEEN 1 AND 12),
   CONSTRAINT chk_pagamenti_importo
     CHECK (importo > 0),
   CONSTRAINT fk_pagamenti_proprietario

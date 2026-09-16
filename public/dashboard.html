@@ -12,6 +12,7 @@
   <main class="container dashboard-container" aria-labelledby="dashboard-title">
     <h1 id="dashboard-title" class="visually-hidden">I tuoi immobili</h1>
     <p id="session-message" class="message" role="status" aria-live="polite" aria-atomic="true">Caricamento immobili…</p>
+    <p id="dashboard-feedback" class="message" role="status" aria-live="polite" aria-atomic="true"></p>
     <button id="retry" class="dashboard-retry" type="button" hidden>Riprova</button>
     <div id="protected-content" class="dashboard-content" hidden>
       <div id="empty-state" class="dashboard-empty" hidden>
@@ -21,6 +22,47 @@
     </div>
     <noscript><p>Abilita JavaScript nel browser per accedere e visualizzare i tuoi immobili.</p></noscript>
   </main>
+  <dialog id="tenants-dialog" class="dashboard-dialog" aria-labelledby="tenants-dialog-title">
+    <div class="dialog-heading">
+      <h2 id="tenants-dialog-title">Gestisci inquilini</h2>
+      <button type="button" class="icon-button" data-close aria-label="Chiudi gestione inquilini"><span aria-hidden="true">×</span></button>
+    </div>
+    <p id="tenants-message" class="message" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"></p>
+    <button id="tenants-retry" type="button" hidden>Riprova</button>
+    <ul id="dialog-tenant-list" class="dialog-tenant-list"></ul>
+    <div id="tenants-empty" class="dialog-empty" hidden>
+      <p>Non hai ancora inquilini attivi.</p>
+      <a id="tenants-new" class="button-link" href="/inquilino.html">Nuovo inquilino</a>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="button-secondary" data-close>Annulla</button>
+    </div>
+  </dialog>
+  <dialog id="payment-dialog" class="dashboard-dialog" aria-labelledby="payment-dialog-title">
+    <div class="dialog-heading">
+      <h2 id="payment-dialog-title">Registrazione pagamento</h2>
+      <button type="button" class="icon-button" data-close aria-label="Chiudi registrazione pagamento"><span aria-hidden="true">×</span></button>
+    </div>
+    <p id="payment-message" class="message" role="status" aria-live="polite" aria-atomic="true"></p>
+    <button id="payment-retry" type="button" hidden>Riprova</button>
+    <div id="payment-empty" class="dialog-empty" hidden>
+      <p>Nessun inquilino con contratto disponibile.</p>
+      <a id="payment-new-tenant" class="button-link" href="/inquilino.html">Nuovo inquilino</a>
+    </div>
+    <div id="payment-fields" hidden>
+      <label for="payment-tenant">Inquilino</label>
+      <select id="payment-tenant" disabled>
+        <option value="">Seleziona un inquilino</option>
+      </select>
+      <p class="payment-amount-label">Importo</p>
+      <p id="payment-amount" class="payment-amount">€ 0,00</p>
+      <p id="payment-period" class="field-hint"></p>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="button-secondary" data-close>Annulla</button>
+      <button id="payment-confirm" type="button" disabled>Pagato</button>
+    </div>
+  </dialog>
   <footer id="site-footer" class="site-footer"></footer>
 </body>
 </html>
