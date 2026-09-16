@@ -208,3 +208,29 @@ input[aria-invalid="true"] {
 .immobili-list { list-style: none; margin: 0; padding: 0; }
 .immobili-list li { padding-block: 1rem; border-top: 1px solid #dbe2ea; overflow-wrap: anywhere; }
 .immobili-list h3 { margin-top: 0; color: #15385f; }
+.tenant-section {
+  margin-block: 1.5rem;
+}
+
+.tenant-fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.tenant-legend {
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.tenant-list {
+  padding: 0;
+  list-style: none;
+}
+
+.tenant-list li {
+  padding-block: 1rem;
+  border-top: 1px solid #dbe2ea;
+  overflow-wrap: anywhere;
+}
