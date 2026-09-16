@@ -68,7 +68,7 @@ async function create(proprietarioId, body) {
     { inquilinoId: 'Seleziona un tuo inquilino attivo.' });
   if (!tipologia) throw inputError(404, 'Tipologia contrattuale non disponibile.',
     { tipologiaId: 'Seleziona una tipologia disponibile.' });
-  if (typeof immobile.datiCatastali !== 'string' || !immobile.datiCatastali.trim()) {
+  if (!immobile.datiCatastali || typeof immobile.datiCatastali !== 'object') {
     throw inputError(400, 'Completa i dati catastali dell’immobile prima di registrare il contratto.',
       { immobileId: 'I dati catastali dell’immobile sono obbligatori.' });
   }

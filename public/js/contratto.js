@@ -18,6 +18,10 @@ const fieldSteps = {
   immobileId: 1, inquilinoId: 2, tipologiaId: 3, dataInizio: 3, canoneAnnuale: 3, giornoPagamento: 3
 };
 const euro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
+const cadastralFields = [
+  'codiceComunale', 'foglio', 'particella', 'subalterno',
+  'zona', 'categoria', 'consistenza', 'rendita'
+];
 let prerequisites = { immobili: [], inquilini: [], tipologie: [] };
 let step = 1;
 let ready = false;
@@ -68,7 +72,16 @@ function inquilinoLabel(inquilino) {
 }
 
 function hasDatiCatastali(immobile) {
-  return typeof immobile?.datiCatastali === 'string' && Boolean(immobile.datiCatastali.trim());
+  const data = immobile?.datiCatastali;
+  return data && typeof data === 'object'
+    && cadastralFields.every((name) => data[name] !== null
+      && data[name] !== undefined && String(data[name]).trim() !== '');
+}
+
+function cadastralSummary(immobile) {
+  if (!hasDatiCatastali(immobile)) return 'non presenti';
+  const data = immobile.datiCatastali;
+  return `Codice ${data.codiceComunale} · Foglio ${data.foglio} · Particella ${data.particella} · Sub ${data.subalterno}`;
 }
 
 // Solo anteprima: il POST invia la data iniziale, il server ricalcola la scadenza.
@@ -89,7 +102,7 @@ function updateDetails() {
   const inquilino = selected(prerequisites.inquilini, 'inquilinoId');
   const tipologia = selected(prerequisites.tipologie, 'tipologiaId');
   document.querySelector('#immobile-detail').textContent = immobile
-    ? `${immobileLabel(immobile)}. Dati catastali: ${immobile.datiCatastali?.trim() || 'non presenti'}` : '';
+    ? `${immobileLabel(immobile)}. Dati catastali: ${cadastralSummary(immobile)}` : '';
   document.querySelector('#inquilini-empty a').href = immobile
     ? `/inquilino.html?immobileId=${encodeURIComponent(immobile.id)}` : '/inquilino.html';
   const missingCatasto = immobile && !hasDatiCatastali(immobile);
@@ -149,7 +162,6 @@ function showStep(value, focus = true) {
 function fillSelect(name, items, label) {
   const select = form.elements.namedItem(name);
   const previousValue = select.value;
-  // Conserva l'opzione vuota e i valori già scelti anche dopo un nuovo caricamento.
   select.replaceChildren(select.options[0]);
   for (const item of items) select.add(new Option(label(item), item.id));
   select.value = items.some((item) => item.id === previousValue) ? previousValue : '';
@@ -234,7 +246,9 @@ function validateStep(value) {
       fields.canoneAnnuale = 'Inserisci un importo tra 0,01 e 99.999.999,99 euro, con massimo 2 decimali.';
     }
     const giorno = form.elements.giornoPagamento;
-    if (!giorno.value || !giorno.validity.valid) fields.giornoPagamento = 'Inserisci un giorno intero tra 1 e 28.';
+    if (!giorno.value || !giorno.validity.valid) {
+      fields.giornoPagamento = 'Inserisci un giorno intero tra 1 e 28.';
+    }
   }
   return fields;
 }
@@ -332,6 +346,7 @@ next.addEventListener('click', () => {
   formMessage.textContent = '';
   if (checkStep(step)) showStep(step + 1);
 });
+
 previous.addEventListener('click', () => {
   if (previous.disabled) return;
   clearFieldErrors(form);
@@ -339,6 +354,7 @@ previous.addEventListener('click', () => {
   showStep(step - 1);
   updateDetails();
 });
+
 form.addEventListener('input', () => {
   clearFieldErrors(form);
   formMessage.textContent = '';
@@ -353,13 +369,14 @@ form.addEventListener('submit', async (event) => {
   for (const value of [1, 2, 3]) {
     if (!checkStep(value)) return;
   }
-  // Lista esplicita: nessuna dataFine o canoneMensile inviati al server.
+
   const input = {};
   for (const name of Object.keys(fieldSteps)) input[name] = form.elements.namedItem(name).value;
   const controller = request;
   busy = true;
   syncControls();
   formMessage.textContent = 'Registrazione in corso…';
+
   try {
     const contract = await api('/api/contratti', { method: 'POST', body: JSON.stringify(input) });
     if (controller.signal.aborted) return;
@@ -367,7 +384,6 @@ form.addEventListener('submit', async (event) => {
     formMessage.textContent = `Contratto #${contract.id} registrato. Decorrenza dal ${formatDate(contract.dataInizio)} al ${formatDate(contract.dataFine)}.`;
     syncControls();
     formMessage.focus();
-    // Un errore nell'aggiornamento dell'elenco non annulla una registrazione già riuscita.
     await loadList();
   } catch (error) {
     if (controller.signal.aborted) return;
@@ -391,6 +407,7 @@ newContract.addEventListener('click', () => {
   updateDetails();
   showStep(1);
 });
+
 retryList.addEventListener('click', async () => {
   if (busy) return;
   busy = true;
@@ -399,6 +416,7 @@ retryList.addEventListener('click', async () => {
   busy = false;
   syncControls();
 });
+
 document.querySelector('#logout').addEventListener('click', logout);
 retry.addEventListener('click', loadPage);
 window.addEventListener('pageshow', loadPage);
