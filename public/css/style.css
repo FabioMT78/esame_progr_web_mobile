@@ -189,3 +189,22 @@ input[aria-invalid="true"] {
     padding: 1rem;
   }
 }
+
+/* Gestione immobili */
+.immobili-page .status-card { margin-bottom: 1.5rem; }
+.immobili-page fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.immobili-page textarea {
+  display: block;
+  width: 100%;
+  padding: 0.65rem;
+  font: inherit;
+  color: #1f2937;
+  background: #fff;
+  border: 1px solid #64748b;
+  border-radius: 0.35rem;
+  resize: vertical;
+}
+.immobili-page textarea[aria-invalid="true"] { border: 2px solid #9f1c1c; }
+.immobili-list { list-style: none; margin: 0; padding: 0; }
+.immobili-list li { padding-block: 1rem; border-top: 1px solid #dbe2ea; overflow-wrap: anywhere; }
+.immobili-list h3 { margin-top: 0; color: #15385f; }

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Immobili — Gestionale Affitti</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/immobile.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="/">Gestionale Affitti</a>
+      <nav aria-label="Navigazione principale">
+        <a href="/dashboard.html">Area riservata</a>
+        <a href="/immobile.html" aria-current="page">Immobili</a>
+        <button id="logout" type="button">Esci</button>
+      </nav>
+    </div>
+  </header>
+  <main class="container immobili-page">
+    <h1>Immobili</h1>
+    <p id="session-message" class="message" role="status">Verifica della sessione in corso…</p>
+    <button id="session-retry" type="button" hidden>Riprova accesso</button>
+    <div id="protected-content" hidden>
+      <section class="status-card" aria-labelledby="form-title">
+        <h2 id="form-title">Nuovo immobile</h2>
+        <p>Tutti i campi sono obbligatori tranne i dati catastali e l'URL immagine (http o https).</p>
+        <form id="immobile-form">
+          <fieldset id="form-fields" disabled>
+          <div class="form-grid">
+          <div class="field">
+            <label for="titolo">Titolo</label>
+            <input id="titolo" name="titolo" type="text" maxlength="150" required aria-describedby="titolo-error">
+            <p class="field-error" id="titolo-error"></p>
+          </div>
+          <div class="field">
+            <label for="via">Via</label>
+            <input id="via" name="via" type="text" maxlength="150" required aria-describedby="via-error">
+            <p class="field-error" id="via-error"></p>
+          </div>
+          <div class="field">
+            <label for="numeroCivico">Numero civico</label>
+            <input id="numeroCivico" name="numeroCivico" type="text" maxlength="20" required aria-describedby="numeroCivico-error">
+            <p class="field-error" id="numeroCivico-error"></p>
+          </div>
+          <div class="field">
+            <label for="cap">CAP</label>
+            <input id="cap" name="cap" type="text" maxlength="10" required aria-describedby="cap-error">
+            <p class="field-error" id="cap-error"></p>
+          </div>
+          <div class="field">
+            <label for="comune">Comune</label>
+            <input id="comune" name="comune" type="text" maxlength="100" required aria-describedby="comune-error">
+            <p class="field-error" id="comune-error"></p>
+          </div>
+          <div class="field">
+            <label for="provincia">Provincia</label>
+            <input id="provincia" name="provincia" type="text" maxlength="100" required aria-describedby="provincia-error">
+            <p class="field-error" id="provincia-error"></p>
+          </div>
+          <div class="field">
+            <label for="datiCatastali">Dati catastali (facoltativi)</label>
+            <textarea id="datiCatastali" name="datiCatastali" rows="3" aria-describedby="datiCatastali-error"></textarea>
+            <p class="field-error" id="datiCatastali-error"></p>
+          </div>
+          <div class="field">
+            <label for="immagineUrl">URL immagine (facoltativo)</label>
+            <input id="immagineUrl" name="immagineUrl" type="url" maxlength="500" aria-describedby="immagineUrl-error">
+            <p class="field-error" id="immagineUrl-error"></p>
+          </div>
+          </div>
+          <div class="actions">
+            <button id="save" type="submit">Crea immobile</button>
+            <a href="/immobile.html" id="new-immobile">Nuovo immobile</a>
+          </div>
+          </fieldset>
+        </form>
+        <p id="form-message" class="message" role="status" aria-live="polite" tabindex="-1"></p>
+        <button id="detail-retry" type="button" hidden>Riprova caricamento immobile</button>
+      </section>
+      <section class="status-card" aria-labelledby="list-title">
+        <h2 id="list-title">I tuoi immobili attivi</h2>
+        <p id="list-message" class="message" role="status" aria-live="polite" tabindex="-1"></p>
+        <button id="list-retry" type="button" hidden>Riprova elenco</button>
+        <ul id="immobili-list" class="immobili-list"></ul>
+      </section>
+    </div>
+    <noscript><p>Abilita JavaScript nel browser per gestire gli immobili.</p></noscript>
+  </main>
+  <footer class="site-footer">
+    <div class="container"><small>&copy; 2026 Gestionale Affitti</small></div>
+  </footer>
+</body>
+</html>
