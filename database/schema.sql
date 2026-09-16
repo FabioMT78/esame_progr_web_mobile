@@ -57,11 +57,38 @@ CREATE TABLE inquilini (
     FOREIGN KEY (proprietario_id) REFERENCES proprietari(id)
 );
 
+CREATE TABLE tipologie_contrattuali (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  denominazione VARCHAR(150) NOT NULL UNIQUE,
+  durata SMALLINT UNSIGNED NOT NULL,
+  rinnovo SMALLINT UNSIGNED NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT chk_tipologie_durata CHECK (durata > 0),
+  CONSTRAINT chk_tipologie_rinnovo CHECK (rinnovo > 0)
+);
+
+CREATE TABLE articoli_contratto (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  tipologia_id BIGINT UNSIGNED NOT NULL,
+  num_articolo SMALLINT UNSIGNED NOT NULL,
+  num_parte SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  titolo VARCHAR(255) NOT NULL,
+  sottotitolo VARCHAR(255) NULL,
+  descrizione TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT uq_articoli_tipologia_parte UNIQUE (tipologia_id, num_articolo, num_parte),
+  CONSTRAINT fk_articoli_tipologia
+    FOREIGN KEY (tipologia_id) REFERENCES tipologie_contrattuali(id)
+);
+
 CREATE TABLE contratti (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   proprietario_id BIGINT UNSIGNED NOT NULL,
   immobile_id BIGINT UNSIGNED NOT NULL,
   inquilino_id BIGINT UNSIGNED NOT NULL,
+  tipologia_id BIGINT UNSIGNED NOT NULL,
   data_inizio DATE NOT NULL,
   data_fine DATE NOT NULL,
   canone_annuale DECIMAL(10, 2) NOT NULL,
@@ -74,13 +101,15 @@ CREATE TABLE contratti (
   CONSTRAINT chk_contratti_canone
     CHECK (canone_annuale > 0),
   CONSTRAINT chk_contratti_giorno_pagamento
-    CHECK (giorno_pagamento BETWEEN 1 AND 31),
+    CHECK (giorno_pagamento BETWEEN 1 AND 28),
   CONSTRAINT fk_contratti_proprietario
     FOREIGN KEY (proprietario_id) REFERENCES proprietari(id),
   CONSTRAINT fk_contratti_immobile
     FOREIGN KEY (immobile_id) REFERENCES immobili(id),
   CONSTRAINT fk_contratti_inquilino
-    FOREIGN KEY (inquilino_id) REFERENCES inquilini(id)
+    FOREIGN KEY (inquilino_id) REFERENCES inquilini(id),
+  CONSTRAINT fk_contratti_tipologia
+    FOREIGN KEY (tipologia_id) REFERENCES tipologie_contrattuali(id)
 );
 
 CREATE TABLE pagamenti (

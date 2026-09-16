@@ -157,3 +157,36 @@ docker pull mysql:8.4
 
 Questi controlli permettono di distinguere un problema dell'ambiente Docker
 da un problema della configurazione del progetto.
+
+## Template contrattuali JSON
+
+I template di canone libero e canone concordato sono in
+`database/seed/templates/`. Contengono denominazione, durata, rinnovo e articoli;
+i placeholder nelle descrizioni vengono conservati senza essere renderizzati.
+
+Prima di caricare i template e usare i contratti, applicare lo schema aggiornato
+`database/schema.sql`, che aggiunge tipologie e articoli, il collegamento dalla
+tabella contratti alla tipologia e il limite del giorno di pagamento a 28.
+
+Con Node.js e le variabili di connessione MySQL già configurati:
+
+```bash
+npm run db:seed:templates
+```
+
+Con i servizi Docker avviati:
+
+```bash
+docker compose --env-file docker/.env -f docker/compose.yaml exec app npm run db:seed:templates
+```
+
+Il comando valida tutti i JSON e li carica in un'unica transazione. Può essere
+rieseguito: aggiorna le tipologie per denominazione e sostituisce i rispettivi
+articoli; in caso di errore annulla tutte le modifiche.
+
+Se il volume MySQL Docker esiste già, `schema.sql` **non viene riapplicato
+automaticamente**. Prima del seed occorre aggiornare manualmente lo schema,
+associando anche gli eventuali contratti esistenti a una tipologia coerente e
+verificandone date e giorno di pagamento, oppure ricreare un database di sviluppo
+sacrificabile come descritto nella nota sul database. La ricreazione elimina i
+dati del volume: non è necessaria se si effettua un aggiornamento conservativo.

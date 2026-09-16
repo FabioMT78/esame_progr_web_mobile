@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contratti — Gestionale Affitti</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="module" src="/js/layout.js"></script>
+</head>
+<body data-menu="private" data-page-script="/js/contratto.js">
+  <header id="site-header" class="site-header"></header>
+  <main class="container">
+    <div class="content-column">
+      <h1>Contratti</h1>
+      <p id="session-message" class="message" role="status" tabindex="-1">Verifica della sessione in corso…</p>
+      <button id="retry" class="action-right" type="button" hidden>Riprova caricamento</button>
+      <div id="protected-content" class="card-stack" hidden>
+        <section class="status-card contract-section" aria-labelledby="form-title">
+          <h2 id="form-title">Nuovo contratto di locazione</h2>
+          <p>Seleziona immobile e inquilino, inserisci i dati e verifica il riepilogo prima di registrare.</p>
+          <ol id="contract-stepper" class="contract-stepper" aria-label="Avanzamento registrazione">
+            <li aria-current="step">1. Immobile</li>
+            <li>2. Inquilino</li>
+            <li>3. Dati contrattuali</li>
+            <li>4. Riepilogo</li>
+          </ol>
+          <form id="contract-form" novalidate>
+            <fieldset class="contract-step" data-step="1" disabled>
+              <legend id="step1-title" tabindex="-1">Passaggio 1 di 4 — Immobile</legend>
+              <div id="immobili-empty" class="message" hidden>
+                <p>Non hai immobili attivi. Registra un immobile per proseguire.</p>
+                <a href="/immobile.html">Crea immobile</a>
+              </div>
+              <div class="field">
+                <label for="immobileId">Immobile registrato</label>
+                <select id="immobileId" name="immobileId" required aria-describedby="immobile-detail immobileId-error">
+                  <option value="">Seleziona un immobile</option>
+                </select>
+                <p id="immobile-detail" class="field-hint"></p>
+                <p id="immobileId-error" class="field-error" aria-live="polite"></p>
+                <a id="edit-immobile" href="/immobile.html" hidden>Completa i dati catastali</a>
+              </div>
+            </fieldset>
+            <fieldset class="contract-step" data-step="2" disabled hidden>
+              <legend id="step2-title" tabindex="-1">Passaggio 2 di 4 — Inquilino</legend>
+              <div id="inquilini-empty" class="message" hidden>
+                <p>Non hai inquilini attivi. Registra un inquilino per proseguire.</p>
+                <a href="/inquilino.html">Crea inquilino</a>
+              </div>
+              <div class="field">
+                <label for="inquilinoId">Inquilino registrato</label>
+                <select id="inquilinoId" name="inquilinoId" required aria-describedby="inquilino-detail inquilinoId-error">
+                  <option value="">Seleziona un inquilino</option>
+                </select>
+                <p id="inquilino-detail" class="field-hint"></p>
+                <p id="inquilinoId-error" class="field-error"></p>
+              </div>
+            </fieldset>
+            <fieldset class="contract-step" data-step="3" disabled hidden>
+              <legend id="step3-title" tabindex="-1">Passaggio 3 di 4 — Dati contrattuali</legend>
+              <p id="tipologie-empty" class="message" hidden>Nessuna tipologia contrattuale disponibile. Contatta chi gestisce il servizio e riprova il caricamento.</p>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="tipologiaId">Tipologia contrattuale</label>
+                  <select id="tipologiaId" name="tipologiaId" required aria-describedby="tipologia-detail tipologiaId-error">
+                    <option value="">Seleziona una tipologia</option>
+                  </select>
+                  <p id="tipologia-detail" class="field-hint"></p>
+                  <p id="tipologiaId-error" class="field-error"></p>
+                </div>
+                <div class="field">
+                  <label for="dataInizio">Decorrenza dal</label>
+                  <input id="dataInizio" name="dataInizio" type="date" min="1000-01-01" max="9999-12-31" required aria-describedby="dataInizio-error">
+                  <p id="dataInizio-error" class="field-error"></p>
+                </div>
+                <div class="field">
+                  <label for="dataFine">Decorrenza al</label>
+                  <input id="dataFine" type="date" readonly aria-describedby="dataFine-hint">
+                  <p id="dataFine-hint" class="field-hint">Data iniziale + durata in anni − 1 giorno. Il rinnovo non modifica questa scadenza.</p>
+                </div>
+                <div class="field">
+                  <label for="canoneAnnuale">Canone annuale (€)</label>
+                  <input id="canoneAnnuale" name="canoneAnnuale" type="number" min="0.01" max="99999999.99" step="0.01" required aria-describedby="canoneAnnuale-error">
+                  <p id="canoneAnnuale-error" class="field-error"></p>
+                </div>
+                <div class="field">
+                  <label for="canoneMensile">Canone mensile (€)</label>
+                  <input id="canoneMensile" type="text" readonly aria-describedby="canoneMensile-hint">
+                  <p id="canoneMensile-hint" class="field-hint">Canone annuale diviso 12, arrotondato a 2 decimali per la visualizzazione.</p>
+                </div>
+                <div class="field">
+                  <label for="giornoPagamento">Giorno di pagamento</label>
+                  <input id="giornoPagamento" name="giornoPagamento" type="number" min="1" max="28" step="1" required aria-describedby="giornoPagamento-hint giornoPagamento-error">
+                  <p id="giornoPagamento-hint" class="field-hint">Un giorno intero tra 1 e 28 di ogni mese.</p>
+                  <p id="giornoPagamento-error" class="field-error"></p>
+                </div>
+              </div>
+            </fieldset>
+            <fieldset class="contract-step" data-step="4" disabled hidden>
+              <legend id="step4-title" tabindex="-1">Passaggio 4 di 4 — Riepilogo</legend>
+              <p>Controlla i dati. Il contratto viene salvato solo con “Conferma e registra”.</p>
+              <dl id="contract-summary" class="contract-summary"></dl>
+            </fieldset>
+            <div class="actions form-actions">
+              <button id="previous-step" type="button" hidden>Indietro</button>
+              <button id="next-step" class="action-primary" type="button" disabled>Avanti</button>
+              <button id="confirm-contract" class="action-primary" type="submit" hidden disabled>Conferma e registra</button>
+            </div>
+          </form>
+          <p id="form-message" class="message" role="status" aria-atomic="true" tabindex="-1"></p>
+          <button id="new-contract" type="button" hidden>Registra un altro contratto</button>
+        </section>
+        <section class="status-card contract-section" aria-labelledby="list-title">
+          <h2 id="list-title">Contratti registrati</h2>
+          <p id="list-message" class="message" role="status" tabindex="-1"></p>
+          <button id="retry-list" type="button" hidden>Riprova elenco contratti</button>
+          <ul id="contract-list" class="contract-list"></ul>
+        </section>
+      </div>
+      <noscript><p>Abilita JavaScript per registrare e visualizzare i contratti.</p></noscript>
+    </div>
+  </main>
+  <footer id="site-footer" class="site-footer"></footer>
+</body>
+</html>

@@ -1,0 +1,154 @@
+{
+  "denominazione": "Canone libero",
+  "durata": 4,
+  "rinnovo": 4,
+  "articoli": [
+    {
+      "numArticolo": 1,
+      "numParte": 0,
+      "titolo": "Articolo 1",
+      "sottotitolo": "(Durata della locazione. Disdetta e Rinnovo)",
+      "descrizione": "Il contratto è stipulato per la durata di anni quattro, a partire dal {{contratto.dal}} fino al {{contratto.al}} e si intenderà rinnovato per altri quattro anni nel caso in cui il Locatore non comunichi al Conduttore disdetta motivata ai sensi dell’art. 3, comma 1, legge 431/98 mediante raccomandata, almeno sei mesi prima della scadenza. Al termine dell’eventuale periodo di proroga ciascuna delle parti avrà diritto di attivare la procedura per un nuovo contratto, comunicando la propria intenzione via raccomandata entro 60 giorni, in mancanza di risposta il contratto s’intenderà concluso. Qualora ricorrano gravi motivi il Conduttore potrà recedere anticipatamente del contratto dando un prevviso di sei mesi. A suo carico saranno le tasse di rescissione anticipata e il risarcimento del danno qualora non si rispettino i sei mesi di preavviso."
+    },
+    {
+      "numArticolo": 2,
+      "numParte": 0,
+      "titolo": "Articolo 2",
+      "sottotitolo": "(Canone)",
+      "descrizione": "Il canone annuo di locazione è di {{contratto.canoneAnnuale}} euro ({{contratto.canoneAnnualeText}}/00) che il Conduttore obbliga a corrispondere al domicilio, mediante bonifico bancario, del Locatore in 12 rate uguali anticipate di {{contratto.canoneMensile}} euro ({{contratto.canoneMensileText}}/00) ciascuna, scadente il {{contratto.giornoPagamento}} di ogni mese. Il canone sarà aggiornato ogni anno nella misura del 100% della variazione ISTAT."
+    },
+    {
+      "numArticolo": 3,
+      "numParte": 0,
+      "titolo": "Articolo 3",
+      "sottotitolo": "(Deposito cauzionale)",
+      "descrizione": "A garanzia delle obbligazioni assunte col presente contratto, il Conduttore versa al Locatore (che con la firma del contratto ne rilascia, in caso, quietanza) una somma di {{contratto.depositoCauzionale}} euro ({{contratto.depositoCauzionaleText}}/00) non imputabile in conto canoni e produttiva/non produttiva di interessi legali. Il deposito cauzionale così costituito viene reso al termine della locazione previa verifica dello stato dell'unità immobiliare e dell'osservanza di ogni obbligazione contrattuale."
+    },
+    {
+      "numArticolo": 4,
+      "numParte": 0,
+      "titolo": "Articolo 4",
+      "sottotitolo": "(Oneri accessori)",
+      "descrizione": "Per gli oneri accessori le parti fanno applicazione della Tabella oneri accessori, allegato G al decreto emanato ai sensi dell’articolo 4, comma 2, della legge n. 431/98 (che fa parte integrante e sostanziale del presente contratto, per quanto non venga ad esso materialmente allegato). Sono interamente a carico del Conduttore le spese relative ad ogni utenza (energia elettrica, acqua, gas, telefono e altro)."
+    },
+    {
+      "numArticolo": 5,
+      "numParte": 0,
+      "titolo": "Articolo 5",
+      "sottotitolo": "(Spese di bollo e registrazione)",
+      "descrizione": "Le spese di bollo per il presente contratto, e per le ricevute conseguenti, sono a carico del Conduttore. Il locatore provvede alla registrazione del contratto, dandone documentata comunicazione al conduttore - che corrisponde la quota di sua spettanza, pari alla metà - e all’amministratore del condominio ai sensi dell’art. 13 della legge 431 del 1998. In caso di risoluzione anticipata l’imposta dovuta è posta per intero a carico del Conduttore. Per quanto non previsto si farà riferimento alle leggi vigenti e alle norme del codice civile."
+    },
+    {
+      "numArticolo": 6,
+      "numParte": 0,
+      "titolo": "Articolo 6",
+      "sottotitolo": "(Pagamento)",
+      "descrizione": "Il pagamento del canone o di quant'altro dovuto anche per oneri accessori non può venire sospeso o ritardato da pretese o eccezioni del Conduttore, qualunque ne sia il titolo. Il mancato puntuale pagamento, per qualunque causa, anche di una sola rata del canone (nonché di quant'altro dovuto, ove di importo pari almeno ad una mensilità del canone), costituisce in mora il Conduttore, fatto salvo quanto previsto dall’articolo 55 della legge n 392/78."
+    },
+    {
+      "numArticolo": 7,
+      "numParte": 0,
+      "titolo": "Articolo 7",
+      "sottotitolo": "(Uso)",
+      "descrizione": "L'immobile deve essere destinato esclusivamente a civile abitazione del Conduttore e delle persone attualmente con lui conviventi. Salvo patto scritto contrario, è fatto divieto di sublocare o dare in comodato, né in tutto né in parte, l’unità immobiliare, pena la risoluzione di diritto del contratto. Per la successione nel contratto, si applica l'articolo 6 della legge n. 392/78, nel testo vigente a seguito della sentenza della Corte costituzionale n. 404 del 1988."
+    },
+    {
+      "numArticolo": 8,
+      "numParte": 0,
+      "titolo": "Articolo 8",
+      "sottotitolo": "(Recesso del Conduttore)",
+      "descrizione": "Il Conduttore ha facoltà di recedere per gravi motivi dal contratto previo avviso da recapitarsi al Locatore mediante lettera raccomandata a/r almeno sei mesi prima."
+    },
+    {
+      "numArticolo": 9,
+      "numParte": 0,
+      "titolo": "Articolo 9",
+      "sottotitolo": "(Consegna)",
+      "descrizione": "Il Conduttore dichiara di aver visitato l'unità immobiliare locatagli, di averla trovata adatta all'uso convenuto e, pertanto, di prenderla in consegna ad ogni effetto col ritiro delle chiavi, costituendosi da quel momento custode della stessa. Il Conduttore si impegna a riconsegnare l'unità immobiliare nello stato in cui l'ha ricevuta, salvo il deperimento d'uso, pena il risarcimento del danno."
+    },
+    {
+      "numArticolo": 10,
+      "numParte": 0,
+      "titolo": "Articolo 10",
+      "sottotitolo": "(Modifiche e danni)",
+      "descrizione": "Il Conduttore non può apportare alcuna modifica, innovazione, miglioria o addizione ai locali locati ed alla loro destinazione, o agli impianti esistenti, senza il preventivo consenso scritto del Locatore, fermo restando che, anche se autorizzati, i lavori e le relative pratiche amministrative per l’autorizzazione verranno eseguiti a spese del Conduttore e verranno rimossi, sempre a sua cura e spese, a fine locazione. Ogni aggiunta che non possa essere tolta senza danneggiare i locali e ogni altra innovazione, pur autorizzata, resterà acquisita alla proprietà a titolo gratuito."
+    },
+    {
+      "numArticolo": 11,
+      "numParte": 0,
+      "titolo": "Articolo 11",
+      "sottotitolo": "(Manutenzioni e oneri del Conduttore)",
+      "descrizione": "Il Conduttore assume l’obbligo della manutenzione ordinaria dell’immobile. Sono a carico del Conduttore le riparazioni di piccola manutenzione, con particolare riferimento a pavimenti, superficie dei muri, intonaci interni, piastrelle e serramenti o relative agli impianti idraulici, elettrici, gas e condizionamento di acqua. Restano a carico del Locatore tutti i lavori di straordinaria manutenzione. A tal fine, il Conduttore sarà tenuto a comunicare tempestivamente al Locatore, con ogni mezzo idoneo, gli interventi per la manutenzione straordinaria da eseguire sull’immobile. Le spese di manutenzione di eccezionale entità o comunque erogate per interventi di carattere strutturale (sostituzione di impianti, rifacimento del tetto, degli intonaci esterni, delle fondazioni ecc.) restano a carico del Locatore. Saranno a carico del Conduttore le spese di allacciamento interno di luce, gas, acqua, telefono ecc. Oltre ai lavori che il Conduttore non abbia eseguito pur essendo a suo carico, saranno addebitati al Conduttore medesimo o agli inquilini responsabili le spese occorrenti per riparare i danni, prodotti da colpa, negligenza o cattivo uso, ai locali e agli impianti di uso e di utilità comuni, nonché i danni provocati da intasamenti di colonne di scarico per introduzione di corpi estranei e/o non consentiti."
+    },
+    {
+      "numArticolo": 12,
+      "numParte": 0,
+      "titolo": "Articolo 12",
+      "sottotitolo": "(Responsabilità)",
+      "descrizione": "Il Conduttore esonera espressamente il Locatore da ogni responsabilità per i danni diretti o indiretti che potessero derivargli da fatto dei propri familiari, dipendenti o da tutte le persone che egli ha ammesso temporaneamente nell’unità immobiliare, nonché per interruzioni incolpevoli dei servizi. Il Conduttore è direttamente responsabile verso il Locatore e i terzi dei danni causati per colpa sua da spandimento di acqua, fughe di gas, ecc. e da ogni altro abuso o trascuratezza nell’uso della cosa locata. È fatto divieto all’inquilino di svolgere nell’unità locata qualsiasi attività professionale, artigianale, commerciale, ecc. anche secondaria e accessoria. È pure vietato tenere animali pericolosi in modo da recare impedimento a terzi. Il Conduttore si impegna a riconsegnare i locali alla scadenza liberi da persone e cose, puliti in ogni loro parte. Il Conduttore si impegna a rispettare le norme del regolamento dello stabile ove esistente, accusando in tal caso ricevuta della consegna dello stesso con la firma del presente contratto, così come si impegna a osservare le deliberazioni dell’assemblea dei condomini e comunque le regole di buon vicinato. È in ogni caso vietato al Conduttore di compiere atti, e tenere comportamenti, che possano recare molestia agli altri abitanti dello stabile. Il Conduttore si impegna a non installare antenne esterne radiotelevisive particolari (salvi il consenso scritto del Locatore e delibera favorevole del condominio), a non tenere depositi di materiali pericolosi, a non destinare i locali ad uso contrario all’igiene, alla sicurezza, alla tranquillità e al decoro dell’edificio."
+    },
+    {
+      "numArticolo": 13,
+      "numParte": 0,
+      "titolo": "Articolo 13",
+      "sottotitolo": "(Impianti)",
+      "descrizione": "Il Conduttore - in caso d'installazione sullo stabile di antenna televisiva centralizzata - si obbliga a servirsi unicamente dell'impianto relativo, restando sin d'ora il Locatore, in caso di inosservanza, autorizzato a far rimuovere e demolire ogni antenna individuale a spese del Conduttore, il quale nulla può pretendere a qualsiasi titolo, fatte salve le eccezioni di legge. Per quanto attiene all'impianto termico autonomo, ove presente, vale la normativa del DPR n. 412/93, con particolare riferimento a quanto stabilito dall'articolo 11, comma 2, dello stesso. Per la buona conservazione e per garantire l’ottimale funzionamento dell’impianto di riscaldamento autonomo, eventualmente esistente, il Conduttore si impegna a far intervenire, a proprie cura e spese, un operatore specializzato e abilitato ai sensi della normativa vigente per la manutenzione ordinaria, la pulizia, la verifica dell’effettivo tiraggio del tubo di esalazione fumi e la messa a punto della caldaia a gas, con frequenza annuale o inferiore secondo necessità. Di ciò il Conduttore dà espressa ed ampia garanzia al Locatore. Al presente contratto viene altresì allegato il libretto inerente l’impianto termico, debitamente compilato e sottoscritto, per la sola fase iniziale, dalla proprietà. Tale libretto dovrà esser aggiornato a cura del Conduttore e riconsegnato al Locatore al termine della locazione, completo di ogni sua parte. Tutti i costi, che nel corso del presente contratto e dei suoi eventuali rinnovi dovessero essere sostenuti sia per il funzionamento sia per la manutenzione ordinaria, saranno a carico del Conduttore. Nel caso in cui si rendano necessari interventi di manutenzione straordinaria all’impianto, il Conduttore, prima di far eseguire qualsiasi intervento, deve comunicarlo al Locatore, che si riserva il diritto di verificare la necessità o meno di tale intervento. Resta inteso che saranno comunque a carico del Conduttore gli interventi di manutenzione straordinaria, ivi compresa la sostituzione della caldaia, ove i medesimi si rendano necessari a seguito di cattiva manutenzione ordinaria."
+    },
+    {
+      "numArticolo": 14,
+      "numParte": 0,
+      "titolo": "Articolo 14",
+      "sottotitolo": "(Accesso)",
+      "descrizione": "Le Parti convengono che al Locatore è data facoltà, per motivate ragioni, di visitare o di far visitare i locali affittati con preavviso di qualche giorno. Il Conduttore si impegna a far accedere le maestranze per l’esecuzione di eventuali interventi urgenti o indilazionabili. Nel caso in cui il Locatore intendesse vendere l'unità immobiliare locata il Conduttore deve consentire la visita all'unità immobiliare una volta la settimana, per almeno due ore, con esclusione dei giorni festivi."
+    },
+    {
+      "numArticolo": 15,
+      "numParte": 0,
+      "titolo": "Articolo 15",
+      "sottotitolo": "(Assemblee)",
+      "descrizione": "Il Conduttore ha diritto di voto, in luogo del proprietario dell'unità immobiliare locatagli, nelle deliberazioni dell'assemblea condominiale relative alle spese ed alle modalità di gestione dei servizi di riscaldamento e di condizionamento d'aria. Ha inoltre diritto di intervenire, senza voto, sulle deliberazioni relative alla modificazione degli altri servizi comuni. Quanto stabilito in materia di riscaldamento e di condizionamento d'aria si applica anche ove si tratti di edificio non in condominio. In tale caso (e con l'osservanza, in quanto applicabili, delle disposizioni del codice civile sull'assemblea dei condomini) i conduttori si riuniscono in apposita assemblea, convocata dalla proprietà o da almeno tre conduttori."
+    },
+    {
+      "numArticolo": 16,
+      "numParte": 0,
+      "titolo": "Articolo 16",
+      "sottotitolo": "(Clausole essenziali e risoluzione)",
+      "descrizione": "Le clausole 1 (Durata della locazione. Disdetta e Rinnovo), 2 (Canone), 3(Deposito cauzionale), 4 (Oneri accessori), 6 (Pagamento), 7 (Uso), 9 (Consegna), 10 (Modifiche e danni), 11 (Manutenzioni e oneri del Conduttore), 12 (Responsabilità), 13 (Impianti) hanno carattere essenziale cosicché, per patto espresso, la violazione anche di una soltanto di esse può essere causa di azione di risoluzione del contratto. La vendita dell'unità immobiliare locata - in relazione della quale non viene concessa la prelazione al Conduttore - non costituisce motivo di risoluzione del contratto. Qualora dovesse intervenire una causa che possa dar diritto al Conduttore di ottenere la risoluzione del contratto per sopravvenuta inidoneità della cosa locata a servire all’uso convenuto, che non sia imputabile né al Conduttore né al Locatore, quest’ultimo sarà tenuto a restituire solamente la parte di corrispettivo anticipatogli proporzionale al periodo di mancato godimento da parte del Conduttore, escluso ogni altro compenso e ogni risarcimento di danni e previa riconsegna della cosa locata."
+    },
+    {
+      "numArticolo": 17,
+      "numParte": 0,
+      "titolo": "Articolo 17",
+      "sottotitolo": "(Riservatezza: consenso al trattamento dei dati personali)",
+      "descrizione": "Il Locatore e il Conduttore si autorizzano reciprocamente a comunicare a terzi i propri dati anagrafici e personali in relazione ad adempimenti connessi col rapporto di locazione secondo le modalità prescritte dal d.lgs. 30 giugno 2003, n. 196."
+    },
+    {
+      "numArticolo": 18,
+      "numParte": 0,
+      "titolo": "Articolo 18",
+      "sottotitolo": "(Diritto Applicabile)",
+      "descrizione": "Il presente contratto è regolato dalla legge italiana. Per tutto quanto non espressamente disciplinato dal presente contratto, le Parti fanno espresso rinvio alle disposizioni vigenti del codice civile, della legge 27 luglio 1978, n. 392, della legge 9 dicembre 1998, n. 431, o comunque dalle norme vigenti e dagli usi locali, in quanto applicabili, nonché (ove presente) al Regolamento del condominio di cui il Conduttore dichiara di aver preso conoscenza mediante lettura integrale del testo."
+    },
+    {
+      "numArticolo": 19,
+      "numParte": 0,
+      "titolo": "Articolo 19",
+      "sottotitolo": "(Modifiche e/o integrazioni del contratto)",
+      "descrizione": "Qualsiasi modifica e/o integrazione del presente contratto, sotto pena di inefficacia, non potrà avere luogo e non potrà essere provata se non mediante atto scritto."
+    },
+    {
+      "numArticolo": 20,
+      "numParte": 0,
+      "titolo": "Articolo 20",
+      "sottotitolo": "(Domicilio)",
+      "descrizione": "A tutti gli effetti del presente contratto, compresa la notifica degli atti esecutivi, e ai fini della competenza a giudicare, il Conduttore elegge domicilio nei locali a lui locati e, ove egli più non li occupi o comunque detenga, presso l’Ufficio di segreteria del Comune ove è situato l’immobile locato."
+    },
+    {
+      "numArticolo": 21,
+      "numParte": 0,
+      "titolo": "Articolo 21",
+      "sottotitolo": "(Risoluzione delle controversie)",
+      "descrizione": "Tutte le controversie derivanti dal presente contratto o connesse allo stesso, che dovessero insorgere tra le Parti, escluse quelle che comportano l’avvio dei procedimenti per convalida di licenza o di sfratto, saranno devolute a un tentativo di conciliazione presso un Organismo di mediazione e risolte secondo il regolamento da questa adottato. Nel procedimento avviato le Parti, eventualmente, a loro scelta, potranno essere assistite dalla rispettiva organizzazione sindacale dei Conduttori e associazione della proprietà edilizia."
+    }
+  ]
+}

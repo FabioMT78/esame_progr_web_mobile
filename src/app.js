@@ -4,6 +4,7 @@ const pool = require('./db/pool');
 const authRoutes = require('./routes/auth-routes');
 const immobiliRoutes = require('./routes/immobili-routes');
 const inquiliniRoutes = require('./routes/inquilini-routes');
+const contrattiRoutes = require('./routes/contratti-routes');
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use('/api/auth', authRoutes);
 app.use('/api/immobili', immobiliRoutes);
 app.use('/api/inquilini', inquiliniRoutes);
+app.use('/api/contratti', contrattiRoutes);
 
 app.get('/api/health', async (_req, res) => {
   try {

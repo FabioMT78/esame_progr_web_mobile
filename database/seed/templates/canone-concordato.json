@@ -1,0 +1,196 @@
+{
+  "denominazione": "Canone concordato",
+  "durata": 3,
+  "rinnovo": 2,
+  "articoli": [
+    {
+      "numArticolo": 1,
+      "numParte": 0,
+      "titolo": "Articoli 1",
+      "sottotitolo": "(durata locazione)",
+      "descrizione": "Il contratto è stipulato per la durata di anni 3 con decorrenza dal {{contratto.dal}} e scadenza il {{contratto.al}}."
+    },
+    {
+      "numArticolo": 2,
+      "numParte": 0,
+      "titolo": "Articolo 2",
+      "sottotitolo": "(rinnovo contratto)",
+      "descrizione": "Alla prima scadenza, il contratto è prorogato di diritto di due anni fatta salva la facoltà di disdetta da parte del locatore che intenda adibire l’immobile agli usi o effettuare sullo stesso le opere di cui all’art. 3 della legge n. 431/1998, ovvero vendere l’immobile alle condizioni e con le modalità di cui all’art. 3. Alla scadenza del periodo di proroga biennale ciascuna delle parti ha diritto di attivare la procedura per il rinnovo a nuove condizioni o per la rinuncia al rinnovo del contratto comunicando la propria intenzione con lettera raccomandata da inviare all’altra parte almeno sei mesi prima della scadenza. In mancanza della comunicazione il contratto è rinnovato tacitamente alle medesime condizioni. Nel caso in cui il locatore abbia riacquistato la disponibilità dell’alloggio alla prima scadenza e non lo adibisca, nel termine di dodici mesi dalla data in cui ha riacquistato la detta disponibilità, agli usi per i quali ha esercitato la facoltà di disdetta, il conduttore avrà diritto al ripristino del rapporto di locazione alle medesime condizioni di cui al contratto disdettato o, in alternativa, ad un risarcimento in misura pari a trentasei mensilità dell’ultimo canone di locazione percepito."
+    },
+    {
+      "numArticolo": 3,
+      "numParte": 0,
+      "titolo": "Articolo 3",
+      "sottotitolo": "(natura tipo contratto)",
+      "descrizione": "Il conduttore ha facoltà di recedere per gravi motivi dal contratto previo avviso da recapitarsi a mezzo lettera raccomandata almeno sei mesi prima. In caso di recesso anticipato da parte del conduttore, l’avviso all’Agenzia delle Entrate e le relative spese sono a carico dello stesso."
+    },
+    {
+      "numArticolo": 4,
+      "numParte": 0,
+      "titolo": "Articolo 4",
+      "sottotitolo": "(recessione contratto)",
+      "descrizione": "Il conduttore ha facoltà di recedere per gravi motivi dal contratto previo avviso da recapitarsi a mezzo lettera raccomandata almeno tre mesi prima. Tale facoltà è consentita anche ad uno o più dei conduttori firmatari e in tal caso, dal mese dell’intervenuto recesso, la locazione prosegue nei confronti degli altri ferma restando la solidarietà del conduttore recedente per i pregressi periodi di conduzione."
+    },
+    {
+      "numArticolo": 5,
+      "numParte": 0,
+      "titolo": "Articolo 5",
+      "sottotitolo": "(condizioni per la recessione contrattuale)",
+      "descrizione": "Si fa presente che i seguenti punti sono parte essenziale per il recesso e/o la disdetta del presente contratto e che il locatore ed il conduttore di comune accordo ne accettano ed approvano il contenuto ottemperando quanto segue: a. il conduttore si impegna a reperire personalmente, o tramite agenzia, i possibili successori del contratto e di fargli visionare l’immobile, il contratto di locazione e, nel caso sia interessato, fargli conoscere gli altri inquilini accettandosi vicendevolmente; b. è fondamentale che il potenziale subentrante non faccia uso di droghe, sia una persona mite, non sia coinvolto in crimini e/o reati, non porti con sé animali, rispetti gli altri inquilini ed il vicinato, e soprattutto sia a conoscenza di codesto articolo (articolo 5) approvandolo in ogni sua parte; c. almeno 30 giorni prima del giorno pattuito per la recessione, o disdetta, il conduttore presenterà al locatore le persone che hanno accettato di locare la porzione immobiliare oggetto del presente contratto avendo approvato il punto b di codesto articolo (articolo 5.b); tali persone verranno di seguito denominate “candidati”; d. il locatore si riserva la facoltà di selezionare il candidato fra quelli proposti dal conduttore, oppure, previo accordo scritto, di reperirlo egli stesso; e. il locatore si assume l’impegno di mettere a disposizione del conduttore tutto il materiale a disposizione per trovare il candidato ovvero: materiale fotografico della porzione immobiliare in oggetto corredato di testi per gli annunci ed elenco dei portali nei quali inserire gli annunci; f. il conduttore si impegna ad inserire e rinnovare almeno una volta al giorno gli annunci di locazione nei portali suggeriti dal locatore per tutto il tempo necessario alla presentazione dei candidati; g. qualora il conduttore avesse presentato al locatore almeno 3 candidati che corrispondano ai requisiti di cui all’articolo 5.b e nonostante siano benaccetti dagli inquilini il locatore non li ritenesse idonei, il conduttore sarà sollevato dall’onere della ricerca che verrà effettuata personalmente dal locatore o da chi per lui; h. qualora il conduttore non avesse presentato al locatore dei candidati, ovvero delle persone di cui all’articolo 5.b e 5.c, o avesse presentato delle persone che non soddisfino i requisiti dell’articolo 5.b e 5.c, la richiesta di recessione sarà considerata annullata da ambo le parti invalidando completamente la comunicazione presentata come da articolo 3; i. qualora il conduttore avesse ottemperato ai punti di codesto articolo ed in particolare all’articolo 5.a, articolo 5.b, articolo 5.c ed articolo 5.f , dandone dimostrazione documentata, ma al termine del periodo di cui all’articolo 2 ed articolo 4, rispettivamente nei casi di disdetta e recessione, non avesse trovato un candidato, può ritenersi sollevato dall’onere della ricerca e se ne occuperà pienamente il locatore; j. qualora il conduttore avesse NON ottemperato ai punti di codesto articolo ed in particolare all’articolo 5.a, articolo 5.b, articolo 5.c ed articolo 5.f in caso di disdetta il contratto si intenderà automaticamente rinnovato ed in caso di recessione la stessa sarà considerata da ambo le parti annullata e quindi il locatore avrà diritto a trattenere l’intero deposito cauzionale oltre al recupero, ex art. 633 e ss. del c.p.c, di tutti i canoni di locazione previsti per l’intera durata del contratto."
+    },
+    {
+      "numArticolo": 6,
+      "numParte": 0,
+      "titolo": "Articolo 6",
+      "sottotitolo": "(destinazione d’uso)",
+      "descrizione": "L’immobile dovrà essere destinato esclusivamente ad uso di civile abitazione del conduttore. è vietato il sub affitto parziale o totale dell’immobile."
+    },
+    {
+      "numArticolo": 7,
+      "numParte": 0,
+      "titolo": "Articolo 7",
+      "sottotitolo": "(canone)",
+      "descrizione": "Secondo quanto stabilito dall’Accordo definito tra Assessorato alle Politiche Abitative del 05/02/2004 protocollo n.385 Roma. Il canone annuo di locazione è convenuto in Euro {{contratto.canoneAnnuale}} annuali da corrispondere al Locatore come indicato nell’Articolo 10 (modalità di pagamento) del presente contratto. Tale canone è stato determinato dalle parti sulla base dell’applicazione dei seguenti criteri e parametri: secondo quanto stabilito dall’articolo dell’Accordo territoriale. Nel caso in cui l’accordo territoriale di cui al presente punto lo preveda, il canone sarà aggiornato annualmente nella misura contrattata che comunque non potrà superare il 75% della variazione ISTAT. Nel caso in cui il locatore opti per l’applicazione della cedolare secca è sospesa per un periodo corrispondente alla durata dell’opzione la facoltà di chiedere l’aggiornamento ISTAT (art.3, D.Lgs 14 marzo 2011, n. 23)."
+    },
+    {
+      "numArticolo": 8,
+      "numParte": 0,
+      "titolo": "Articolo 8",
+      "sottotitolo": "(utenze e tasse)",
+      "descrizione": "Di comune accordo il locatore ed il conduttore hanno convenuto al pagamento mensile di utenze e tasse fisse a carico del conduttore di cui si assume l’onere il locatore, ovvero della TARI, Telecom, condominio, super condominio e, in forma preventiva, la quota parte mensile del conguaglio condominiale dell’anno in corso calcolato sulla base dei conguagli disponibili degli ultimi 3 anni, di cui il conduttore ha preso visione, fermo restando che a produzione della rendicontazione condominiale verrà verificato se quanto versato ha generato un debito o un credito che sarà cura delle parti, locatore e/o conduttore, di saldare entro un mese dalla comunicazione."
+    },
+    {
+      "numArticolo": 9,
+      "numParte": 0,
+      "titolo": "Articolo 9",
+      "sottotitolo": "(cedolare secca)",
+      "descrizione": "Ad integrazione delle pattuizioni intercorse si precisa, ai sensi e per gli effetti dell’art. 3, comma 1 e 2 del D.Lgs n. 23/11, che il locatore opta per l’applicazione dell’imposta sostitutiva operata nella forma della cedolare secca sul reddito riveniente dai canoni dell’unità abitativa in locazione. In virtù di quanto sopra il Locatore rinuncia, ai sensi e per gli effetti dell’art. 3, comma 11 del decreto citato, alla facoltà di chiedere l’aggiornamento del canone, inclusa la variazione ISTAT dell’indice nazionale dei prezzi al consumo per le famiglie di operai e impiegati verificatesi nell’anno precedente."
+    },
+    {
+      "numArticolo": 10,
+      "numParte": 0,
+      "titolo": "Articolo 10",
+      "sottotitolo": "(modalità di pagamento)",
+      "descrizione": "Il canone (articolo 7 - canone), le utenze e tasse (articolo 8 - utenze e tasse), comprensive dei servizi accessori, devono essere versate in n.12 rate anticipate di pari importo da corrispondersi al domicilio della parte locatrice entro il giorno {{contratto.giornoPagamento}} di ogni mese. La rata mensile di Euro {{contratto.canoneMensile}} (euro {{contratto.canoneMensileText}}/00 di cui _________,00) è da corrispondere a mezzo bonifico bancario presso la banca Intesa San Paolo: IBAN {{proprietario.iban}}; in caso di mancato pagamento del canone la parte locatrice potrà valersi del disposto dell’art.1453 C.C. senza bisogno di diffida o di costituzione in mora."
+    },
+    {
+      "numArticolo": 11,
+      "numParte": 0,
+      "titolo": "Articolo 11",
+      "sottotitolo": "(condizioni di pagamento)",
+      "descrizione": "Il pagamento del canone o di quant’altro dovuto anche per oneri accessori non potrà essere sospeso o ritardato da pretese o eccezioni del conduttore, qualunque ne sia il titolo. Il mancato puntuale pagamento, per qualunque causa, anche di una sola rata del canone nonché di quant’altro dovuto ove di importo pari ad una mensilità del canone, costituisce in mora il conduttore, fatto salvo quanto previsto dagli art. 5 e 55, legge 27 luglio 1978, n. 392."
+    },
+    {
+      "numArticolo": 12,
+      "numParte": 0,
+      "titolo": "Articolo 12",
+      "sottotitolo": "(accesso all’immobile)",
+      "descrizione": "Il conduttore dovrà consentire l’accesso all’unità immobiliare al locatore, al suo amministratore nonché ai loro incaricati ove gli stessi ne abbiano motivando la ragione."
+    },
+    {
+      "numArticolo": 13,
+      "numParte": 0,
+      "titolo": "Articolo 13",
+      "sottotitolo": "(consegna)",
+      "descrizione": "Il conduttore dichiara di aver visitato la casa locatagli e di averla trovata adatta all’uso convenuto e, cosi’, di prenderla in consegna ad ogni effetto con il ritiro delle chiavi, costituendosi da quel momento della medesima custode. Il conduttore si impegna a riconsegnare l’unità immobiliare locata nello stato medesimo in cui l’ha ricevuta salvo il deperimento d’uso, pena il risarcimento del danno. Si impegna, altresì, a rispettare le norme del regolamento dello stabile ove esistente, accusando in tal caso ricevuta della consegna dello stesso con la firma del presente contratto, cosi’ come si impegna ad osservare le deliberazioni dell’assemblea dei condomini. é in ogni caso vietato al conduttore di compiere atti, e tenere comportamenti, che possano recare molestia agli altri abitanti dello stabile."
+    },
+    {
+      "numArticolo": 14,
+      "numParte": 0,
+      "titolo": "Articolo 14",
+      "sottotitolo": "(modifiche all’immobile)",
+      "descrizione": "Il conduttore non potrà apportare alcuna modifica, innovazione, miglioria o addizione ai locali locati ed alla loro destinazione, o agli impianti esistenti, senza il preventivo consenso scritto del locatore."
+    },
+    {
+      "numArticolo": 15,
+      "numParte": 0,
+      "titolo": "Articolo 15",
+      "sottotitolo": "(danni ed interruzione dei servizi)",
+      "descrizione": "Il conduttore esonera espressamente il locatore da ogni responsabilità per i danni diretti o indiretti che potessero derivargli da fatti dei dipendenti del locatore medesimo nonché per interruzioni incolpevoli dei servizi. Per espressa deroga agli Art.1583 e 1584 C.C., il conduttore non avrà diritto a pretendere alcun risarcimento di danni o rimborso spese, qualora dovesse risultare limitato l’uso ed il godimento della cosa locata per riparazioni anche se differibili o modifiche necessarie all’intero stabile o parte di esso, nonché in caso di scioglimento anticipato del contratto derivante dai predetti lavori."
+    },
+    {
+      "numArticolo": 16,
+      "numParte": 0,
+      "titolo": "Articolo 16",
+      "sottotitolo": "(deposito cauzionale)",
+      "descrizione": "A garanzia delle obbligazioni assunte con il presente contratto, la parte conduttrice corrisponde alla parte locatrice, che con la firma del presente contratto ne rilascia quietanza, la somma di Euro {{contratto.depositoCauzionale}},00 (euro {{contratto.depositoCauzionaleText}}/00) a titolo di deposito cauzionale pari a 3 mensilità del canone, non imputabile in conto pigioni e non produttiva di interessi legali. La garanzia come sopra costituita sarà restituita al termine della locazione previa verifica dello stato dell’unità immobiliare e dell’osservanza di ogni obbligazione contrattuale."
+    },
+    {
+      "numArticolo": 17,
+      "numParte": 0,
+      "titolo": "Articolo 17",
+      "sottotitolo": "(oneri accessori)",
+      "descrizione": "Per gli oneri accessori le parti faranno applicazione della ’Tabella oneri accessori’ allegata all’Accordo di cui all’articolo 3 (allegato A). In ogni caso sono interamente a carico del conduttore le spese in quanto esistenti relative al servizio di pulizia, al funzionamento e all’ordinaria manutenzione dell’ascensore, alla fornitura dell’acqua nonché dell’energia elettrica, del riscaldamento e del condizionamento dell’aria, allo spurgo dei pozzi neri e delle latrine nonché alle forniture degli altri servizi comuni. Le spese per il servizio di portineria, ove istituito, saranno a carico del conduttore nella misura del 90%. Il pagamento di quanto sopra deve avvenire in sede di consuntivo entro un mese dalla richiesta. Prima di effettuare il pagamento, il conduttore ha diritto di ottenere l’indicazione specifica delle spese anzidette e dei criteri di ripartizione. Ha inoltre diritto di prendere visione presso il locatore o presso il suo amministratore o l’amministratore condominiale, ove esistente dei documenti giustificativi delle spese effettuate, anche tramite le organizzazioni sindacali. In una col pagamento della prima rata del canone annuale, il conduttore verserà una quota di acconto non superiore a quella di sua spettanza risultante dal consuntivo dell’anno precedente."
+    },
+    {
+      "numArticolo": 18,
+      "numParte": 0,
+      "titolo": "Articolo 18",
+      "sottotitolo": "(assemblea condominiale)",
+      "descrizione": "Il conduttore ha diritto di voto, in luogo del proprietario dell’unità immobiliare locatagli, nelle delibere dell’assemblea condominiale relative alle spese ed alle modalità di gestione dei servizi di riscaldamento e di condizionamento d’aria. Ha inoltre diritto di intervenire, senza voto, sulle delibere relative alla modificazione degli altri servizi comuni. Quanto stabilito in materia di riscaldamento e di condizionamento d’aria si applica anche ove si tratti di edificio non in condominio. In tale caso e con l’osservanza, in quanto applicabili, delle disposizioni del Codice Civile sull’assemblea dei condomini i conduttori si riuniscono in apposita assemblea convocata dalla proprietà o da almeno tre conduttori."
+    },
+    {
+      "numArticolo": 19,
+      "numParte": 0,
+      "titolo": "Articolo 19",
+      "sottotitolo": "(antenna centralizzata)",
+      "descrizione": "Il conduttore in caso di installazione sullo stabile di antenna televisiva centralizzata si obbliga a servirsi esclusivamente dell’impianto relativo, restando sin d’ora il locatore in caso di inosservanza autorizzato a far rimuovere e demolire ogni antenna individuale a spese del conduttore, il quale nulla potrà pretendere a qualsiasi titolo, fatte salve le eccezioni di legge."
+    },
+    {
+      "numArticolo": 20,
+      "numParte": 0,
+      "titolo": "Articolo 20",
+      "sottotitolo": "(vendita immobile e prelazione)",
+      "descrizione": "Nel caso in cui il locatore intendesse vendere l’unità immobiliare locata il conduttore dovrà consentire la visita all’unità immobiliare una volta alla settimana per almeno due ore con l’esclusione dei giorni festivi. Il locatore non concede il diritto di prelazione al conduttore in caso di vendita dell’immobile locato, da esercitarsi secondo gli art. 38 e 39 della legge 27 luglio 1978, n. 392."
+    },
+    {
+      "numArticolo": 21,
+      "numParte": 0,
+      "titolo": "Articolo 21",
+      "sottotitolo": "(spese di bollo)",
+      "descrizione": "Le spese di bollo per il presente contratto, e per le ricevute conseguenti, sono a carico del conduttore. Il locatore provvederà alla registrazione del contratto, dandone notizia al conduttore. Questi corrisponderà la quota di sua spettanza, pari alla metà. Le parti potranno delegare per la registrazione del contratto una delle organizzazioni che abbiano prestato assistenza per la stipula del presente contratto."
+    },
+    {
+      "numArticolo": 22,
+      "numParte": 0,
+      "titolo": "Articolo 22",
+      "sottotitolo": "(domicilio del conduttore)",
+      "descrizione": "A tutti gli effetti del presente contratto, compresa la notifica degli atti esecutivi, e ai fini della competenza a giudicare, il conduttore elegge domicilio nei locali a lui locati e, ove egli più non li occupi o comunque detenga, presso l’Ufficio di segreteria del Comune ove è situato l’immobile locato."
+    },
+    {
+      "numArticolo": 23,
+      "numParte": 0,
+      "titolo": "Articolo 23",
+      "sottotitolo": "(modifiche al contratto)",
+      "descrizione": "Qualunque modifica al presente contratto non può aver luogo, e non può essere provata, se non mediante atto scritto."
+    },
+    {
+      "numArticolo": 24,
+      "numParte": 0,
+      "titolo": "Articolo 24",
+      "sottotitolo": "(privacy)",
+      "descrizione": "Il locatore ed il conduttore si autorizzano reciprocamente a comunicare a terzi i propri dati personali in relazione ad adempimenti connessi col rapporto di locazione (legge 31 dicembre 1996, n. 675)."
+    },
+    {
+      "numArticolo": 25,
+      "numParte": 0,
+      "titolo": "Articolo 25",
+      "sottotitolo": "(commissione di conciliazione)",
+      "descrizione": "Le parti di comune accordo potranno adire per ogni controversia che dovesse sorgere in merito alla interpretazione e esecuzione del presente contratto la Commissione di Conciliazione stragiudiziale paritetica istituita nell’ambito dell’Accordo di cui al articolo 3 ."
+    },
+    {
+      "numArticolo": 26,
+      "numParte": 0,
+      "titolo": "Articolo 26",
+      "sottotitolo": "(certificazione APE ed utenze)",
+      "descrizione": "Il conduttore dichiara di essere stato informato e di aver preso visione della certificazione energetica Ape (allegato B). Le utenze e spese condominiali sono interamente a carico del conduttore ed il locatore autorizza fin dalla stipula del contratto ad effettuare eventuali volture e subentri per le utenze domestiche."
+    },
+    {
+      "numArticolo": 27,
+      "numParte": 0,
+      "titolo": "Articolo 27",
+      "sottotitolo": "(varie)",
+      "descrizione": "Per quanto non previsto dal presente contratto le parti fanno espresso rinvio alla Convenzione Nazionale di cui all’art. 4, comma 1, legge n. 431/1998, al decreto del Ministro dei lavori pubblici di concerto con il Ministro delle finanze di cui all’art. 4, comma 2, legge n. 431/1998, all’Accordo di cui al articolo 3 eventualmente al decreto del Ministro dei lavori pubblici di concerto con il Ministro delle finanze di cui all’art. 4, comma 3, legge n. 431/1998 alle disposizioni del Codice Civile, della legge 27 luglio 1978, n. 392, della legge 9 dicembre 1998, n. 431 e comunque alle norme vigenti ed agli usi locali. Altre pattuizioni: porzione immobiliare di mq convenzionali 20,225 sito in zona Tiburtino presenza di n. 9 elementi; appartamento mobiliato."
+    }
+  ]
+}
