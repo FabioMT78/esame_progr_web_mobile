@@ -1,0 +1,66 @@
+:root {
+  font-family: Arial, Helvetica, sans-serif;
+  color: #1f2937;
+  background: #f5f7fa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  width: min(100% - 2rem, 72rem);
+  margin-inline: auto;
+}
+
+.site-header,
+.site-footer {
+  background: #15385f;
+  color: #ffffff;
+}
+
+.site-header .container,
+.site-footer .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 1rem;
+}
+
+.site-header a {
+  color: inherit;
+}
+
+.brand {
+  font-weight: 700;
+  text-decoration: none;
+}
+
+main {
+  flex: 1;
+  padding-block: 2rem;
+}
+
+.status-card {
+  max-width: 42rem;
+  padding: 1.5rem;
+  background: #ffffff;
+  border: 1px solid #dbe2ea;
+  border-radius: 0.75rem;
+}
+
+@media (max-width: 40rem) {
+  .site-header .container,
+  .site-footer .container {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
