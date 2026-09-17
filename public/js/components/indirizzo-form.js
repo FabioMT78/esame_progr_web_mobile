@@ -1,16 +1,16 @@
 const commonFields = [
   { name: 'indirizzo', label: 'Indirizzo', type: 'text', maxLength: 150, autocomplete: 'street-address' },
   { name: 'civico', label: 'Civico', type: 'text', maxLength: 20 },
+  { name: 'comune', label: 'Comune', type: 'text', maxLength: 100, autocomplete: 'address-level2' },  
   {
-    name: 'cap', label: 'CAP', type: 'text', minLength: 5, maxLength: 5,
-    inputMode: 'numeric', autocomplete: 'postal-code', hint: '5 cifre.'
-  },
-  {
-    name: 'provincia', label: 'Provincia', type: 'text', minLength: 2, maxLength: 2,
+    name: 'provincia', label: 'Prov.', type: 'text', minLength: 2, maxLength: 2,
     autocapitalize: 'characters', spellcheck: false, autocomplete: 'address-level1',
-    hint: '2 lettere'
+    hint: ''
   },
-  { name: 'comune', label: 'Comune', type: 'text', maxLength: 100, autocomplete: 'address-level2' }
+  {
+    name: 'cap', label: 'CAP', type: 'text', minLength: 5, maxLength: 10,
+    inputMode: 'numeric', autocomplete: 'postal-code', hint: ''
+  }
 ];
 
 const titleField = {
@@ -20,9 +20,9 @@ const titleField = {
 
 const baseRequiredFields = new Set(['titolo', 'indirizzo', 'cap', 'comune', 'provincia']);
 
-function assertContainer(container) {
+function assertContainer(container, name = 'container') {
   if (!(container instanceof Element)) {
-    throw new TypeError('Il container del componente indirizzo non è valido.');
+    throw new TypeError(`Il ${name} del componente indirizzo non è valido.`);
   }
 }
 
@@ -33,6 +33,7 @@ function fieldId(prefix, name) {
 function createField(definition, prefix) {
   const wrapper = document.createElement('div');
   wrapper.className = 'field';
+  wrapper.dataset.addressField = definition.name;
 
   const id = fieldId(prefix, definition.name);
   const errorId = `${id}-error`;
@@ -86,29 +87,54 @@ export function createIndirizzoForm({
   datiObbligatori = false,
   visibile = true,
   mostraTitolo = false,
+  titoloContainer = null,
   civicoObbligatorio = false,
   idPrefix = ''
 } = {}) {
   assertContainer(container);
+  if (titoloContainer !== null) assertContainer(titoloContainer, 'titoloContainer');
 
-  const definitions = mostraTitolo ? [titleField, ...commonFields] : commonFields;
   const requiredFields = new Set(baseRequiredFields);
   if (civicoObbligatorio) requiredFields.add('civico');
 
-  const grid = document.createElement('div');
-  grid.className = 'form-grid';
-  for (const definition of definitions) grid.append(createField(definition, idPrefix));
-  container.replaceChildren(grid);
+  const commonGrid = document.createElement('div');
+  commonGrid.className = 'form-grid address-form-grid';
+  for (const definition of commonFields) {
+    commonGrid.append(createField(definition, idPrefix));
+  }
+  container.replaceChildren(commonGrid);
 
+  const titleIsSeparate = mostraTitolo && titoloContainer;
+  if (titoloContainer) titoloContainer.replaceChildren();
+
+  if (mostraTitolo) {
+    if (titleIsSeparate) {
+      titoloContainer.append(createField(titleField, idPrefix));
+    } else {
+      commonGrid.prepend(createField(titleField, idPrefix));
+    }
+  }
+
+  const definitions = mostraTitolo ? [titleField, ...commonFields] : commonFields;
   let required = Boolean(datiObbligatori);
   let visible = Boolean(visibile);
 
+  function rootFor(name) {
+    return titleIsSeparate && name === 'titolo' ? titoloContainer : container;
+  }
+
   function input(name) {
-    return container.querySelector(`[name="${name}"]`);
+    return rootFor(name).querySelector(`[name="${name}"]`);
   }
 
   function errorElement(name) {
-    return container.querySelector(`#${CSS.escape(fieldId(idPrefix, name))}-error`);
+    return rootFor(name).querySelector(
+      `#${CSS.escape(fieldId(idPrefix, name))}-error`
+    );
+  }
+
+  function requiredMarker(name) {
+    return rootFor(name).querySelector(`[data-required-marker="${name}"]`);
   }
 
   function clearErrors() {
@@ -126,26 +152,34 @@ export function createIndirizzoForm({
       field.required = mandatory;
       if (mandatory) field.setAttribute('aria-required', 'true');
       else field.removeAttribute('aria-required');
-      container.querySelector(`[data-required-marker="${name}"]`).hidden = !mandatory;
+      requiredMarker(name).hidden = !mandatory;
     }
   }
 
   function setVisible(value) {
     visible = Boolean(value);
     container.hidden = !visible;
-    for (const { name } of definitions) input(name).disabled = !visible;
+    if (titleIsSeparate) titoloContainer.hidden = !visible;
+
+    for (const { name } of definitions) {
+      input(name).disabled = !visible;
+    }
   }
 
   function getData() {
     const data = Object.fromEntries(
       definitions.map(({ name }) => [name, input(name).value.trim()])
     );
-    if (Object.hasOwn(data, 'provincia')) data.provincia = data.provincia.toUpperCase();
+    if (Object.hasOwn(data, 'provincia')) {
+      data.provincia = data.provincia.toUpperCase();
+    }
     return data;
   }
 
   function setData(data = {}) {
-    for (const { name } of definitions) input(name).value = data?.[name] ?? '';
+    for (const { name } of definitions) {
+      input(name).value = data?.[name] ?? '';
+    }
     clearErrors();
   }
 
@@ -169,7 +203,8 @@ export function createIndirizzoForm({
       if (required && requiredFields.has(definition.name) && !value) {
         errors[definition.name] = 'Questo campo è obbligatorio.';
       } else if (value && definition.maxLength && value.length > definition.maxLength) {
-        errors[definition.name] = `Inserisci al massimo ${definition.maxLength} caratteri.`;
+        errors[definition.name] =
+          `Inserisci al massimo ${definition.maxLength} caratteri.`;
       }
     }
 
@@ -188,7 +223,13 @@ export function createIndirizzoForm({
   }
 
   function focusFirstInvalid() {
-    container.querySelector('[aria-invalid="true"]')?.focus();
+    for (const { name } of definitions) {
+      const field = input(name);
+      if (field.getAttribute('aria-invalid') === 'true') {
+        field.focus();
+        break;
+      }
+    }
   }
 
   setRequired(required);

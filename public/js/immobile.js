@@ -21,6 +21,7 @@ const imageError = document.querySelector('#imageFile-error');
 
 const indirizzo = createIndirizzoForm({
   container: document.querySelector('#indirizzo-fields'),
+  titoloContainer: document.querySelector('#immobile-title-field'),
   datiObbligatori: true,
   mostraTitolo: true
 });

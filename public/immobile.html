@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nuovo immobile — Gestionale Affitti</title>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/immobile.css">
   <script type="module" src="/js/layout.js"></script>
 </head>
 <body data-menu="private" data-page-script="/js/immobile.js">
@@ -18,13 +19,13 @@
         <section class="status-card" aria-labelledby="form-title">
           <form id="immobile-form" novalidate>
             <fieldset id="form-fields" disabled>
-              <div class="form-grid">
-                <div>
+              <div class="immobile-hero">
+                <div class="immobile-hero-main">
                   <h1 id="form-title">Nuovo immobile</h1>
-                  <!-- <p><i>I campi contrassegnati con * sono obbligatori.</i></p> -->
+                  <div id="immobile-title-field"></div>
                 </div>
 
-                <div class="field">
+                <div class="field immobile-photo-field">
                   <div class="property-card-media">
                     <img
                       id="immobile-image-preview"
@@ -48,7 +49,7 @@
                 </div>
               </div>
 
-              <section aria-labelledby="address-title">
+              <section class="immobile-address-section" aria-labelledby="address-title">
                 <h2 id="address-title">Indirizzo</h2>
                 <div id="indirizzo-fields"></div>
                 <small class="required-help">* Campi obbligatori.</small>
@@ -58,7 +59,7 @@
 
               <section aria-labelledby="cadastral-title">
                 <h2 id="cadastral-title">Dati catastali</h2>
-                <p class="field-hint">Facoltativi in questa pagina. I campi necessari al contratto verranno richiesti quando servono.</p>
+                <p class="field-hint"></p>
                 <div id="dati-catastali-fields"></div>
                 <small class="required-help">* Campi obbligatori.</small>
               </section>
