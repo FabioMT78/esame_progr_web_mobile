@@ -22,22 +22,31 @@
     </div>
     <noscript><p>Abilita JavaScript nel browser per accedere e visualizzare i tuoi immobili.</p></noscript>
   </main>
+
   <dialog id="tenants-dialog" class="dashboard-dialog" aria-labelledby="tenants-dialog-title">
     <div class="dialog-heading">
       <h2 id="tenants-dialog-title">Gestisci inquilini</h2>
       <button type="button" class="icon-button" data-close aria-label="Chiudi gestione inquilini"><span aria-hidden="true">×</span></button>
     </div>
+    <div id="tenants-toolbar" class="actions" hidden>
+      <div class="action-group action-group--end">
+        <small>
+          <a id="tenants-new-compact" class="button-link button-secondary" href="/inquilino.html">Nuovo inquilino</a>
+        </small>
+      </div>
+    </div>
     <p id="tenants-message" class="message" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"></p>
     <button id="tenants-retry" type="button" hidden>Riprova</button>
     <ul id="dialog-tenant-list" class="dialog-tenant-list"></ul>
     <div id="tenants-empty" class="dialog-empty" hidden>
-      <p>Non hai ancora inquilini attivi.</p>
-      <a id="tenants-new" class="button-link" href="/inquilino.html">Nuovo inquilino</a>
+      <p>Non hai ancora inquilini associati a questo immobile.</p>
+      <a id="tenants-new-empty" class="button-link" href="/inquilino.html">Nuovo inquilino</a>
     </div>
     <div class="dialog-actions">
-      <button type="button" class="button-cancel" data-close>Annulla</button>
+      <button type="button" class="button-secondary" data-close>Annulla</button>
     </div>
   </dialog>
+
   <dialog id="payment-dialog" class="dashboard-dialog" aria-labelledby="payment-dialog-title">
     <div class="dialog-heading">
       <h2 id="payment-dialog-title">Registrazione pagamento</h2>
@@ -46,8 +55,9 @@
     <p id="payment-message" class="message" role="status" aria-live="polite" aria-atomic="true"></p>
     <button id="payment-retry" type="button" hidden>Riprova</button>
     <div id="payment-empty" class="dialog-empty" hidden>
-      <p>Non hai ancora inquilini attivi.</p>
-      <a id="payment-new-tenant" class="button-link" href="/inquilino.html">Nuovo inquilino</a>
+      <p id="payment-empty-message"></p>
+      <a id="payment-new-tenant" class="button-link" href="/inquilino.html" hidden>Nuovo inquilino</a>
+      <button id="payment-create-contract" type="button" hidden>Crea contratto</button>
     </div>
     <div id="payment-fields" hidden>
       <label for="payment-tenant">Inquilino</label>
@@ -59,10 +69,24 @@
       <p id="payment-period" class="field-hint"></p>
     </div>
     <div class="dialog-actions">
-      <button type="button" class="button-cancel" data-close>Annulla</button>
+      <button type="button" class="button-secondary" data-close>Annulla</button>
       <button id="payment-confirm" type="button" disabled>Pagato</button>
     </div>
   </dialog>
+
+  <dialog id="contract-preview-dialog" class="dashboard-dialog contract-preview-dialog"
+    aria-labelledby="contract-preview-title">
+    <div class="dialog-heading">
+      <h2 id="contract-preview-title">Anteprima contratto</h2>
+      <button type="button" class="icon-button" data-close aria-label="Chiudi anteprima contratto"><span aria-hidden="true">×</span></button>
+    </div>
+    <p id="contract-preview-message" class="message" role="status" aria-live="polite" aria-atomic="true"></p>
+    <div id="contract-preview-content" hidden></div>
+    <div class="dialog-actions">
+      <button type="button" class="button-secondary" data-close>Chiudi</button>
+    </div>
+  </dialog>
+
   <footer id="site-footer" class="site-footer"></footer>
 </body>
 </html>

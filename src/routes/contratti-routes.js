@@ -33,6 +33,10 @@ router.get('/', async (req, res) => {
   res.status(200).json(await contratti.list(req.proprietarioId));
 });
 
+router.get('/:id', async (req, res) => {
+  res.status(200).json(await contratti.get(req.params.id, req.proprietarioId));
+});
+
 router.post('/', async (req, res) => {
   res.status(201).json(await contratti.create(req.proprietarioId, req.body));
 });

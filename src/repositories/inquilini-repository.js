@@ -1,7 +1,8 @@
 const pool = require('../db/pool');
 
-const columns = `CAST(id AS CHAR) AS id, nome, cognome,
-  codice_fiscale AS codiceFiscale, DATE_FORMAT(data_nascita, '%Y-%m-%d') AS dataNascita,
+const columns = `CAST(id AS CHAR) AS id, CAST(immobile_id AS CHAR) AS immobileId,
+  nome, cognome, codice_fiscale AS codiceFiscale,
+  DATE_FORMAT(data_nascita, '%Y-%m-%d') AS dataNascita,
   indirizzo, civico, cap, provincia, comune,
   immagine_url AS immagineUrl,
   tipo_documento AS tipoDocumento, numero_documento AS numeroDocumento,
@@ -9,18 +10,14 @@ const columns = `CAST(id AS CHAR) AS id, nome, cognome,
   DATE_FORMAT(data_rilascio_documento, '%Y-%m-%d') AS dataRilascioDocumento,
   DATE_FORMAT(data_scadenza_documento, '%Y-%m-%d') AS dataScadenzaDocumento`;
 
-async function hasImmobili(ownerId) {
-  const [rows] = await pool.execute(
-    `SELECT EXISTS(SELECT 1 FROM immobili
-     WHERE proprietario_id = ? AND deleted_at IS NULL) AS hasImmobili`, [ownerId]
-  );
-  return Boolean(rows[0].hasImmobili);
-}
-
-async function list(ownerId) {
+async function list(ownerId, immobileId = null) {
+  const whereImmobile = immobileId === null ? '' : ' AND immobile_id = ?';
+  const params = immobileId === null ? [ownerId] : [ownerId, immobileId];
   const [rows] = await pool.execute(
     `SELECT ${columns} FROM inquilini
-     WHERE proprietario_id = ? AND deleted_at IS NULL ORDER BY cognome, nome, id`, [ownerId]
+     WHERE proprietario_id = ? AND deleted_at IS NULL${whereImmobile}
+     ORDER BY cognome, nome, id`,
+    params
   );
   return rows;
 }
@@ -35,6 +32,7 @@ async function findActive(id, ownerId) {
 
 function values(data) {
   return [
+    data.immobileId,
     data.nome,
     data.cognome,
     data.codiceFiscale,
@@ -56,11 +54,11 @@ function values(data) {
 async function create(ownerId, data) {
   const [result] = await pool.execute(
     `INSERT INTO inquilini (
-      proprietario_id, nome, cognome, codice_fiscale, data_nascita,
+      proprietario_id, immobile_id, nome, cognome, codice_fiscale, data_nascita,
       indirizzo, civico, cap, provincia, comune, immagine_url,
       tipo_documento, numero_documento, organo_rilascio_documento,
       data_rilascio_documento, data_scadenza_documento
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [ownerId, ...values(data)]
   );
   return String(result.insertId);
@@ -69,12 +67,36 @@ async function create(ownerId, data) {
 async function update(id, ownerId, data) {
   const [result] = await pool.execute(
     `UPDATE inquilini SET
+      immobile_id = ?,
       nome = ?, cognome = ?, codice_fiscale = ?, data_nascita = ?,
       indirizzo = ?, civico = ?, cap = ?, provincia = ?, comune = ?, immagine_url = ?,
       tipo_documento = ?, numero_documento = ?, organo_rilascio_documento = ?,
       data_rilascio_documento = ?, data_scadenza_documento = ?
      WHERE id = ? AND proprietario_id = ? AND deleted_at IS NULL`,
     [...values(data), id, ownerId]
+  );
+  return result.affectedRows > 0;
+}
+
+async function hasActiveContract(id, ownerId) {
+  const [rows] = await pool.execute(
+    `SELECT EXISTS(
+       SELECT 1 FROM contratti
+       WHERE inquilino_id = ? AND proprietario_id = ?
+         AND deleted_at IS NULL
+         AND CURRENT_DATE BETWEEN data_inizio AND data_fine
+     ) AS hasActiveContract`,
+    [id, ownerId]
+  );
+  return Boolean(rows[0].hasActiveContract);
+}
+
+async function assignImmobile(id, ownerId, immobileId) {
+  const [result] = await pool.execute(
+    `UPDATE inquilini SET immobile_id = ?
+     WHERE id = ? AND proprietario_id = ? AND deleted_at IS NULL
+       AND immobile_id IS NULL`,
+    [immobileId, id, ownerId]
   );
   return result.affectedRows > 0;
 }
@@ -87,4 +109,4 @@ async function archive(id, ownerId) {
   return result.affectedRows > 0;
 }
 
-module.exports = { hasImmobili, list, findActive, create, update, archive };
+module.exports = { list, findActive, create, update, hasActiveContract, assignImmobile, archive };

@@ -13,14 +13,19 @@ function inputError(status, message, fields) {
   return Object.assign(new Error(message), { status, fields });
 }
 
+function validId(id) {
+  return typeof id === 'string'
+    && /^[1-9]\d{0,19}$/.test(id)
+    && BigInt(id) <= 18446744073709551615n;
+}
+
 function validateInput(input) {
   const data = {};
   const fields = {};
 
   for (const key of ['immobileId', 'inquilinoId', 'tipologiaId']) {
     const id = input?.[key];
-    if (typeof id !== 'string' || !/^[1-9]\d{0,19}$/.test(id)
-        || BigInt(id) > 18446744073709551615n) {
+    if (!validId(id)) {
       fields[key] = 'Seleziona un elemento valido.';
     } else {
       data[key] = id;
@@ -90,6 +95,13 @@ async function list(proprietarioId) {
   return (await repository.list(proprietarioId)).map(withCanoneMensile);
 }
 
+async function get(id, proprietarioId) {
+  if (!validId(id)) throw inputError(404, 'Contratto non trovato.');
+  const contratto = await repository.findById(id, proprietarioId);
+  if (!contratto) throw inputError(404, 'Contratto non trovato.');
+  return withCanoneMensile(contratto);
+}
+
 async function create(proprietarioId, body) {
   const data = validateInput(body);
 
@@ -108,6 +120,23 @@ async function create(proprietarioId, body) {
   if (!inquilino) {
     throw inputError(404, 'Inquilino non disponibile.', {
       inquilinoId: 'Seleziona un tuo inquilino attivo.'
+    });
+  }
+
+  if (inquilino.immobileId === null) {
+    // Recupero compatibile degli eventuali record legacy creati prima che
+    // l'associazione immobile-inquilino fosse persistita.
+    const associated = await inquilini.assignImmobile(
+      inquilino.id,
+      proprietarioId,
+      immobile.id
+    );
+    if (associated) inquilino.immobileId = immobile.id;
+  }
+
+  if (inquilino.immobileId !== immobile.id) {
+    throw inputError(400, 'L’inquilino non è associato all’immobile selezionato.', {
+      inquilinoId: 'Seleziona un inquilino associato a questo immobile.'
     });
   }
 
@@ -154,12 +183,10 @@ async function create(proprietarioId, body) {
   if (!id) {
     throw inputError(
       409,
-      'I dati selezionati non sono più disponibili o non sono più completi. Ricarica e riprova.'
+      'I dati selezionati non sono più disponibili, non sono associati tra loro o non sono più completi. Ricarica e riprova.'
     );
   }
 
-  // Il contratto ormai esiste: un eventuale problema nella pulizia della bozza
-  // non deve trasformare una creazione riuscita in un errore da ritentare.
   await bozze.remove(proprietarioId).catch(() => {});
 
   return withCanoneMensile({
@@ -174,4 +201,4 @@ async function create(proprietarioId, body) {
   });
 }
 
-module.exports = { prerequisiti, list, create };
+module.exports = { prerequisiti, list, get, create };

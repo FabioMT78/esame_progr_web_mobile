@@ -27,6 +27,23 @@
             <fieldset id="tenant-fields" class="tenant-fields" disabled>
               <legend class="visually-hidden">Dati dell’inquilino</legend>
 
+              <section class="contract-step" aria-labelledby="association-title">
+                <h2 id="association-title">Immobile associato</h2>
+                <div class="field">
+                  <label for="immobileId">Immobile *</label>
+                  <select id="immobileId" name="immobileId" required
+                    aria-describedby="immobileId-hint immobileId-error">
+                    <option value="">Seleziona un immobile</option>
+                  </select>
+                  <p id="immobileId-hint" class="field-hint">
+                    Ogni inquilino può essere associato a un solo immobile alla volta.
+                  </p>
+                  <p id="immobileId-error" class="field-error"></p>
+                </div>
+              </section>
+
+              <hr class="divider">
+
               <section aria-labelledby="anagrafica-title">
                 <h2 id="anagrafica-title">Dati anagrafici</h2>
                 <div id="anagrafica-fields"></div>
@@ -34,7 +51,8 @@
 
               <div class="field">
                 <label for="immagineUrl">URL immagine (facoltativo)</label>
-                <input id="immagineUrl" name="immagineUrl" type="url" maxlength="500" aria-describedby="immagineUrl-error immagineUrl-hint">
+                <input id="immagineUrl" name="immagineUrl" type="url" maxlength="500"
+                  aria-describedby="immagineUrl-error immagineUrl-hint">
                 <p class="field-hint" id="immagineUrl-hint">Indirizzo http o https di un’immagine.</p>
                 <p class="field-error" id="immagineUrl-error"></p>
                 <small class="required-help">* Campi obbligatori.</small>
@@ -57,7 +75,7 @@
               </section>
 
               <div class="actions form-actions">
-                <button id="cancel-tenant" class="button-cancel" type="button">Annulla</button>
+                <button id="cancel-tenant" class="button-secondary" type="button">Annulla</button>
                 <button id="save" class="action-primary" type="submit">Crea inquilino</button>
               </div>
             </fieldset>
@@ -71,11 +89,14 @@
     </div>
   </main>
 
-  <dialog id="tenant-created-dialog" class="dashboard-dialog" aria-labelledby="tenant-created-title" aria-describedby="tenant-created-message">
+  <dialog id="tenant-created-dialog" class="dashboard-dialog"
+    aria-labelledby="tenant-created-title" aria-describedby="tenant-created-message">
     <div class="dialog-heading">
       <h2 id="tenant-created-title">Inquilino creato</h2>
     </div>
-    <p id="tenant-created-message">L’inquilino è stato registrato correttamente. Vuoi creare ora un contratto per questo immobile?</p>
+    <p id="tenant-created-message">
+      L’inquilino è stato registrato correttamente. Vuoi creare ora un contratto per questo immobile?
+    </p>
     <div class="dialog-actions">
       <button id="tenant-created-dashboard" class="button-secondary" type="button">Torna alla dashboard</button>
       <button id="tenant-created-contract" type="button">Crea contratto</button>

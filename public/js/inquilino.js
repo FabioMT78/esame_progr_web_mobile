@@ -1,4 +1,10 @@
-import { readToken, clearToken, clearFieldErrors, showFormError, readIdParameter } from './common.js';
+import {
+  readToken,
+  clearToken,
+  clearFieldErrors,
+  showFormError,
+  readIdParameter
+} from './common.js';
 import { createAnagraficaForm } from './components/anagrafica-form.js';
 import { createIndirizzoForm } from './components/indirizzo-form.js';
 import { createDocumentoIdentitaForm } from './components/documento-identita-form.js';
@@ -12,6 +18,7 @@ const formMessage = document.querySelector('#form-message');
 const warning = document.querySelector('#prerequisite-warning');
 const cancel = document.querySelector('#cancel-tenant');
 const imageInput = document.querySelector('#immagineUrl');
+const immobileSelect = document.querySelector('#immobileId');
 const tenantCreatedDialog = document.querySelector('#tenant-created-dialog');
 const tenantCreatedDashboard = document.querySelector('#tenant-created-dashboard');
 const tenantCreatedContract = document.querySelector('#tenant-created-contract');
@@ -34,7 +41,9 @@ const documento = createDocumentoIdentitaForm({
 });
 
 let editId = new URLSearchParams(window.location.search).get('id');
+let immobili = [];
 let hasImmobili = false;
+let lockedImmobile = false;
 let editorReady = false;
 let busy = false;
 let request;
@@ -43,7 +52,11 @@ let createdTenantId = null;
 function logout() {
   request?.abort();
   content.hidden = true;
-  try { clearToken(); } finally { window.location.replace('/'); }
+  try {
+    clearToken();
+  } finally {
+    window.location.replace('/');
+  }
 }
 
 async function api(url, options = {}) {
@@ -57,7 +70,10 @@ async function api(url, options = {}) {
     ...options,
     cache: 'no-store',
     signal: request.signal,
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
   });
 
   if (response.status === 401) {
@@ -77,10 +93,23 @@ async function api(url, options = {}) {
 }
 
 function syncControls() {
-  fields.disabled = busy || !editorReady || (editId === null && !hasImmobili);
+  const unavailable = busy || !editorReady || (editId === null && !hasImmobili);
+  fields.disabled = unavailable;
+  immobileSelect.disabled = unavailable || lockedImmobile;
   retry.disabled = busy;
   cancel.disabled = busy;
   form.setAttribute('aria-busy', String(busy));
+}
+
+function fillImmobileOptions() {
+  const placeholder = new Option('Seleziona un immobile', '');
+  immobileSelect.replaceChildren(placeholder);
+
+  for (const immobile of immobili) {
+    const street = [immobile.indirizzo, immobile.civico].filter(Boolean).join(' ');
+    const label = [immobile.titolo, street, immobile.comune].filter(Boolean).join(' — ');
+    immobileSelect.add(new Option(label, immobile.id));
+  }
 }
 
 function clearImageError() {
@@ -107,6 +136,16 @@ function validateImageUrl() {
   }
 }
 
+function validateImmobile() {
+  const valid = immobili.some((immobile) => immobile.id === immobileSelect.value);
+  if (valid) return {};
+
+  const message = 'Seleziona un immobile.';
+  immobileSelect.setAttribute('aria-invalid', 'true');
+  document.querySelector('#immobileId-error').textContent = message;
+  return { immobileId: message };
+}
+
 function clearFormState() {
   form.reset();
   anagrafica.clear();
@@ -119,6 +158,7 @@ function clearFormState() {
 }
 
 function fillEditor(tenant) {
+  immobileSelect.value = tenant.immobileId ?? '';
   anagrafica.setData(tenant);
   indirizzo.setData(tenant);
   documento.setData(tenant);
@@ -127,6 +167,7 @@ function fillEditor(tenant) {
 
 function buildPayload() {
   return {
+    immobileId: immobileSelect.value,
     ...anagrafica.getData(),
     ...indirizzo.getData(),
     ...documento.getData(),
@@ -137,6 +178,7 @@ function buildPayload() {
 function validateForm() {
   clearFieldErrors(form);
   const errors = {
+    ...validateImmobile(),
     ...anagrafica.validate(),
     ...indirizzo.validate(),
     ...documento.validate(),
@@ -144,6 +186,7 @@ function validateForm() {
   };
 
   if (!Object.keys(errors).length) return true;
+
   showFormError(form, formMessage, {
     message: 'Controlla i campi indicati.',
     fields: errors
@@ -154,18 +197,25 @@ function validateForm() {
 async function loadPrerequisites() {
   hasImmobili = false;
   syncControls();
+
   const data = await api('/api/inquilini/prerequisiti');
-  hasImmobili = data.hasImmobili === true;
+  immobili = Array.isArray(data.immobili) ? data.immobili : [];
+  hasImmobili = data.hasImmobili === true && immobili.length > 0;
+  fillImmobileOptions();
   warning.hidden = hasImmobili;
   syncControls();
 }
 
 async function loadEditor() {
-  document.querySelector('#form-title').textContent = editId !== null ? 'Modifica inquilino' : 'Nuovo inquilino';
-  document.querySelector('#save').textContent = editId !== null ? 'Salva modifiche' : 'Crea inquilino';
-  document.title = `${editId !== null ? 'Modifica inquilino' : 'Nuovo inquilino'} — Gestionale Affitti`;
+  document.querySelector('#form-title').textContent =
+    editId !== null ? 'Modifica inquilino' : 'Nuovo inquilino';
+  document.querySelector('#save').textContent =
+    editId !== null ? 'Salva modifiche' : 'Crea inquilino';
+  document.title =
+    `${editId !== null ? 'Modifica inquilino' : 'Nuovo inquilino'} — Gestionale Affitti`;
 
   editorReady = false;
+  lockedImmobile = false;
   syncControls();
   clearFormState();
 
@@ -173,6 +223,9 @@ async function loadEditor() {
     if (!/^[1-9]\d*$/.test(editId)) throw new Error('Inquilino non trovato.');
     const tenant = await api(`/api/inquilini/${encodeURIComponent(editId)}`);
     fillEditor(tenant);
+  } else if (immobileContext && immobili.some((item) => item.id === immobileContext)) {
+    immobileSelect.value = immobileContext;
+    lockedImmobile = true;
   }
 
   editorReady = true;
@@ -183,9 +236,11 @@ async function loadPage() {
   request?.abort();
   const controller = new AbortController();
   request = controller;
+
   content.hidden = true;
   retry.hidden = true;
   busy = true;
+  editorReady = false;
   syncControls();
   sessionMessage.textContent = 'Verifica della sessione in corso…';
 
@@ -195,18 +250,19 @@ async function loadPage() {
     formMessage.textContent = '';
     clearFieldErrors(form);
 
-    const results = await Promise.allSettled([loadPrerequisites(), loadEditor()]);
-    if (controller.signal.aborted) return;
+    await loadPrerequisites();
+    await loadEditor();
 
-    const errors = results.filter((result) => result.status === 'rejected');
-    if (results[1].status === 'rejected') showFormError(form, formMessage, results[1].reason);
-    sessionMessage.textContent = errors.length
-      ? 'Alcuni dati non sono disponibili. Riprova caricamento.'
-      : '';
-    retry.hidden = !errors.length;
+    if (controller.signal.aborted) return;
+    sessionMessage.textContent = '';
+    retry.hidden = true;
   } catch (error) {
     if (controller.signal.aborted) return;
-    sessionMessage.textContent = 'Impossibile verificare la sessione. Riprova caricamento.';
+    sessionMessage.textContent = `Errore: ${
+      error instanceof TypeError
+        ? 'Impossibile contattare il server. Riprova caricamento.'
+        : error.message
+    }`;
     retry.hidden = false;
   } finally {
     if (!controller.signal.aborted) {
@@ -220,6 +276,16 @@ form.addEventListener('input', (event) => {
   formMessage.textContent = '';
   const field = event.target.closest('[name]');
   if (!field) return;
+
+  field.removeAttribute('aria-invalid');
+  const error = document.getElementById(`${field.name}-error`);
+  if (error) error.textContent = '';
+});
+
+form.addEventListener('change', (event) => {
+  const field = event.target.closest('[name]');
+  if (!field) return;
+
   field.removeAttribute('aria-invalid');
   const error = document.getElementById(`${field.name}-error`);
   if (error) error.textContent = '';
@@ -231,25 +297,34 @@ form.addEventListener('submit', async (event) => {
 
   const input = buildPayload();
   const creating = editId === null;
+
   busy = true;
   syncControls();
   formMessage.textContent = 'Salvataggio in corso…';
 
   try {
     const tenant = await api(
-      creating ? '/api/inquilini' : `/api/inquilini/${encodeURIComponent(editId)}`,
-      { method: creating ? 'POST' : 'PUT', body: JSON.stringify(input) }
+      creating
+        ? '/api/inquilini'
+        : `/api/inquilini/${encodeURIComponent(editId)}`,
+      {
+        method: creating ? 'POST' : 'PUT',
+        body: JSON.stringify(input)
+      }
     );
 
-    if (creating && immobileContext) {
+    if (creating && lockedImmobile) {
       createdTenantId = String(tenant.id);
       clearFormState();
       tenantCreatedDialog.showModal();
       return;
     }
 
-    if (creating) clearFormState();
-    else fillEditor(tenant);
+    if (creating) {
+      clearFormState();
+    } else {
+      fillEditor(tenant);
+    }
 
     formMessage.textContent = creating ? 'Inquilino creato.' : 'Modifiche salvate.';
     formMessage.focus();
@@ -257,7 +332,9 @@ form.addEventListener('submit', async (event) => {
     if (request.signal.aborted) return;
     showFormError(form, formMessage, error);
     if (creating && error.status === 409) {
-      await loadPrerequisites().catch(() => { retry.hidden = false; });
+      await loadPrerequisites().catch(() => {
+        retry.hidden = false;
+      });
     }
   } finally {
     busy = false;
@@ -275,6 +352,7 @@ tenantCreatedDashboard.addEventListener('click', () => {
 
 tenantCreatedContract.addEventListener('click', () => {
   if (!immobileContext || !createdTenantId) return;
+
   const params = new URLSearchParams({
     immobileId: immobileContext,
     inquilinoId: createdTenantId
@@ -298,12 +376,16 @@ cancel.addEventListener('click', () => {
     previousIsSafe = false;
   }
 
-  if (previousIsSafe && window.history.length > 1) window.history.back();
-  else window.location.assign('/dashboard.html');
+  if (previousIsSafe && window.history.length > 1) {
+    window.history.back();
+  } else {
+    window.location.assign('/dashboard.html');
+  }
 });
 
 document.querySelector('#logout').addEventListener('click', logout);
 retry.addEventListener('click', loadPage);
+
 window.addEventListener('pageshow', loadPage);
 window.addEventListener('pagehide', () => {
   request?.abort();

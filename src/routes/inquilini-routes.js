@@ -14,7 +14,7 @@ router.get('/prerequisiti', async (req, res) => {
 });
 
 router.get('/', async (req, res) => {
-  res.status(200).json(await inquilini.list(req.proprietarioId));
+  res.status(200).json(await inquilini.list(req.proprietarioId, req.query));
 });
 
 router.get('/:id', async (req, res) => {

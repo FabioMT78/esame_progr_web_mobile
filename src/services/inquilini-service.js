@@ -1,4 +1,6 @@
 const repository = require('../repositories/inquilini-repository');
+const immobili = require('../repositories/immobili-repository');
+const bozze = require('./bozze-contratto-service');
 
 function inputError(status, message, fields) {
   return Object.assign(new Error(message), { status, fields });
@@ -9,6 +11,12 @@ function validateId(id) {
       || id.length > 20 || BigInt(id) > 18446744073709551615n) {
     throw inputError(404, 'Inquilino non trovato.');
   }
+}
+
+function validUnsignedId(value) {
+  return typeof value === 'string'
+    && /^[1-9]\d{0,19}$/.test(value)
+    && BigInt(value) <= 18446744073709551615n;
 }
 
 function validDate(value) {
@@ -60,6 +68,7 @@ function dateValue(input, key, fields, { required = false, notFuture = false } =
 function validateInput(input) {
   const fields = {};
   const data = {
+    immobileId: input?.immobileId,
     nome: text(input, 'nome', 100, fields, true),
     cognome: text(input, 'cognome', 100, fields, true),
     codiceFiscale: text(input, 'codiceFiscale', 16, fields, true),
@@ -79,6 +88,10 @@ function validateInput(input) {
     ),
     dataScadenzaDocumento: dateValue(input, 'dataScadenzaDocumento', fields)
   };
+
+  if (!validUnsignedId(data.immobileId)) {
+    fields.immobileId = 'Seleziona un immobile valido.';
+  }
 
   data.codiceFiscale = data.codiceFiscale?.toUpperCase() ?? null;
   if (data.codiceFiscale && !/^[A-Z0-9]{16}$/.test(data.codiceFiscale)) {
@@ -125,7 +138,22 @@ function validateInput(input) {
 }
 
 async function prerequisiti(ownerId) {
-  return { hasImmobili: await repository.hasImmobili(ownerId) };
+  const items = await immobili.list(ownerId);
+  return { hasImmobili: items.length > 0, immobili: items };
+}
+
+async function list(ownerId, query = {}) {
+  const immobileId = query?.immobileId;
+  if (immobileId == null || immobileId === '') return repository.list(ownerId);
+
+  if (!validUnsignedId(immobileId)) {
+    throw inputError(400, 'Immobile non valido.', {
+      immobileId: 'Seleziona un immobile valido.'
+    });
+  }
+
+  if (!await immobili.findById(immobileId, ownerId)) return [];
+  return repository.list(ownerId, immobileId);
 }
 
 async function get(id, ownerId) {
@@ -133,6 +161,16 @@ async function get(id, ownerId) {
   const tenant = await repository.findActive(id, ownerId);
   if (!tenant) throw inputError(404, 'Inquilino non trovato.');
   return tenant;
+}
+
+async function ensureImmobile(immobileId, ownerId) {
+  const immobile = await immobili.findById(immobileId, ownerId);
+  if (!immobile) {
+    throw inputError(404, 'Immobile non disponibile.', {
+      immobileId: 'Seleziona un tuo immobile attivo.'
+    });
+  }
+  return immobile;
 }
 
 function duplicateError(error) {
@@ -145,10 +183,20 @@ function duplicateError(error) {
 }
 
 async function create(ownerId, input) {
-  const data = validateInput(input);
-  if (!await repository.hasImmobili(ownerId)) {
-    throw inputError(409, 'Per registrare un inquilino devi prima creare almeno un immobile.');
+  let effectiveInput = input;
+
+  // Compatibilità con la creazione incorporata nel wizard contratto:
+  // il wizard ha già salvato l'immobile nella bozza prima di creare l'inquilino.
+  if (input?.immobileId == null || input.immobileId === '') {
+    const draft = await bozze.get(ownerId);
+    if (draft?.immobileId) {
+      effectiveInput = { ...input, immobileId: draft.immobileId };
+    }
   }
+
+  const data = validateInput(effectiveInput);
+  await ensureImmobile(data.immobileId, ownerId);
+
   try {
     const id = await repository.create(ownerId, data);
     return await get(id, ownerId);
@@ -158,8 +206,22 @@ async function create(ownerId, input) {
 }
 
 async function update(id, ownerId, input) {
-  await get(id, ownerId);
-  const data = validateInput(input);
+  const existing = await get(id, ownerId);
+  const effectiveInput = input?.immobileId == null || input.immobileId === ''
+    ? { ...input, immobileId: existing.immobileId }
+    : input;
+  const data = validateInput(effectiveInput);
+  await ensureImmobile(data.immobileId, ownerId);
+
+  if (existing.immobileId && existing.immobileId !== data.immobileId
+      && await repository.hasActiveContract(id, ownerId)) {
+    throw inputError(
+      409,
+      'Non puoi cambiare immobile a un inquilino con un contratto attivo.',
+      { immobileId: 'Termina o lascia scadere il contratto attivo prima di cambiare immobile.' }
+    );
+  }
+
   try {
     if (!await repository.update(id, ownerId, data)) {
       throw inputError(404, 'Inquilino non trovato.');
@@ -172,9 +234,17 @@ async function update(id, ownerId, input) {
 
 async function archive(id, ownerId) {
   validateId(id);
+
+  if (await repository.hasActiveContract(id, ownerId)) {
+    throw inputError(
+      409,
+      'Non puoi archiviare un inquilino con un contratto attivo.'
+    );
+  }
+
   if (!await repository.archive(id, ownerId)) {
     throw inputError(404, 'Inquilino non trovato.');
   }
 }
 
-module.exports = { prerequisiti, list: repository.list, get, create, update, archive };
+module.exports = { prerequisiti, list, get, create, update, archive };

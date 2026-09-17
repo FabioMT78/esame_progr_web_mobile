@@ -46,6 +46,116 @@ async function list(proprietarioId) {
   }));
 }
 
+async function findById(id, proprietarioId) {
+  const [rows] = await pool.execute(
+    `SELECT
+      CAST(c.id AS CHAR) AS id,
+      DATE_FORMAT(c.data_inizio, '%Y-%m-%d') AS dataInizio,
+      DATE_FORMAT(c.data_fine, '%Y-%m-%d') AS dataFine,
+      c.canone_annuale AS canoneAnnuale,
+      c.giorno_pagamento AS giornoPagamento,
+
+      CAST(i.id AS CHAR) AS immobileId,
+      i.titolo,
+      i.indirizzo AS immobileIndirizzo,
+      i.civico AS immobileCivico,
+      i.cap AS immobileCap,
+      i.comune AS immobileComune,
+      i.provincia AS immobileProvincia,
+      i.codice_comunale AS codiceComunale,
+      i.foglio,
+      i.particella,
+      i.subalterno,
+      i.zona,
+      i.categoria,
+      i.consistenza,
+      i.rendita,
+
+      CAST(q.id AS CHAR) AS inquilinoId,
+      q.nome,
+      q.cognome,
+      q.codice_fiscale AS codiceFiscale,
+      DATE_FORMAT(q.data_nascita, '%Y-%m-%d') AS dataNascita,
+      q.indirizzo AS inquilinoIndirizzo,
+      q.civico AS inquilinoCivico,
+      q.cap AS inquilinoCap,
+      q.provincia AS inquilinoProvincia,
+      q.comune AS inquilinoComune,
+      q.tipo_documento AS tipoDocumento,
+      q.numero_documento AS numeroDocumento,
+      q.organo_rilascio_documento AS organoRilascioDocumento,
+      DATE_FORMAT(q.data_rilascio_documento, '%Y-%m-%d') AS dataRilascioDocumento,
+      DATE_FORMAT(q.data_scadenza_documento, '%Y-%m-%d') AS dataScadenzaDocumento,
+
+      CAST(t.id AS CHAR) AS tipologiaId,
+      t.denominazione,
+      t.durata,
+      t.rinnovo
+
+     FROM contratti c
+     JOIN immobili i ON i.id = c.immobile_id AND i.proprietario_id = c.proprietario_id
+     JOIN inquilini q ON q.id = c.inquilino_id AND q.proprietario_id = c.proprietario_id
+     JOIN tipologie_contrattuali t ON t.id = c.tipologia_id
+     WHERE c.id = ? AND c.proprietario_id = ? AND c.deleted_at IS NULL`,
+    [id, proprietarioId]
+  );
+
+  const row = rows[0];
+  if (!row) return undefined;
+
+  const datiCatastali = {
+    codiceComunale: row.codiceComunale,
+    foglio: row.foglio,
+    particella: row.particella,
+    subalterno: row.subalterno,
+    zona: row.zona,
+    categoria: row.categoria,
+    consistenza: row.consistenza,
+    rendita: row.rendita
+  };
+
+  return {
+    id: row.id,
+    immobile: {
+      id: row.immobileId,
+      titolo: row.titolo,
+      indirizzo: row.immobileIndirizzo,
+      civico: row.immobileCivico,
+      cap: row.immobileCap,
+      comune: row.immobileComune,
+      provincia: row.immobileProvincia,
+      datiCatastali
+    },
+    inquilino: {
+      id: row.inquilinoId,
+      nome: row.nome,
+      cognome: row.cognome,
+      codiceFiscale: row.codiceFiscale,
+      dataNascita: row.dataNascita,
+      indirizzo: row.inquilinoIndirizzo,
+      civico: row.inquilinoCivico,
+      cap: row.inquilinoCap,
+      provincia: row.inquilinoProvincia,
+      comune: row.inquilinoComune,
+      tipoDocumento: row.tipoDocumento,
+      numeroDocumento: row.numeroDocumento,
+      organoRilascioDocumento: row.organoRilascioDocumento,
+      dataRilascioDocumento: row.dataRilascioDocumento,
+      dataScadenzaDocumento: row.dataScadenzaDocumento
+    },
+    tipologia: {
+      id: row.tipologiaId,
+      denominazione: row.denominazione,
+      durata: row.durata,
+      rinnovo: row.rinnovo
+    },
+    dataInizio: row.dataInizio,
+    dataFine: row.dataFine,
+    canoneAnnuale: Number(row.canoneAnnuale),
+    giornoPagamento: row.giornoPagamento
+  };
+}
+
 async function create(proprietarioId, data) {
   const connection = await pool.getConnection();
   try {
@@ -56,7 +166,9 @@ async function create(proprietarioId, data) {
       )
        SELECT ?, i.id, q.id, t.id, ?, ?, ?, ?
        FROM immobili i
-       JOIN inquilini q ON q.id = ? AND q.proprietario_id = i.proprietario_id
+       JOIN inquilini q ON q.id = ?
+         AND q.proprietario_id = i.proprietario_id
+         AND q.immobile_id = i.id
        JOIN tipologie_contrattuali t ON t.id = ?
        WHERE i.id = ? AND i.proprietario_id = ?
          AND i.deleted_at IS NULL
@@ -106,4 +218,4 @@ async function create(proprietarioId, data) {
   }
 }
 
-module.exports = { list, create };
+module.exports = { list, findById, create };
