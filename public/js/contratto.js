@@ -177,6 +177,29 @@ function hasCompleteTenant(tenant) {
     && hasTenantDocument(tenant);
 }
 
+function editorRequiredFieldsComplete(editor) {
+  const fields = [
+    ...editor.querySelectorAll(
+      'input[required]:not(:disabled), select[required]:not(:disabled), textarea[required]:not(:disabled)'
+    )
+  ];
+
+  return fields.length > 0
+    && fields.every((field) => present(field.value) && field.validity.valid);
+}
+
+function immobileStepReady() {
+  return immobileEditorMode
+    ? editorRequiredFieldsComplete(immobileEditor)
+    : hasCadastralData(selectedImmobile());
+}
+
+function tenantStepReady() {
+  return tenantEditorMode
+    ? editorRequiredFieldsComplete(tenantEditor)
+    : hasCompleteTenant(selectedTenant());
+}
+
 function selectedImmobile() {
   return prerequisites.immobili.find((item) => item.id === immobileSelect.value);
 }
@@ -400,8 +423,8 @@ function syncControls() {
 
   next.hidden = step === 4 || completed;
   next.disabled = unavailable
-    || (step === 1 && !hasCadastralData(selectedImmobile()))
-    || (step === 2 && !hasCompleteTenant(selectedTenant()))
+    || (step === 1 && !immobileStepReady())
+    || (step === 2 && !tenantStepReady())
     || (step === 3 && !prerequisites.tipologie.length);
 
   confirm.hidden = step !== 4 || completed;
@@ -490,6 +513,7 @@ function openNewImmobile() {
 
   immobileEditor.hidden = false;
   immobileEditor.scrollIntoView({ block: 'nearest' });
+  syncControls();
 }
 
 function openImmobileCompletion(immobile) {
@@ -510,6 +534,7 @@ function openImmobileCompletion(immobile) {
 
   immobileEditor.hidden = false;
   immobileEditor.scrollIntoView({ block: 'nearest' });
+  syncControls();
 }
 
 function closeTenantEditor() {
@@ -547,6 +572,7 @@ function openNewTenant() {
 
   tenantEditor.hidden = false;
   tenantEditor.scrollIntoView({ block: 'nearest' });
+  syncControls();
 }
 
 function openTenantCompletion(tenant) {
@@ -578,6 +604,7 @@ function openTenantCompletion(tenant) {
 
   tenantEditor.hidden = false;
   tenantEditor.scrollIntoView({ block: 'nearest' });
+  syncControls();
 }
 
 function renderPrerequisites({ preserveSelection = true } = {}) {
@@ -957,12 +984,12 @@ form.addEventListener('input', (event) => {
 
   formMessage.textContent = '';
   updateContractDerivedValues();
-  syncStepper();
+  syncControls();
 });
 
 form.addEventListener('change', () => {
   updateContractDerivedValues();
-  syncStepper();
+  syncControls();
 });
 
 next.addEventListener('click', async () => {
