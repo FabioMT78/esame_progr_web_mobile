@@ -16,4 +16,16 @@ async function findById(id) {
   return rows[0];
 }
 
-module.exports = { list, findById };
+async function listArticles(tipologiaId) {
+  const [rows] = await pool.execute(
+    `SELECT num_articolo AS numArticolo, num_parte AS numParte,
+      titolo, sottotitolo, descrizione
+     FROM articoli_contratto
+     WHERE tipologia_id = ?
+     ORDER BY num_articolo, num_parte, id`,
+    [tipologiaId]
+  );
+  return rows;
+}
+
+module.exports = { list, findById, listArticles };

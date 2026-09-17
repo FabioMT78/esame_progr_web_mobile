@@ -6,6 +6,7 @@
   <title>Nuovo contratto — Gestionale Affitti</title>
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/contratto-wizard.css">
+  <link rel="stylesheet" href="/css/contratto-preview.css">
   <script type="module" src="/js/layout.js"></script>
 </head>
 <body data-menu="private" data-page-script="/js/contratto.js">
@@ -184,8 +185,13 @@
 
             <fieldset class="contract-step" data-step="4" disabled hidden>
               <legend id="step4-title" tabindex="-1">Passaggio 4 di 4 — Riepilogo</legend>
-              <p>Controlla i dati. Il contratto viene salvato solo con “Conferma e registra”.</p>
-              <dl id="contract-summary" class="contract-summary"></dl>
+              <p>
+                Controlla l’anteprima del contratto. Il contratto viene salvato solo con
+                “Conferma e registra”.
+              </p>
+              <p id="contract-preview-message" class="message" role="status"
+                aria-live="polite" hidden></p>
+              <div id="contract-preview" aria-label="Anteprima del contratto"></div>
             </fieldset>
 
             <div class="actions form-actions">

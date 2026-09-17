@@ -3,12 +3,12 @@ const commonFields = [
   { name: 'civico', label: 'Civico', type: 'text', maxLength: 20 },
   {
     name: 'cap', label: 'CAP', type: 'text', minLength: 5, maxLength: 5,
-    inputMode: 'numeric', autocomplete: 'postal-code', hint: ''
+    inputMode: 'numeric', autocomplete: 'postal-code', hint: '5 cifre.'
   },
   {
     name: 'provincia', label: 'Provincia', type: 'text', minLength: 2, maxLength: 2,
     autocapitalize: 'characters', spellcheck: false, autocomplete: 'address-level1',
-    hint: ''
+    hint: 'Sigla di 2 lettere.'
   },
   { name: 'comune', label: 'Comune', type: 'text', maxLength: 100, autocomplete: 'address-level2' }
 ];

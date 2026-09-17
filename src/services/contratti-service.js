@@ -2,12 +2,17 @@ const repository = require('../repositories/contratti-repository');
 const immobili = require('../repositories/immobili-repository');
 const inquilini = require('../repositories/inquilini-repository');
 const tipologie = require('../repositories/tipologie-contrattuali-repository');
+const proprietari = require('../repositories/proprietario-repository');
 const bozze = require('./bozze-contratto-service');
 const {
   hasRequiredCadastralData,
   hasCompleteTenantData
 } = require('./contratti-requisiti');
-const { calcolaDataFine, calcolaCanoneMensile } = require('./contratti-calcoli');
+const {
+  calcolaDataFine,
+  calcolaCanoneMensile
+} = require('./contratti-calcoli');
+const { generaAnteprima } = require('./contratto-documento-service');
 
 function inputError(status, message, fields) {
   return Object.assign(new Error(message), { status, fields });
@@ -25,11 +30,8 @@ function validateInput(input) {
 
   for (const key of ['immobileId', 'inquilinoId', 'tipologiaId']) {
     const id = input?.[key];
-    if (!validId(id)) {
-      fields[key] = 'Seleziona un elemento valido.';
-    } else {
-      data[key] = id;
-    }
+    if (!validId(id)) fields[key] = 'Seleziona un elemento valido.';
+    else data[key] = id;
   }
 
   if (input && Object.hasOwn(input, 'dataFine')) {
@@ -102,6 +104,113 @@ async function get(id, proprietarioId) {
   return withCanoneMensile(contratto);
 }
 
+async function resolvePreviewEntities(proprietarioId, data) {
+  const [immobile, inquilino, tipologia, proprietario] = await Promise.all([
+    immobili.findById(data.immobileId, proprietarioId),
+    inquilini.findActive(data.inquilinoId, proprietarioId),
+    tipologie.findById(data.tipologiaId),
+    proprietari.findContractDataById(proprietarioId)
+  ]);
+
+  if (!immobile) {
+    throw inputError(404, 'Immobile non disponibile.', {
+      immobileId: 'Seleziona un tuo immobile attivo.'
+    });
+  }
+  if (!inquilino) {
+    throw inputError(404, 'Inquilino non disponibile.', {
+      inquilinoId: 'Seleziona un tuo inquilino attivo.'
+    });
+  }
+  if (inquilino.immobileId && inquilino.immobileId !== immobile.id) {
+    throw inputError(400, 'L’inquilino non è associato all’immobile selezionato.', {
+      inquilinoId: 'Seleziona un inquilino associato a questo immobile.'
+    });
+  }
+  if (!tipologia) {
+    throw inputError(404, 'Tipologia contrattuale non disponibile.', {
+      tipologiaId: 'Seleziona una tipologia disponibile.'
+    });
+  }
+  if (!proprietario) {
+    throw inputError(401, 'Sessione non valida. Accedi nuovamente.');
+  }
+  if (!hasRequiredCadastralData(immobile)) {
+    throw inputError(400, 'Completa i dati catastali necessari.', {
+      immobileId: 'Servono foglio, particella, subalterno, categoria e rendita.'
+    });
+  }
+  if (!hasCompleteTenantData(inquilino)) {
+    throw inputError(400, 'Completa i dati dell’inquilino.', {
+      inquilinoId:
+        'Servono dati anagrafici, residenza completa e documento di riconoscimento completo.'
+    });
+  }
+
+  return { immobile, inquilino, tipologia, proprietario };
+}
+
+async function anteprima(proprietarioId, body) {
+  const data = validateInput(body);
+  const entities = await resolvePreviewEntities(proprietarioId, data);
+
+  try {
+    data.dataFine = calcolaDataFine(data.dataInizio, entities.tipologia.durata);
+  } catch (error) {
+    if (!(error instanceof RangeError)) throw error;
+    throw inputError(
+      400,
+      'Controlla la decorrenza del contratto.',
+      { dataInizio: error.message }
+    );
+  }
+
+  const articoli = await tipologie.listArticles(entities.tipologia.id);
+  if (!articoli.length) {
+    throw inputError(409, 'La tipologia selezionata non contiene articoli contrattuali.');
+  }
+
+  return generaAnteprima({
+    contratto: {
+      dataInizio: data.dataInizio,
+      dataFine: data.dataFine,
+      canoneAnnuale: data.canoneAnnuale,
+      giornoPagamento: data.giornoPagamento,
+      nomeDescrizione: `${entities.tipologia.denominazione} — ${entities.immobile.titolo}`,
+      registratoIl: null
+    },
+    ...entities,
+    articoli
+  });
+}
+
+async function anteprimaRegistrata(id, proprietarioId) {
+  const contratto = await get(id, proprietarioId);
+  const [proprietario, articoli] = await Promise.all([
+    proprietari.findContractDataById(proprietarioId),
+    tipologie.listArticles(contratto.tipologia.id)
+  ]);
+
+  if (!proprietario) {
+    throw inputError(401, 'Sessione non valida. Accedi nuovamente.');
+  }
+  if (!articoli.length) {
+    throw inputError(409, 'La tipologia del contratto non contiene articoli.');
+  }
+
+  return generaAnteprima({
+    contratto: {
+      ...contratto,
+      nomeDescrizione: `${contratto.tipologia.denominazione} — ${contratto.immobile.titolo}`
+    },
+    immobile: contratto.immobile,
+    inquilino: contratto.inquilino,
+    tipologia: contratto.tipologia,
+    proprietario,
+    articoli
+  });
+}
+
 async function create(proprietarioId, body) {
   const data = validateInput(body);
 
@@ -124,8 +233,6 @@ async function create(proprietarioId, body) {
   }
 
   if (inquilino.immobileId === null) {
-    // Recupero compatibile degli eventuali record legacy creati prima che
-    // l'associazione immobile-inquilino fosse persistita.
     const associated = await inquilini.assignImmobile(
       inquilino.id,
       proprietarioId,
@@ -201,4 +308,11 @@ async function create(proprietarioId, body) {
   });
 }
 
-module.exports = { prerequisiti, list, get, create };
+module.exports = {
+  prerequisiti,
+  list,
+  get,
+  anteprima,
+  anteprimaRegistrata,
+  create
+};

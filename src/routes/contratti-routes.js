@@ -29,6 +29,16 @@ router.delete('/bozza', async (req, res) => {
   res.status(204).end();
 });
 
+router.post('/anteprima', async (req, res) => {
+  res.status(200).json(await contratti.anteprima(req.proprietarioId, req.body));
+});
+
+router.get('/:id/anteprima', async (req, res) => {
+  res.status(200).json(
+    await contratti.anteprimaRegistrata(req.params.id, req.proprietarioId)
+  );
+});
+
 router.get('/', async (req, res) => {
   res.status(200).json(await contratti.list(req.proprietarioId));
 });

@@ -50,6 +50,7 @@ async function findById(id, proprietarioId) {
   const [rows] = await pool.execute(
     `SELECT
       CAST(c.id AS CHAR) AS id,
+      DATE_FORMAT(c.created_at, '%Y-%m-%d') AS registratoIl,
       DATE_FORMAT(c.data_inizio, '%Y-%m-%d') AS dataInizio,
       DATE_FORMAT(c.data_fine, '%Y-%m-%d') AS dataFine,
       c.canone_annuale AS canoneAnnuale,
@@ -103,19 +104,9 @@ async function findById(id, proprietarioId) {
   const row = rows[0];
   if (!row) return undefined;
 
-  const datiCatastali = {
-    codiceComunale: row.codiceComunale,
-    foglio: row.foglio,
-    particella: row.particella,
-    subalterno: row.subalterno,
-    zona: row.zona,
-    categoria: row.categoria,
-    consistenza: row.consistenza,
-    rendita: row.rendita
-  };
-
   return {
     id: row.id,
+    registratoIl: row.registratoIl,
     immobile: {
       id: row.immobileId,
       titolo: row.titolo,
@@ -124,7 +115,16 @@ async function findById(id, proprietarioId) {
       cap: row.immobileCap,
       comune: row.immobileComune,
       provincia: row.immobileProvincia,
-      datiCatastali
+      datiCatastali: {
+        codiceComunale: row.codiceComunale,
+        foglio: row.foglio,
+        particella: row.particella,
+        subalterno: row.subalterno,
+        zona: row.zona,
+        categoria: row.categoria,
+        consistenza: row.consistenza,
+        rendita: row.rendita
+      }
     },
     inquilino: {
       id: row.inquilinoId,
@@ -173,13 +173,11 @@ async function create(proprietarioId, data) {
        WHERE i.id = ? AND i.proprietario_id = ?
          AND i.deleted_at IS NULL
          AND q.deleted_at IS NULL
-
          AND i.foglio IS NOT NULL
          AND i.particella IS NOT NULL
          AND i.subalterno IS NOT NULL
          AND i.categoria IS NOT NULL AND TRIM(i.categoria) <> ''
          AND i.rendita IS NOT NULL
-
          AND q.nome IS NOT NULL AND TRIM(q.nome) <> ''
          AND q.cognome IS NOT NULL AND TRIM(q.cognome) <> ''
          AND q.codice_fiscale IS NOT NULL AND TRIM(q.codice_fiscale) <> ''

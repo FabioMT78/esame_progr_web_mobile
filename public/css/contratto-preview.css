@@ -1,0 +1,118 @@
+.contract-document {
+  max-width: 52rem;
+  margin: 1.5rem auto 0;
+  padding: clamp(1.25rem, 3vw, 2.5rem);
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #111827;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  box-shadow: 0 0.25rem 1rem rgb(15 23 42 / 8%);
+}
+
+.contract-document-header {
+  margin-bottom: 1.75rem;
+  text-align: center;
+}
+
+.contract-document-title {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.4vw, 1.55rem);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.contract-document-subtitle {
+  margin: 0.35rem 0 0;
+  font-style: italic;
+}
+
+.contract-document-intro p,
+.contract-document-article-text {
+  text-align: justify;
+}
+
+.contract-document-grants,
+.contract-document-preamble {
+  margin-block: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.contract-document-data {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1.5rem;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border-block: 1px solid #d1d5db;
+}
+
+.contract-document-data-row {
+  min-width: 0;
+}
+
+.contract-document-data dt {
+  font-weight: 700;
+}
+
+.contract-document-data dd {
+  margin: 0.15rem 0 0;
+}
+
+.contract-document-article {
+  margin-top: 1.6rem;
+}
+
+.contract-document-article h3 {
+  margin: 0;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.contract-document-article-subtitle {
+  margin: 0.1rem 0 0.75rem;
+  font-style: italic;
+  text-align: center;
+}
+
+.contract-document-article-text {
+  margin: 0;
+  white-space: pre-line;
+}
+
+.contract-document-signatures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3rem;
+  margin-top: 3rem;
+  text-align: center;
+}
+
+.contract-document-signatures > div {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.contract-document-signature-line {
+  display: block;
+  min-height: 2.5rem;
+  border-bottom: 1px solid #111827;
+}
+
+@media (max-width: 40rem) {
+  .contract-document {
+    padding: 1rem;
+    font-size: 0.94rem;
+  }
+
+  .contract-document-data,
+  .contract-document-signatures {
+    grid-template-columns: 1fr;
+  }
+
+  .contract-document-signatures {
+    gap: 2rem;
+  }
+}

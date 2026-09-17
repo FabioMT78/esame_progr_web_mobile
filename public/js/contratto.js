@@ -9,6 +9,7 @@ import { createIndirizzoForm } from './components/indirizzo-form.js';
 import { createDatiCatastaliForm } from './components/dati-catastali-form.js';
 import { createAnagraficaForm } from './components/anagrafica-form.js';
 import { createDocumentoIdentitaForm } from './components/documento-identita-form.js';
+import { renderContrattoPreview } from './components/contratto-preview.js';
 
 const content = document.querySelector('#protected-content');
 const form = document.querySelector('#contract-form');
@@ -20,7 +21,8 @@ const next = document.querySelector('#next-step');
 const confirm = document.querySelector('#confirm-contract');
 const cancelWizard = document.querySelector('#cancel-wizard');
 const newContract = document.querySelector('#new-contract');
-const summary = document.querySelector('#contract-summary');
+const previewContainer = document.querySelector('#contract-preview');
+const previewMessage = document.querySelector('#contract-preview-message');
 
 const immobileSelect = form.elements.immobileId;
 const tenantSelect = form.elements.inquilinoId;
@@ -34,10 +36,6 @@ const tenantAnagraficaSection = document.querySelector('#tenant-anagrafica-secti
 const tenantAddressSection = document.querySelector('#tenant-address-section');
 const tenantDocumentSection = document.querySelector('#tenant-document-section');
 
-const euro = new Intl.NumberFormat('it-IT', {
-  style: 'currency',
-  currency: 'EUR'
-});
 
 const cadastralRequired = ['foglio', 'particella', 'subalterno', 'categoria', 'rendita'];
 const tenantAnagraficaRequired = ['nome', 'cognome', 'codiceFiscale', 'dataNascita'];
@@ -96,6 +94,7 @@ let step = 1;
 let ready = false;
 let busy = false;
 let completed = false;
+let previewReady = false;
 let request;
 let immobileEditorMode = null;
 let tenantEditorMode = null;
@@ -239,15 +238,6 @@ function formatDate(value) {
   return value ? value.split('-').reverse().join('/') : '—';
 }
 
-function appendDetail(dl, label, value) {
-  const group = document.createElement('div');
-  const term = document.createElement('dt');
-  const description = document.createElement('dd');
-  term.textContent = label;
-  description.textContent = value;
-  group.append(term, description);
-  dl.append(group);
-}
 
 function fillSelect(select, items, label) {
   const previousValue = select.value;
@@ -339,39 +329,6 @@ function contractFieldsComplete() {
   return Object.keys(fields).length === 0;
 }
 
-function renderSummary() {
-  summary.replaceChildren();
-
-  const immobile = selectedImmobile();
-  const tenant = selectedTenant();
-  const tipologia = selectedTipologia();
-  const annuale = Number(form.elements.canoneAnnuale.value);
-
-  appendDetail(summary, 'Immobile', immobile ? immobileLabel(immobile) : '—');
-  appendDetail(summary, 'Inquilino', tenant ? tenantLabel(tenant) : '—');
-  appendDetail(summary, 'Tipologia', tipologia?.denominazione || '—');
-  appendDetail(summary, 'Durata', tipologia ? `${tipologia.durata} anni` : '—');
-  appendDetail(summary, 'Decorrenza', formatDate(form.elements.dataInizio.value));
-  appendDetail(summary, 'Scadenza', formatDate(previewDataFine()));
-  appendDetail(
-    summary,
-    'Canone annuale',
-    Number.isFinite(annuale) ? euro.format(annuale) : '—'
-  );
-  appendDetail(
-    summary,
-    'Canone mensile',
-    Number.isFinite(annuale) ? euro.format(annuale / 12) : '—'
-  );
-  appendDetail(
-    summary,
-    'Giorno di pagamento',
-    form.elements.giornoPagamento.value
-      ? `${form.elements.giornoPagamento.value} di ogni mese`
-      : '—'
-  );
-}
-
 function completedSteps() {
   const immobileComplete = hasCadastralData(selectedImmobile());
   const tenantComplete = immobileComplete && hasCompleteTenant(selectedTenant());
@@ -428,7 +385,7 @@ function syncControls() {
     || (step === 3 && !prerequisites.tipologie.length);
 
   confirm.hidden = step !== 4 || completed;
-  confirm.disabled = unavailable;
+  confirm.disabled = unavailable || !previewReady;
 
   cancelWizard.disabled = busy;
   retry.disabled = busy;
@@ -441,7 +398,6 @@ function syncControls() {
 
 function showStep(value, focus = true) {
   step = value;
-  if (step === 4) renderSummary();
   syncControls();
   if (focus) document.querySelector(`#step${step}-title`)?.focus();
 }
@@ -465,7 +421,9 @@ function renderImmobileDetail() {
   if (present(data.categoria)) parts.push(`Categoria ${data.categoria}`);
   if (present(data.rendita)) parts.push(`Rendita € ${data.rendita}`);
 
-  detail.textContent = parts.length ? '' : 'Dati catastali da completare.';
+  detail.textContent = `${immobileLabel(immobile)}. ${
+    parts.length ? parts.join(' · ') : 'Dati catastali da completare.'
+  }`;
 
   error.textContent = hasCadastralData(immobile)
     ? ''
@@ -474,13 +432,20 @@ function renderImmobileDetail() {
 
 function renderTenantDetail() {
   const tenant = selectedTenant();
+  const detail = document.querySelector('#inquilino-detail');
   const error = document.querySelector('#inquilinoId-error');
+
+  if (!tenant) {
+    detail.textContent = '';
+    return;
+  }
 
   const missing = [];
   if (!hasTenantAnagrafica(tenant)) missing.push('dati anagrafici');
   if (!hasTenantAddress(tenant)) missing.push('residenza');
   if (!hasTenantDocument(tenant)) missing.push('documento');
 
+  detail.textContent = tenantLabel(tenant);
   error.textContent = missing.length
     ? `Completa: ${missing.join(', ')}.`
     : '';
@@ -512,8 +477,7 @@ function openNewImmobile() {
   immobileCatasto.clear();
 
   immobileEditor.hidden = false;
-  immobileEditor.scrollIntoView({ block: 'nearest' });
-  syncControls();
+  immobileEditor.scrollIntoView({ block: 'nearest' });  syncControls();
 }
 
 function openImmobileCompletion(immobile) {
@@ -533,8 +497,7 @@ function openImmobileCompletion(immobile) {
   immobileCatasto.setData(immobile.datiCatastali);
 
   immobileEditor.hidden = false;
-  immobileEditor.scrollIntoView({ block: 'nearest' });
-  syncControls();
+  immobileEditor.scrollIntoView({ block: 'nearest' });  syncControls();
 }
 
 function closeTenantEditor() {
@@ -571,8 +534,7 @@ function openNewTenant() {
   setTenantSection(tenantDocumentSection, tenantDocument, true);
 
   tenantEditor.hidden = false;
-  tenantEditor.scrollIntoView({ block: 'nearest' });
-  syncControls();
+  tenantEditor.scrollIntoView({ block: 'nearest' });  syncControls();
 }
 
 function openTenantCompletion(tenant) {
@@ -603,8 +565,7 @@ function openTenantCompletion(tenant) {
   );
 
   tenantEditor.hidden = false;
-  tenantEditor.scrollIntoView({ block: 'nearest' });
-  syncControls();
+  tenantEditor.scrollIntoView({ block: 'nearest' });  syncControls();
 }
 
 function renderPrerequisites({ preserveSelection = true } = {}) {
@@ -903,6 +864,42 @@ async function saveTenantEditor() {
   }
 }
 
+async function loadContractPreview() {
+  previewReady = false;
+  previewContainer.replaceChildren();
+  previewMessage.hidden = false;
+  previewMessage.textContent = 'Generazione anteprima contratto…';
+  syncControls();
+
+  try {
+    const model = await api('/api/contratti/anteprima', {
+      method: 'POST',
+      body: JSON.stringify({
+        immobileId: immobileSelect.value,
+        inquilinoId: tenantSelect.value,
+        ...contractStepData()
+      })
+    });
+
+    renderContrattoPreview(previewContainer, model);
+    previewReady = true;
+
+    if (model.segnapostoMancanti?.length) {
+      previewMessage.textContent =
+        'Anteprima generata. Alcuni dati non ancora gestiti dal profilo sono mostrati come campi vuoti.';
+    } else {
+      previewMessage.hidden = true;
+      previewMessage.textContent = '';
+    }
+  } catch (error) {
+    previewMessage.hidden = false;
+    previewMessage.textContent = `Errore anteprima: ${error.message}`;
+    previewReady = false;
+  } finally {
+    syncControls();
+  }
+}
+
 async function loadPage() {
   request?.abort();
   request = new AbortController();
@@ -910,6 +907,7 @@ async function loadPage() {
   ready = false;
   busy = true;
   completed = false;
+  previewReady = false;
   retry.hidden = true;
   newContract.hidden = true;
   form.hidden = false;
@@ -983,11 +981,13 @@ form.addEventListener('input', (event) => {
   }
 
   formMessage.textContent = '';
+  if (step === 3) previewReady = false;
   updateContractDerivedValues();
   syncControls();
 });
 
 form.addEventListener('change', () => {
+  if (step === 3) previewReady = false;
   updateContractDerivedValues();
   syncControls();
 });
@@ -1048,6 +1048,7 @@ next.addEventListener('click', async () => {
       if (Object.keys(validateStep3(true)).length) return;
       await saveDraft(3);
       showStep(4);
+      await loadContractPreview();
     }
   } catch (error) {
     if (error.name !== 'AbortError') showFormError(form, formMessage, error);
@@ -1057,9 +1058,10 @@ next.addEventListener('click', async () => {
   }
 });
 
+
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
-  if (busy || !ready || completed || step !== 4 || event.submitter !== confirm) return;
+  if (busy || !ready || completed || step !== 4 || event.submitter !== confirm || !previewReady) return;
 
   clearContractErrors();
 

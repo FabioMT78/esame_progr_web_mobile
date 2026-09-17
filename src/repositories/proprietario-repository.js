@@ -28,4 +28,18 @@ async function findActiveById(id) {
   return rows[0];
 }
 
-module.exports = { create, findActiveByEmail, findActiveById };
+async function findContractDataById(id) {
+  const [rows] = await pool.execute(
+    `SELECT CAST(id AS CHAR) AS id, nome, cognome,
+      codice_fiscale AS codiceFiscale,
+      DATE_FORMAT(data_nascita, '%Y-%m-%d') AS dataNascita,
+      indirizzo_residenza AS indirizzoResidenza,
+      comune_residenza AS comuneResidenza
+     FROM proprietari
+     WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
+    [id]
+  );
+  return rows[0];
+}
+
+module.exports = { create, findActiveByEmail, findActiveById, findContractDataById };
