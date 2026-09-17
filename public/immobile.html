@@ -16,21 +16,42 @@
 
       <div id="protected-content" hidden>
         <section class="status-card" aria-labelledby="form-title">
-          <h1 id="form-title">Nuovo immobile</h1>
-          <p>I campi contrassegnati con * sono obbligatori. URL immagine e dati catastali sono facoltativi.</p>
-
           <form id="immobile-form" novalidate>
             <fieldset id="form-fields" disabled>
+              <div class="form-grid">
+                <div>
+                  <h1 id="form-title">Nuovo immobile</h1>
+                  <p>I campi contrassegnati con * sono obbligatori. La foto e i dati catastali sono facoltativi.</p>
+                </div>
+
+                <div class="field">
+                  <div class="property-card-media">
+                    <img
+                      id="immobile-image-preview"
+                      src="/assets/img/segnaposto_immobile.jpg"
+                      alt="Nessuna immagine disponibile"
+                    >
+                  </div>
+                  <p class="field-hint">JPG, PNG o WebP, massimo 5 MB.</p>
+                  <div class="actions">
+                    <button id="select-image" class="button-secondary" type="button">Carica foto</button>
+                  </div>
+                  <input
+                    id="imageFile"
+                    name="imageFile"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    hidden
+                    aria-describedby="imageFile-error"
+                  >
+                  <p class="field-error" id="imageFile-error"></p>
+                </div>
+              </div>
+
               <section aria-labelledby="address-title">
                 <h2 id="address-title">Indirizzo</h2>
                 <div id="indirizzo-fields"></div>
               </section>
-
-              <div class="field" style="margin-top: 1.5rem;">
-                <label for="immagineUrl">URL immagine (facoltativo)</label>
-                <input id="immagineUrl" name="immagineUrl" type="url" maxlength="500" aria-describedby="immagineUrl-error">
-                <p class="field-error" id="immagineUrl-error"></p>
-              </div>
 
               <hr class="divider">
 

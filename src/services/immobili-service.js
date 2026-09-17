@@ -86,14 +86,20 @@ function validateCadastralData(input, fields) {
   }
 
   const data = {
-    codiceComunale: validateOptionalText(input.codiceComunale, 'codiceComunale', 20, fields),
+    codiceComunale: validateOptionalText(
+      input.codiceComunale, 'codiceComunale', 20, fields
+    ),
     foglio: validateOptionalInteger(input.foglio, 'foglio', fields),
     particella: validateOptionalInteger(input.particella, 'particella', fields),
     subalterno: validateOptionalInteger(input.subalterno, 'subalterno', fields),
     zona: validateOptionalInteger(input.zona, 'zona', fields),
     categoria: validateOptionalText(input.categoria, 'categoria', 20, fields),
-    consistenza: validateOptionalDecimal(input.consistenza, 'consistenza', fields, false),
-    rendita: validateOptionalDecimal(input.rendita, 'rendita', fields, true)
+    consistenza: validateOptionalDecimal(
+      input.consistenza, 'consistenza', fields, false
+    ),
+    rendita: validateOptionalDecimal(
+      input.rendita, 'rendita', fields, true
+    )
   };
 
   return Object.values(data).some((value) => value !== null) ? data : null;
@@ -113,7 +119,9 @@ function validate(input) {
   for (const [key, max] of Object.entries(requiredAddress)) {
     data[key] = typeof input?.[key] === 'string' ? input[key].trim() : '';
     if (!data[key]) fields[key] = 'Questo campo è obbligatorio.';
-    else if (data[key].length > max) fields[key] = `Inserisci al massimo ${max} caratteri.`;
+    else if (data[key].length > max) {
+      fields[key] = `Inserisci al massimo ${max} caratteri.`;
+    }
   }
 
   data.provincia = data.provincia.toUpperCase();
@@ -127,33 +135,20 @@ function validate(input) {
   if (input?.civico != null && typeof input.civico !== 'string') {
     fields.civico = 'Inserisci un testo valido.';
   }
-  data.civico = typeof input?.civico === 'string' ? input.civico.trim() || null : null;
+  data.civico = typeof input?.civico === 'string'
+    ? input.civico.trim() || null
+    : null;
   if (data.civico && data.civico.length > 20) {
     fields.civico = 'Inserisci al massimo 20 caratteri.';
-  }
-
-  if (input?.immagineUrl != null && typeof input.immagineUrl !== 'string') {
-    fields.immagineUrl = 'Inserisci un testo valido.';
-  }
-  data.immagineUrl = typeof input?.immagineUrl === 'string'
-    ? input.immagineUrl.trim() || null
-    : null;
-
-  if (data.immagineUrl) {
-    try {
-      const url = new URL(data.immagineUrl);
-      if (!['http:', 'https:'].includes(url.protocol) || data.immagineUrl.length > 500) {
-        throw new Error('URL non valido');
-      }
-    } catch {
-      fields.immagineUrl = 'Inserisci un URL http o https valido, di massimo 500 caratteri.';
-    }
   }
 
   data.datiCatastali = validateCadastralData(input?.datiCatastali, fields);
 
   if (Object.keys(fields).length) {
-    throw Object.assign(new Error('Controlla i campi indicati.'), { status: 400, fields });
+    throw Object.assign(
+      new Error('Controlla i campi indicati.'),
+      { status: 400, fields }
+    );
   }
   return data;
 }
@@ -166,13 +161,15 @@ async function get(id, proprietarioId) {
 
 async function create(input, proprietarioId) {
   const data = validate(input);
+  data.immagineUrl = null;
   const id = await repository.create(data, proprietarioId);
   return { id, ...data };
 }
 
 async function update(id, input, proprietarioId) {
-  await get(id, proprietarioId);
+  const existing = await get(id, proprietarioId);
   const data = validate(input);
+  data.immagineUrl = existing.immagineUrl;
   if (!await repository.update(id, data, proprietarioId)) throw notFound();
   return { id, ...data };
 }
@@ -181,4 +178,10 @@ async function archive(id, proprietarioId) {
   if (!await repository.archive(validateId(id), proprietarioId)) throw notFound();
 }
 
-module.exports = { list: repository.list, get, create, update, archive };
+module.exports = {
+  list: repository.list,
+  get,
+  create,
+  update,
+  archive
+};

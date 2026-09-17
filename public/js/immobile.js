@@ -2,6 +2,10 @@ import { readToken, clearToken, clearFieldErrors, showFormError } from './common
 import { createIndirizzoForm } from './components/indirizzo-form.js';
 import { createDatiCatastaliForm } from './components/dati-catastali-form.js';
 
+const PLACEHOLDER_IMAGE = '/assets/img/segnaposto_immobile.jpg';
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
 const form = document.querySelector('#immobile-form');
 const fields = document.querySelector('#form-fields');
 const formMessage = document.querySelector('#form-message');
@@ -10,7 +14,10 @@ const sessionMessage = document.querySelector('#session-message');
 const sessionRetry = document.querySelector('#session-retry');
 const detailRetry = document.querySelector('#detail-retry');
 const cancelButton = document.querySelector('#cancel-immobile');
-const imageInput = document.querySelector('#immagineUrl');
+const imageInput = document.querySelector('#imageFile');
+const imagePreview = document.querySelector('#immobile-image-preview');
+const selectImageButton = document.querySelector('#select-image');
+const imageError = document.querySelector('#imageFile-error');
 
 const indirizzo = createIndirizzoForm({
   container: document.querySelector('#indirizzo-fields'),
@@ -26,9 +33,13 @@ const datiCatastali = createDatiCatastaliForm({
 let editingId = null;
 let busy = false;
 let controller;
+let selectedImage = null;
+let currentImageUrl = null;
+let previewObjectUrl = null;
 
 function logout() {
   controller?.abort();
+  revokePreviewObjectUrl();
   content.hidden = true;
   try { clearToken(); } finally { window.location.replace('/'); }
 }
@@ -46,7 +57,8 @@ async function request(path, options = {}) {
     signal: controller.signal,
     headers: {
       Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
     }
   });
 
@@ -61,6 +73,42 @@ async function request(path, options = {}) {
       fields: data.fields,
       status: response.status
     });
+  }
+  return data;
+}
+
+async function uploadImage(immobileId, file) {
+  const token = readToken();
+  if (!token) {
+    logout();
+    throw new DOMException('Sessione terminata', 'AbortError');
+  }
+
+  const response = await fetch(
+    `/api/immobili/${encodeURIComponent(immobileId)}/immagine`,
+    {
+      method: 'PUT',
+      cache: 'no-store',
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': file.type
+      },
+      body: file
+    }
+  );
+
+  if (response.status === 401) {
+    logout();
+    throw new DOMException('Sessione terminata', 'AbortError');
+  }
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw Object.assign(
+      new Error(data.error || 'Impossibile caricare la foto.'),
+      { status: response.status }
+    );
   }
   return data;
 }
@@ -91,28 +139,58 @@ function setMode(id) {
     `${editing ? 'Modifica immobile' : 'Nuovo immobile'} — Gestionale Affitti`;
 }
 
-function clearImageError() {
-  imageInput.removeAttribute('aria-invalid');
-  document.querySelector('#immagineUrl-error').textContent = '';
+function revokePreviewObjectUrl() {
+  if (!previewObjectUrl) return;
+  URL.revokeObjectURL(previewObjectUrl);
+  previewObjectUrl = null;
 }
 
-function validateImageUrl() {
-  clearImageError();
-  const value = imageInput.value.trim();
-  if (!value) return {};
+function setPreview(src, isPlaceholder = false) {
+  imagePreview.src = src || PLACEHOLDER_IMAGE;
+  imagePreview.alt = isPlaceholder
+    ? 'Nessuna immagine disponibile'
+    : 'Anteprima foto immobile';
+}
 
-  try {
-    const url = new URL(value);
-    if (!['http:', 'https:'].includes(url.protocol) || value.length > 500) {
-      throw new Error('URL non valido');
-    }
-    return {};
-  } catch {
-    const message = 'Inserisci un URL http o https valido, di massimo 500 caratteri.';
-    imageInput.setAttribute('aria-invalid', 'true');
-    document.querySelector('#immagineUrl-error').textContent = message;
-    return { immagineUrl: message };
+function showStoredImage(url) {
+  revokePreviewObjectUrl();
+  currentImageUrl = url || null;
+  selectedImage = null;
+  imageInput.value = '';
+  setPreview(currentImageUrl || PLACEHOLDER_IMAGE, !currentImageUrl);
+  selectImageButton.textContent = currentImageUrl ? 'Sostituisci foto' : 'Carica foto';
+}
+
+function clearImageError() {
+  imageInput.removeAttribute('aria-invalid');
+  imageError.textContent = '';
+}
+
+function validateImage(file = selectedImage) {
+  clearImageError();
+  if (!file) return true;
+
+  let message = '';
+  if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+    message = 'Seleziona una foto JPG, PNG o WebP.';
+  } else if (!file.size) {
+    message = 'Il file selezionato è vuoto.';
+  } else if (file.size > MAX_IMAGE_SIZE) {
+    message = 'La foto non può superare 5 MB.';
   }
+
+  if (!message) return true;
+
+  imageInput.setAttribute('aria-invalid', 'true');
+  imageError.textContent = message;
+  return false;
+}
+
+function selectLocalPreview(file) {
+  revokePreviewObjectUrl();
+  previewObjectUrl = URL.createObjectURL(file);
+  setPreview(previewObjectUrl);
+  selectImageButton.textContent = currentImageUrl ? 'Sostituisci foto' : 'Cambia foto';
 }
 
 function clearFormState() {
@@ -121,6 +199,7 @@ function clearFormState() {
   datiCatastali.clear();
   clearFieldErrors(form);
   clearImageError();
+  showStoredImage(null);
   formMessage.textContent = '';
   detailRetry.hidden = true;
 }
@@ -128,30 +207,36 @@ function clearFormState() {
 function fillDetail(immobile) {
   indirizzo.setData(immobile);
   datiCatastali.setData(immobile.datiCatastali);
-  imageInput.value = immobile.immagineUrl ?? '';
+  showStoredImage(immobile.immagineUrl);
 }
 
 function buildPayload() {
   return {
     ...indirizzo.getData(),
-    immagineUrl: imageInput.value.trim(),
     datiCatastali: datiCatastali.getData()
   };
 }
 
 function validateForm() {
+  clearFieldErrors(form);
   const errors = {
     ...indirizzo.validate(),
-    ...datiCatastali.validate(),
-    ...validateImageUrl()
+    ...datiCatastali.validate()
   };
 
-  if (!Object.keys(errors).length) return true;
+  const imageValid = validateImage();
 
-  showFormError(form, formMessage, {
-    message: 'Controlla i campi indicati.',
-    fields: errors
-  });
+  if (!Object.keys(errors).length && imageValid) return true;
+
+  if (Object.keys(errors).length) {
+    showFormError(form, formMessage, {
+      message: 'Controlla i campi indicati.',
+      fields: errors
+    });
+  } else {
+    formMessage.textContent = 'Errore: controlla la foto selezionata.';
+    imageInput.focus();
+  }
   return false;
 }
 
@@ -162,6 +247,7 @@ async function loadDetail() {
   form.reset();
   indirizzo.clear();
   datiCatastali.clear();
+  showStoredImage(null);
 
   const id = new URLSearchParams(window.location.search).get('id');
   setMode(id === null ? null : id);
@@ -185,6 +271,31 @@ async function loadDetail() {
   }
 }
 
+selectImageButton.addEventListener('click', () => {
+  if (!busy) imageInput.click();
+});
+
+imageInput.addEventListener('change', () => {
+  clearImageError();
+  const [file] = imageInput.files;
+  if (!file) return;
+
+  if (!validateImage(file)) {
+    selectedImage = null;
+    imageInput.value = '';
+    setPreview(currentImageUrl || PLACEHOLDER_IMAGE, !currentImageUrl);
+    return;
+  }
+
+  selectedImage = file;
+  selectLocalPreview(file);
+});
+
+imagePreview.addEventListener('error', () => {
+  if (imagePreview.getAttribute('src') === PLACEHOLDER_IMAGE) return;
+  setPreview(PLACEHOLDER_IMAGE, true);
+});
+
 form.addEventListener('input', (event) => {
   formMessage.textContent = '';
 
@@ -201,18 +312,53 @@ form.addEventListener('submit', async (event) => {
   if (busy || fields.disabled || !validateForm()) return;
 
   const data = buildPayload();
+  const updating = editingId !== null;
   setBusy(true);
   formMessage.textContent = 'Salvataggio in corso…';
 
+  let immobileId = editingId;
+  let createdNow = false;
+
   try {
-    const updating = editingId !== null;
-    await request(
+    const saved = await request(
       updating ? `/api/immobili/${encodeURIComponent(editingId)}` : '/api/immobili',
       {
         method: updating ? 'PUT' : 'POST',
         body: JSON.stringify(data)
       }
     );
+
+    if (!updating) {
+      immobileId = saved.id;
+      createdNow = true;
+    }
+
+    if (selectedImage) {
+      formMessage.textContent = 'Salvataggio foto in corso…';
+
+      try {
+        const uploaded = await uploadImage(immobileId, selectedImage);
+        currentImageUrl = uploaded.immagineUrl;
+      } catch (error) {
+        if (error.name === 'AbortError') return;
+
+        if (createdNow) {
+          setMode(immobileId);
+          window.history.replaceState(
+            null,
+            '',
+            `/immobile.html?id=${encodeURIComponent(immobileId)}`
+          );
+        }
+
+        setBusy(false);
+        formMessage.textContent = createdNow
+          ? `Immobile creato, ma la foto non è stata salvata: ${errorText(error)} Riprova da questa pagina.`
+          : `Dati aggiornati, ma la foto non è stata salvata: ${errorText(error)} Riprova.`;
+        formMessage.focus();
+        return;
+      }
+    }
 
     formMessage.textContent = updating
       ? 'Immobile aggiornato con successo.'
@@ -272,5 +418,6 @@ sessionRetry.addEventListener('click', initialize);
 window.addEventListener('pageshow', initialize);
 window.addEventListener('pagehide', () => {
   controller?.abort();
+  revokePreviewObjectUrl();
   content.hidden = true;
 });

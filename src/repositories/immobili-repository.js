@@ -71,7 +71,9 @@ async function create(data, proprietarioId) {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [...values(data), proprietarioId]
     );
-    const [[row]] = await connection.query('SELECT CAST(LAST_INSERT_ID() AS CHAR) AS id');
+    const [[row]] = await connection.query(
+      'SELECT CAST(LAST_INSERT_ID() AS CHAR) AS id'
+    );
     return row.id;
   } finally {
     connection.release();
@@ -90,6 +92,15 @@ async function update(id, data, proprietarioId) {
   return result.affectedRows;
 }
 
+async function updateImageUrl(id, immagineUrl, proprietarioId) {
+  const [result] = await pool.execute(
+    `UPDATE immobili SET immagine_url = ?
+     WHERE id = ? AND proprietario_id = ? AND deleted_at IS NULL`,
+    [immagineUrl, id, proprietarioId]
+  );
+  return result.affectedRows;
+}
+
 async function archive(id, proprietarioId) {
   const [result] = await pool.execute(
     `UPDATE immobili SET deleted_at = CURRENT_TIMESTAMP
@@ -99,4 +110,11 @@ async function archive(id, proprietarioId) {
   return result.affectedRows;
 }
 
-module.exports = { list, findById, create, update, archive };
+module.exports = {
+  list,
+  findById,
+  create,
+  update,
+  updateImageUrl,
+  archive
+};
