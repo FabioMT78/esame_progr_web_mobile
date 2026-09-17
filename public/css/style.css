@@ -592,6 +592,7 @@ textarea[aria-invalid="true"] {
 }
 
 /* Azioni delle card e dialog della dashboard. */
+.icon-cancel,
 .icon-button {
   display: inline-flex;
   flex-shrink: 0;
@@ -707,7 +708,7 @@ body:has(.dashboard-dialog[open]) {
 }
 
 .dialog-actions {
-  justify-content: flex-end;
+  justify-content: space-between;
   margin-top: 1.5rem;
 }
 

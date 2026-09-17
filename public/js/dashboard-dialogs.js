@@ -27,10 +27,10 @@ export function createIcon(name) {
   return svg;
 }
 
-function iconButton(label, icon) {
+function iconButton(label, icon, cancelButton = false) {
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = 'icon-button';
+  button.className = cancelButton ? 'icon-cancel' : 'icon-button';
   button.setAttribute('aria-label', label);
   button.append(createIcon(icon));
   return button;
@@ -263,7 +263,7 @@ export function createTenantsDialog(api, openContractPreview) {
       const actions = document.createElement('div');
       actions.className = 'dialog-tenant-actions';
 
-      const archive = iconButton(`Archivia ${name}`, 'archive');
+      const archive = iconButton(`Archivia ${name}`, 'archive', true);
       archive.addEventListener('click', () => archiveTenant(tenant));
 
       if (activeContract) {
