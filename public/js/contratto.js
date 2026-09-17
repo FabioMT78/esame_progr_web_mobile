@@ -442,9 +442,7 @@ function renderImmobileDetail() {
   if (present(data.categoria)) parts.push(`Categoria ${data.categoria}`);
   if (present(data.rendita)) parts.push(`Rendita € ${data.rendita}`);
 
-  detail.textContent = `${immobileLabel(immobile)}. ${
-    parts.length ? parts.join(' · ') : 'Dati catastali da completare.'
-  }`;
+  detail.textContent = parts.length ? '' : 'Dati catastali da completare.';
 
   error.textContent = hasCadastralData(immobile)
     ? ''
@@ -453,20 +451,13 @@ function renderImmobileDetail() {
 
 function renderTenantDetail() {
   const tenant = selectedTenant();
-  const detail = document.querySelector('#inquilino-detail');
   const error = document.querySelector('#inquilinoId-error');
-
-  if (!tenant) {
-    detail.textContent = '';
-    return;
-  }
 
   const missing = [];
   if (!hasTenantAnagrafica(tenant)) missing.push('dati anagrafici');
   if (!hasTenantAddress(tenant)) missing.push('residenza');
   if (!hasTenantDocument(tenant)) missing.push('documento');
 
-  detail.textContent = tenantLabel(tenant);
   error.textContent = missing.length
     ? `Completa: ${missing.join(', ')}.`
     : '';
@@ -545,8 +536,6 @@ function setTenantSection(section, component, visible) {
 function openNewTenant() {
   tenantEditorMode = 'new';
   document.querySelector('#tenant-editor-title').textContent = 'Nuovo inquilino';
-  document.querySelector('#tenant-editor-help').textContent =
-    'Nel contratto sono obbligatori dati anagrafici, residenza e documento.';
 
   tenantAnagrafica.clear();
   tenantAddress.clear();
@@ -566,8 +555,6 @@ function openTenantCompletion(tenant) {
   tenantEditorMode = 'existing';
   document.querySelector('#tenant-editor-title').textContent =
     `Completa inquilino — ${tenant.nome} ${tenant.cognome}`;
-  document.querySelector('#tenant-editor-help').textContent =
-    'Sono mostrati solo i gruppi di dati incompleti.';
 
   tenantAnagrafica.setData(tenant);
   tenantAddress.setData(tenant);
