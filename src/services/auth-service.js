@@ -6,6 +6,12 @@ function authError(status, message, fields) {
   return Object.assign(new Error(message), { status, fields });
 }
 
+function normalizeIban(value) {
+  return typeof value === 'string'
+    ? value.replace(/\s+/g, '').toUpperCase()
+    : '';
+}
+
 function validateRegistration(input) {
   const data = {};
   const fields = {};
@@ -13,29 +19,47 @@ function validateRegistration(input) {
     email: 255, nome: 100, cognome: 100, codiceFiscale: 16,
     dataNascita: 10, indirizzoResidenza: 255, comuneResidenza: 100
   };
+
   for (const [key, max] of Object.entries(limits)) {
     data[key] = typeof input?.[key] === 'string' ? input[key].trim() : '';
     if (!data[key]) fields[key] = 'Questo campo è obbligatorio.';
     else if (data[key].length > max) fields[key] = `Inserisci al massimo ${max} caratteri.`;
   }
+
   data.email = data.email.toLowerCase();
   data.codiceFiscale = data.codiceFiscale.toUpperCase();
+  data.iban = normalizeIban(input?.iban);
+
   if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
     fields.email = 'Inserisci un indirizzo email valido.';
   }
+
   if (data.codiceFiscale && data.codiceFiscale.length !== 16) {
     fields.codiceFiscale = 'Il codice fiscale deve contenere esattamente 16 caratteri.';
   }
+
+  if (!data.iban) {
+    fields.iban = 'Questo campo è obbligatorio.';
+  } else if (
+    data.iban.length < 15
+    || data.iban.length > 34
+    || !/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(data.iban)
+  ) {
+    fields.iban = 'Inserisci un IBAN valido, da 15 a 34 caratteri, senza spazi.';
+  }
+
   const date = new Date(`${data.dataNascita}T00:00:00.000Z`);
   if (data.dataNascita && (!/^\d{4}-\d{2}-\d{2}$/.test(data.dataNascita)
       || Number(data.dataNascita.slice(0, 4)) < 1000 || Number.isNaN(date.getTime())
       || date.toISOString().slice(0, 10) !== data.dataNascita)) {
     fields.dataNascita = 'Inserisci una data valida.';
   }
+
   if (typeof input?.password !== 'string' || !input.password.trim()
       || input.password.length < 8 || input.password.length > 128) {
     fields.password = 'La password deve contenere da 8 a 128 caratteri.';
   }
+
   data.immagineUrl = typeof input?.immagineUrl === 'string' ? input.immagineUrl.trim() : '';
   if (input?.immagineUrl != null && typeof input.immagineUrl !== 'string') {
     fields.immagineUrl = 'Inserisci un URL valido.';
@@ -50,7 +74,10 @@ function validateRegistration(input) {
     }
   }
   data.immagineUrl ||= null;
-  if (Object.keys(fields).length) throw authError(400, 'Controlla i campi indicati.', fields);
+
+  if (Object.keys(fields).length) {
+    throw authError(400, 'Controlla i campi indicati.', fields);
+  }
   return data;
 }
 

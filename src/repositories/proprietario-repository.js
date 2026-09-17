@@ -4,10 +4,11 @@ async function create(data, passwordHash) {
   const [result] = await pool.execute(
     `INSERT INTO proprietari
       (email, password_hash, nome, cognome, codice_fiscale, data_nascita,
-       indirizzo_residenza, comune_residenza, immagine_url)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       indirizzo_residenza, comune_residenza, iban, immagine_url)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [data.email, passwordHash, data.nome, data.cognome, data.codiceFiscale,
-      data.dataNascita, data.indirizzoResidenza, data.comuneResidenza, data.immagineUrl]
+      data.dataNascita, data.indirizzoResidenza, data.comuneResidenza, data.iban,
+      data.immagineUrl]
   );
   return result.insertId;
 }
@@ -22,7 +23,7 @@ async function findActiveByEmail(email) {
 
 async function findActiveById(id) {
   const [rows] = await pool.execute(
-    `SELECT CAST(id AS CHAR) AS id, email, nome, cognome
+    `SELECT CAST(id AS CHAR) AS id, email, nome, cognome, iban
      FROM proprietari WHERE id = ? AND deleted_at IS NULL LIMIT 1`, [id]
   );
   return rows[0];
@@ -34,7 +35,8 @@ async function findContractDataById(id) {
       codice_fiscale AS codiceFiscale,
       DATE_FORMAT(data_nascita, '%Y-%m-%d') AS dataNascita,
       indirizzo_residenza AS indirizzoResidenza,
-      comune_residenza AS comuneResidenza
+      comune_residenza AS comuneResidenza,
+      iban
      FROM proprietari
      WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
     [id]

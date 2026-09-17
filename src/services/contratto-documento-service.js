@@ -152,7 +152,8 @@ function generaAnteprima({
       nomeCompleto: `${proprietario.nome} ${proprietario.cognome}`.trim(),
       codiceFiscale: proprietario.codiceFiscale || '',
       dataNascita: formatDate(proprietario.dataNascita),
-      residenza: address(proprietario, true)
+      residenza: address(proprietario, true),
+      iban: proprietario.iban || ''
     },
     conduttore: {
       nomeCompleto: `${inquilino.nome} ${inquilino.cognome}`.trim(),

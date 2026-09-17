@@ -14,6 +14,7 @@ CREATE TABLE proprietari (
   data_nascita DATE NOT NULL,
   indirizzo_residenza VARCHAR(255) NOT NULL,
   comune_residenza VARCHAR(100) NOT NULL,
+  iban VARCHAR(34) NOT NULL,
   immagine_url VARCHAR(500) NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -48,6 +49,7 @@ CREATE TABLE immobili (
 CREATE TABLE inquilini (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   proprietario_id BIGINT UNSIGNED NOT NULL,
+  immobile_id BIGINT UNSIGNED NOT NULL,
   nome VARCHAR(100) NOT NULL,
   cognome VARCHAR(100) NOT NULL,
   codice_fiscale CHAR(16) NOT NULL,
@@ -81,7 +83,9 @@ CREATE TABLE inquilini (
       OR data_scadenza_documento >= data_rilascio_documento
     ),
   CONSTRAINT fk_inquilini_proprietario
-    FOREIGN KEY (proprietario_id) REFERENCES proprietari(id)
+    FOREIGN KEY (proprietario_id) REFERENCES proprietari(id),
+  CONSTRAINT fk_inquilini_immobile
+    FOREIGN KEY (immobile_id) REFERENCES immobili(id)
 );
 
 CREATE TABLE tipologie_contrattuali (
