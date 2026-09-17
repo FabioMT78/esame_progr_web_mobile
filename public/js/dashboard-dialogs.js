@@ -36,6 +36,14 @@ function contextUrl(immobileId, inquilinoId) {
   return `${inquilinoId ? '/contratto.html' : '/inquilino.html'}?${params}`;
 }
 
+function todayDate() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function paymentDescription(payment) {
   return `${euro.format(payment.importo)} per ${months.format(
     new Date(Date.UTC(payment.annoCompetenza, payment.meseCompetenza - 1, 1))
@@ -53,10 +61,17 @@ async function loadTenants(api, signal, immobileId = null) {
 
   const contracts = await api('/api/contratti', signal);
   signal.throwIfAborted();
+
+  const today = todayDate();
   const tenants = new Map();
   for (const contract of contracts) {
-    if (contract.immobile.id === immobileId) tenants.set(contract.inquilino.id, contract.inquilino);
+    const belongsToProperty = contract.immobile.id === immobileId;
+    const isActive = contract.dataInizio <= today && today <= contract.dataFine;
+    if (belongsToProperty && isActive) {
+      tenants.set(contract.inquilino.id, contract.inquilino);
+    }
   }
+
   return { tenants: [...tenants.values()], contracts };
 }
 
@@ -81,7 +96,7 @@ export function createTenantsDialog(api) {
 
   function renderTenants(tenants, contracts) {
     list.replaceChildren();
-    const oggi = new Date().toISOString().slice(0, 10);
+    const oggi = todayDate();
     for (const tenant of tenants) {
       const name = `${tenant.nome} ${tenant.cognome}`;
       const item = document.createElement('li');
@@ -124,7 +139,7 @@ export function createTenantsDialog(api) {
     retry.hidden = true;
     message.textContent = `${notice}Caricamento inquilini…`;
     try {
-      const { tenants, contracts } = await loadTenants(api, signal);
+      const { tenants, contracts } = await loadTenants(api, signal, immobile.id);
       renderTenants(tenants, contracts);
       message.textContent = notice;
     } catch (error) {
@@ -244,11 +259,7 @@ export function createPaymentsDialog(api, onRegistered) {
     select.replaceChildren(new Option('Seleziona un inquilino', ''));
     message.textContent = 'Caricamento inquilini…';
     try {
-      // Usa la stessa sorgente del dialog "Gestisci inquilini": se esistono
-      // inquilini attivi, il form pagamento deve essere visibile. Il backend
-      // stabilisce poi se per la coppia immobile/inquilino esiste una competenza
-      // pagabile e mantiene autorevoli contratto, canone e importo.
-      const { tenants } = await loadTenants(api, signal);
+      const { tenants } = await loadTenants(api, signal, immobile.id);
       for (const tenant of tenants) {
         select.add(new Option(`${tenant.nome} ${tenant.cognome}`, tenant.id));
       }

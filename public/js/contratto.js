@@ -350,18 +350,38 @@ function renderSummary() {
   );
 }
 
-function syncStepper() {
-  const complete = [
-    hasCadastralData(selectedImmobile()),
-    hasCompleteTenant(selectedTenant()),
-    step === 4 || (draft?.stepCompletato ?? 0) >= 3,
+function completedSteps() {
+  const immobileComplete = hasCadastralData(selectedImmobile());
+  const tenantComplete = immobileComplete && hasCompleteTenant(selectedTenant());
+  return [
+    immobileComplete,
+    tenantComplete,
+    tenantComplete && ((draft?.stepCompletato ?? 0) >= 3 || step === 4 || completed),
     completed
   ];
+}
+
+function syncStepper() {
+  const complete = completedSteps();
   const labels = ['Immobile', 'Inquilino', 'Dati contrattuali', 'Riepilogo'];
 
   stepperItems.forEach((item, index) => {
     const number = index + 1;
-    item.textContent = `${complete[index] ? '✓ ' : ''}${number}. ${labels[index]}`;
+    const canNavigate = complete[index] && number !== step && !completed;
+    item.replaceChildren();
+
+    if (canNavigate) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'contract-stepper-link';
+      button.dataset.stepTarget = String(number);
+      button.textContent = `✓ ${number}. ${labels[index]}`;
+      button.setAttribute('aria-label', `Torna al passaggio ${number}: ${labels[index]}`);
+      item.append(button);
+    } else {
+      item.textContent = `${complete[index] ? '✓ ' : ''}${number}. ${labels[index]}`;
+    }
+
     if (number === step && !completed) item.setAttribute('aria-current', 'step');
     else item.removeAttribute('aria-current');
   });
@@ -471,7 +491,6 @@ function openNewImmobile() {
   document.querySelector('#immobile-editor-title').textContent = 'Nuovo immobile';
   document.querySelector('#immobile-editor-help').textContent =
     'Inserisci indirizzo e dati catastali necessari al contratto.';
-  document.querySelector('#save-immobile-editor').textContent = 'Crea immobile';
 
   immobileAddressSection.hidden = false;
   immobileAddress.setVisible(true);
@@ -494,7 +513,6 @@ function openImmobileCompletion(immobile) {
     `Completa dati catastali — ${immobile.titolo}`;
   document.querySelector('#immobile-editor-help').textContent =
     'L’indirizzo rimane invariato. Completa i dati necessari alla registrazione del contratto.';
-  document.querySelector('#save-immobile-editor').textContent = 'Salva dati catastali';
 
   immobileAddressSection.hidden = true;
   immobileAddress.setVisible(false);
@@ -533,7 +551,6 @@ function openNewTenant() {
   document.querySelector('#tenant-editor-title').textContent = 'Nuovo inquilino';
   document.querySelector('#tenant-editor-help').textContent =
     'Nel contratto sono obbligatori dati anagrafici, residenza e documento.';
-  document.querySelector('#save-tenant-editor').textContent = 'Crea inquilino';
 
   tenantAnagrafica.clear();
   tenantAddress.clear();
@@ -555,7 +572,6 @@ function openTenantCompletion(tenant) {
     `Completa inquilino — ${tenant.nome} ${tenant.cognome}`;
   document.querySelector('#tenant-editor-help').textContent =
     'Sono mostrati solo i gruppi di dati incompleti.';
-  document.querySelector('#save-tenant-editor').textContent = 'Salva dati inquilino';
 
   tenantAnagrafica.setData(tenant);
   tenantAddress.setData(tenant);
@@ -777,16 +793,13 @@ async function saveImmobileEditor() {
     formMessage.textContent = 'Errore: controlla i campi dell’immobile.';
     if (immobileEditorMode === 'new') immobileAddress.focusFirstInvalid();
     immobileCatasto.focusFirstInvalid();
-    return;
+    return false;
   }
 
-  busy = true;
-  syncControls();
   formMessage.textContent = 'Salvataggio immobile in corso…';
 
   try {
     let saved;
-
     if (immobileEditorMode === 'new') {
       saved = await api('/api/immobili', {
         method: 'POST',
@@ -799,7 +812,6 @@ async function saveImmobileEditor() {
     } else {
       const immobile = selectedImmobile();
       if (!immobile) throw new Error('Seleziona un immobile.');
-
       saved = await api(`/api/immobili/${encodeURIComponent(immobile.id)}`, {
         method: 'PUT',
         body: JSON.stringify({
@@ -817,16 +829,16 @@ async function saveImmobileEditor() {
 
     await refreshPrerequisites();
     immobileSelect.value = saved.id;
-    closeImmobileEditor();
+    immobileEditorMode = null;
+    immobileEditor.hidden = true;
+    immobileAddressSection.hidden = true;
+    immobileAddress.setVisible(false);
+    immobileCatasto.setVisible(false);
     renderImmobileDetail();
-    await saveDraft(1);
-    showStep(2);
-    formMessage.textContent = 'Immobile verificato e salvato nella bozza.';
+    return true;
   } catch (error) {
     if (error.name !== 'AbortError') showEmbeddedError(immobileEditor, error);
-  } finally {
-    busy = false;
-    syncControls();
+    return false;
   }
 }
 
@@ -844,11 +856,9 @@ async function saveTenantEditor() {
     tenantAnagrafica.focusFirstInvalid();
     tenantAddress.focusFirstInvalid();
     tenantDocument.focusFirstInvalid();
-    return;
+    return false;
   }
 
-  busy = true;
-  syncControls();
   formMessage.textContent = 'Salvataggio inquilino in corso…';
 
   try {
@@ -862,26 +872,24 @@ async function saveTenantEditor() {
 
     const saved = existing
       ? await api(`/api/inquilini/${encodeURIComponent(existing.id)}`, {
-        method: 'PUT',
-        body: JSON.stringify(payload)
+        method: 'PUT', body: JSON.stringify(payload)
       })
       : await api('/api/inquilini', {
-        method: 'POST',
-        body: JSON.stringify(payload)
+        method: 'POST', body: JSON.stringify(payload)
       });
 
     await refreshPrerequisites();
     tenantSelect.value = saved.id;
-    closeTenantEditor();
+    tenantEditorMode = null;
+    tenantEditor.hidden = true;
+    setTenantSection(tenantAnagraficaSection, tenantAnagrafica, false);
+    setTenantSection(tenantAddressSection, tenantAddress, false);
+    setTenantSection(tenantDocumentSection, tenantDocument, false);
     renderTenantDetail();
-    await saveDraft(2);
-    showStep(3);
-    formMessage.textContent = 'Inquilino verificato e salvato nella bozza.';
+    return true;
   } catch (error) {
     if (error.name !== 'AbortError') showEmbeddedError(tenantEditor, error);
-  } finally {
-    busy = false;
-    syncControls();
+    return false;
   }
 }
 
@@ -953,12 +961,8 @@ tenantSelect.addEventListener('change', () => {
 
 document.querySelector('#open-new-immobile').addEventListener('click', openNewImmobile);
 document.querySelector('#open-new-immobile-empty').addEventListener('click', openNewImmobile);
-document.querySelector('#close-immobile-editor').addEventListener('click', closeImmobileEditor);
-document.querySelector('#save-immobile-editor').addEventListener('click', saveImmobileEditor);
 
 document.querySelector('#open-new-tenant').addEventListener('click', openNewTenant);
-document.querySelector('#close-tenant-editor').addEventListener('click', closeTenantEditor);
-document.querySelector('#save-tenant-editor').addEventListener('click', saveTenantEditor);
 
 form.addEventListener('input', (event) => {
   const field = event.target.closest('[name]');
@@ -982,21 +986,26 @@ next.addEventListener('click', async () => {
   if (next.disabled || busy) return;
   clearContractErrors();
 
-  try {
-    busy = true;
-    syncControls();
+  busy = true;
+  syncControls();
 
+  try {
     if (step === 1) {
+      if (immobileEditorMode) {
+        const saved = await saveImmobileEditor();
+        if (!saved) return;
+      }
+
       const immobile = selectedImmobile();
       if (!immobile) {
-        document.querySelector('#immobileId-error').textContent =
-          'Seleziona un immobile.';
+        document.querySelector('#immobileId-error').textContent = 'Seleziona un immobile.';
         return;
       }
       if (!hasCadastralData(immobile)) {
         openImmobileCompletion(immobile);
         return;
       }
+
       await saveDraft(1);
       showStep(2);
       const tenant = selectedTenant();
@@ -1005,16 +1014,21 @@ next.addEventListener('click', async () => {
     }
 
     if (step === 2) {
+      if (tenantEditorMode) {
+        const saved = await saveTenantEditor();
+        if (!saved) return;
+      }
+
       const tenant = selectedTenant();
       if (!tenant) {
-        document.querySelector('#inquilinoId-error').textContent =
-          'Seleziona un inquilino.';
+        document.querySelector('#inquilinoId-error').textContent = 'Seleziona un inquilino.';
         return;
       }
       if (!hasCompleteTenant(tenant)) {
         openTenantCompletion(tenant);
         return;
       }
+
       await saveDraft(2);
       showStep(3);
       return;
@@ -1026,9 +1040,7 @@ next.addEventListener('click', async () => {
       showStep(4);
     }
   } catch (error) {
-    if (error.name !== 'AbortError') {
-      showFormError(form, formMessage, error);
-    }
+    if (error.name !== 'AbortError') showFormError(form, formMessage, error);
   } finally {
     busy = false;
     syncControls();
@@ -1135,6 +1147,28 @@ cancelWizard.addEventListener('click', async () => {
 
 newContract.addEventListener('click', () => {
   window.location.assign('/contratto.html');
+});
+
+document.querySelector('#contract-stepper').addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-step-target]');
+  if (!button || busy || completed) return;
+
+  const target = Number(button.dataset.stepTarget);
+  if (!Number.isInteger(target) || target < 1 || target > 4) return;
+  if (!completedSteps()[target - 1]) return;
+
+  clearContractErrors();
+  try {
+    busy = true;
+    syncControls();
+    await saveDraft(draft?.stepCompletato ?? 0);
+    showStep(target);
+  } catch (error) {
+    if (error.name !== 'AbortError') formMessage.textContent = `Errore: ${error.message}`;
+  } finally {
+    busy = false;
+    syncControls();
+  }
 });
 
 retry.addEventListener('click', loadPage);
