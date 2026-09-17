@@ -8,7 +8,7 @@ const commonFields = [
   {
     name: 'provincia', label: 'Provincia', type: 'text', minLength: 2, maxLength: 2,
     autocapitalize: 'characters', spellcheck: false, autocomplete: 'address-level1',
-    hint: 'Sigla di 2 lettere.'
+    hint: '2 lettere'
   },
   { name: 'comune', label: 'Comune', type: 'text', maxLength: 100, autocomplete: 'address-level2' }
 ];

@@ -1,3 +1,5 @@
+import { renderContrattoPreview } from './components/contratto-preview.js';
+
 const euro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
 const months = new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 
@@ -60,44 +62,6 @@ function formatDate(value) {
   return value ? value.split('-').reverse().join('/') : '—';
 }
 
-function formatAddress(subject) {
-  const street = [subject?.indirizzo, subject?.civico].filter(Boolean).join(' ');
-  const town = [subject?.cap, subject?.comune].filter(Boolean).join(' ');
-  const province = subject?.provincia ? `(${subject.provincia})` : '';
-  return [street, [town, province].filter(Boolean).join(' ')].filter(Boolean).join(', ') || '—';
-}
-
-function documentType(value) {
-  if (value === 'CARTA_IDENTITA') return 'Carta d’identità';
-  if (value === 'PASSAPORTO') return 'Passaporto';
-  return value || '—';
-}
-
-function appendDetail(dl, label, value) {
-  const group = document.createElement('div');
-  const dt = document.createElement('dt');
-  const dd = document.createElement('dd');
-  dt.textContent = label;
-  dd.textContent = value ?? '—';
-  group.append(dt, dd);
-  dl.append(group);
-}
-
-function previewSection(title, details) {
-  const section = document.createElement('section');
-  section.className = 'contract-preview-section';
-
-  const heading = document.createElement('h3');
-  heading.textContent = title;
-
-  const dl = document.createElement('dl');
-  dl.className = 'contract-summary';
-  for (const [label, value] of details) appendDetail(dl, label, value);
-
-  section.append(heading, dl);
-  return section;
-}
-
 async function loadPropertyContext(api, signal, immobileId) {
   const params = new URLSearchParams({ immobileId });
   const [tenants, contracts] = await Promise.all([
@@ -140,42 +104,8 @@ export function createContractPreviewDialog(api) {
   const content = document.querySelector('#contract-preview-content');
   let controller;
 
-  function render(contract) {
-    const catasto = contract.immobile.datiCatastali || {};
-    content.replaceChildren(
-      previewSection('Immobile', [
-        ['Titolo', contract.immobile.titolo || '—'],
-        ['Indirizzo', formatAddress(contract.immobile)],
-        ['Codice comunale', catasto.codiceComunale || '—'],
-        ['Foglio', catasto.foglio ?? '—'],
-        ['Particella', catasto.particella ?? '—'],
-        ['Subalterno', catasto.subalterno ?? '—'],
-        ['Zona', catasto.zona ?? '—'],
-        ['Categoria', catasto.categoria || '—'],
-        ['Consistenza', catasto.consistenza ?? '—'],
-        ['Rendita', catasto.rendita != null ? euro.format(Number(catasto.rendita)) : '—']
-      ]),
-      previewSection('Inquilino', [
-        ['Nome e cognome', `${contract.inquilino.nome} ${contract.inquilino.cognome}`],
-        ['Codice fiscale', contract.inquilino.codiceFiscale || '—'],
-        ['Data di nascita', formatDate(contract.inquilino.dataNascita)],
-        ['Residenza', formatAddress(contract.inquilino)],
-        ['Documento', documentType(contract.inquilino.tipoDocumento)],
-        ['Numero documento', contract.inquilino.numeroDocumento || '—'],
-        ['Rilasciato da', contract.inquilino.organoRilascioDocumento || '—'],
-        ['Data rilascio', formatDate(contract.inquilino.dataRilascioDocumento)],
-        ['Data scadenza', formatDate(contract.inquilino.dataScadenzaDocumento)]
-      ]),
-      previewSection('Contratto', [
-        ['Tipologia', contract.tipologia.denominazione || '—'],
-        ['Durata', `${contract.tipologia.durata} anni`],
-        ['Decorrenza', formatDate(contract.dataInizio)],
-        ['Scadenza', formatDate(contract.dataFine)],
-        ['Canone annuale', euro.format(contract.canoneAnnuale)],
-        ['Canone mensile', euro.format(contract.canoneMensile)],
-        ['Giorno di pagamento', `${contract.giornoPagamento} di ogni mese`]
-      ])
-    );
+  function render(documentModel) {
+    renderContrattoPreview(content, documentModel);
     content.hidden = false;
   }
 
@@ -189,10 +119,13 @@ export function createContractPreviewDialog(api) {
     message.textContent = 'Caricamento contratto…';
 
     try {
-      const contract = await api(`/api/contratti/${encodeURIComponent(contractId)}`, signal);
+      const documentModel = await api(
+        `/api/contratti/${encodeURIComponent(contractId)}/anteprima`,
+        signal
+      );
       signal.throwIfAborted();
-      title.textContent = `Anteprima contratto #${contract.id}`;
-      render(contract);
+      title.textContent = `Anteprima contratto #${contractId}`;
+      render(documentModel);
       message.textContent = '';
     } catch (error) {
       if (signal.aborted) return;

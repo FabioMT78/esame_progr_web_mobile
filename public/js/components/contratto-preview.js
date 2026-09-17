@@ -48,7 +48,7 @@ export function renderContrattoPreview(container, documentModel) {
   const header = element('header', 'contract-document-header');
   header.append(
     element('h2', 'contract-document-title', documentModel.titolo),
-    element('p', 'contract-document-subtitle', documentModel.sottotitolo)
+    element('h3', 'contract-document-subtitle', documentModel.sottotitolo)
   );
   documentElement.append(header);
 
@@ -79,16 +79,16 @@ export function renderContrattoPreview(container, documentModel) {
   parties.append(landlord, grants, tenant, property);
   documentElement.append(parties);
 
-  const contractData = element('dl', 'contract-document-data');
-  contractData.append(
-    row('Tipologia', documentModel.contratto.tipologia),
-    row('Decorrenza', documentModel.contratto.dal),
-    row('Scadenza', documentModel.contratto.al),
-    row('Canone annuale', documentModel.contratto.canoneAnnuale),
-    row('Canone mensile', documentModel.contratto.canoneMensile),
-    row('Giorno pagamento', documentModel.contratto.giornoPagamento)
-  );
-  documentElement.append(contractData);
+  // const contractData = element('dl', 'contract-document-data');
+  // contractData.append(
+  //   row('Tipologia', documentModel.contratto.tipologia),
+  //   row('Decorrenza', documentModel.contratto.dal),
+  //   row('Scadenza', documentModel.contratto.al),
+  //   row('Canone annuale', documentModel.contratto.canoneAnnuale),
+  //   row('Canone mensile', documentModel.contratto.canoneMensile),
+  //   row('Giorno pagamento', documentModel.contratto.giornoPagamento)
+  // );
+  // documentElement.append(contractData);
 
   documentElement.append(
     element(
@@ -117,14 +117,14 @@ export function renderContrattoPreview(container, documentModel) {
   landlordSignature.append(
     element('strong', null, 'IL LOCATORE'),
     element('span', 'contract-document-signature-line', ''),
-    element('span', null, documentModel.locatore.nomeCompleto)
+    element('span', null, '(' + documentModel.locatore.nomeCompleto + ')')
   );
 
   const tenantSignature = element('div');
   tenantSignature.append(
     element('strong', null, 'IL CONDUTTORE'),
     element('span', 'contract-document-signature-line', ''),
-    element('span', null, documentModel.conduttore.nomeCompleto)
+    element('span', null, '(' + documentModel.conduttore.nomeCompleto + ')')
   );
 
   signatures.append(landlordSignature, tenantSignature);

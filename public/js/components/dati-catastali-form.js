@@ -10,6 +10,7 @@ const fieldsDefinition = [
 ];
 
 const requiredWhenEnabled = new Set([
+  'codiceComunale',
   'foglio',
   'particella',
   'subalterno',

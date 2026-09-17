@@ -455,8 +455,7 @@ function closeImmobileEditor() {
 function openNewImmobile() {
   immobileEditorMode = 'new';
   document.querySelector('#immobile-editor-title').textContent = 'Nuovo immobile';
-  document.querySelector('#immobile-editor-help').textContent =
-    'Inserisci indirizzo e dati catastali necessari al contratto.';
+  document.querySelector('#immobile-editor-help').textContent = '';
 
   immobileAddressSection.hidden = false;
   immobileAddress.setVisible(true);
