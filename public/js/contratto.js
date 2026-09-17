@@ -16,7 +16,6 @@ const formMessage = document.querySelector('#form-message');
 const retry = document.querySelector('#retry');
 const steps = [...form.querySelectorAll('[data-step]')];
 const stepperItems = [...document.querySelectorAll('#contract-stepper li')];
-const previous = document.querySelector('#previous-step');
 const next = document.querySelector('#next-step');
 const confirm = document.querySelector('#confirm-contract');
 const cancelWizard = document.querySelector('#cancel-wizard');
@@ -398,9 +397,6 @@ function syncControls() {
 
   immobileSelect.disabled = unavailable || step !== 1 || lockedImmobile;
   tenantSelect.disabled = unavailable || step !== 2 || lockedTenant;
-
-  previous.hidden = step === 1 || completed;
-  previous.disabled = unavailable;
 
   next.hidden = step === 4 || completed;
   next.disabled = unavailable
@@ -1041,25 +1037,6 @@ next.addEventListener('click', async () => {
     }
   } catch (error) {
     if (error.name !== 'AbortError') showFormError(form, formMessage, error);
-  } finally {
-    busy = false;
-    syncControls();
-  }
-});
-
-previous.addEventListener('click', async () => {
-  if (previous.disabled || busy) return;
-  clearContractErrors();
-
-  try {
-    busy = true;
-    syncControls();
-    await saveDraft(draft?.stepCompletato ?? 0);
-    showStep(Math.max(1, step - 1));
-  } catch (error) {
-    if (error.name !== 'AbortError') {
-      formMessage.textContent = `Errore: ${error.message}`;
-    }
   } finally {
     busy = false;
     syncControls();
