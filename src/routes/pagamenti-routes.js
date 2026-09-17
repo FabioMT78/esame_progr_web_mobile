@@ -9,6 +9,10 @@ router.use((_req, res, next) => {
 });
 router.use(requireAuth);
 
+router.get('/stato', async (req, res) => {
+  res.status(200).json(await pagamenti.stato(req.proprietarioId, req.query));
+});
+
 router.get('/anteprima', async (req, res) => {
   res.status(200).json(await pagamenti.anteprima(req.proprietarioId, req.query));
 });

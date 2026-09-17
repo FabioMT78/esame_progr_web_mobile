@@ -40,6 +40,17 @@ async function listContratti(immobileId, inquilinoId, proprietarioId, db = pool,
   return rows;
 }
 
+async function listContrattiImmobile(immobileId, proprietarioId) {
+  const [rows] = await pool.execute(
+    `SELECT ${contrattoColumns} ${contrattoJoins}
+     WHERE c.immobile_id = ? AND c.proprietario_id = ?
+       AND c.deleted_at IS NULL AND i.deleted_at IS NULL
+     ORDER BY c.inquilino_id, c.data_inizio, c.id`,
+    [immobileId, proprietarioId]
+  );
+  return rows;
+}
+
 async function listPagamenti(immobileId, inquilinoId, proprietarioId, db = pool, lock = false) {
   const [rows] = await db.execute(
     `SELECT CAST(p.contratto_id AS CHAR) AS contrattoId,
@@ -51,6 +62,20 @@ async function listPagamenti(immobileId, inquilinoId, proprietarioId, db = pool,
      ${lock ? 'FOR UPDATE' : ''}`, [proprietarioId, proprietarioId, immobileId, inquilinoId]
   );
   // Il vincolo UNIQUE riserva la competenza anche per eventuali record archiviati.
+  return rows;
+}
+
+async function listPagamentiImmobile(immobileId, proprietarioId) {
+  const [rows] = await pool.execute(
+    `SELECT CAST(p.contratto_id AS CHAR) AS contrattoId,
+       p.anno_competenza AS annoCompetenza, p.mese_competenza AS meseCompetenza
+     FROM pagamenti p
+     JOIN contratti c ON c.id = p.contratto_id AND c.proprietario_id = p.proprietario_id
+     JOIN immobili i ON i.id = c.immobile_id AND i.proprietario_id = c.proprietario_id
+     WHERE p.proprietario_id = ? AND c.proprietario_id = ?
+       AND c.immobile_id = ? AND c.deleted_at IS NULL AND i.deleted_at IS NULL`,
+    [proprietarioId, proprietarioId, immobileId]
+  );
   return rows;
 }
 
@@ -90,4 +115,14 @@ async function transaction(work) {
   }
 }
 
-module.exports = { findCoppia, findContratto, listContratti, listPagamenti, lockImmobile, insert, transaction };
+module.exports = {
+  findCoppia,
+  findContratto,
+  listContratti,
+  listContrattiImmobile,
+  listPagamenti,
+  listPagamentiImmobile,
+  lockImmobile,
+  insert,
+  transaction
+};

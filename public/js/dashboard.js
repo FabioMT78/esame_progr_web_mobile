@@ -109,23 +109,6 @@ function setPaymentStatus(status, hasPendingPayments) {
   status.title = description;
 }
 
-async function tenantHasPendingPayment(immobileId, inquilinoId, signal) {
-  const params = new URLSearchParams({ immobileId, inquilinoId });
-
-  try {
-    await api(`/api/pagamenti/anteprima?${params}`, signal);
-    return true;
-  } catch (error) {
-    if (signal.aborted || error.name === 'AbortError') throw error;
-
-    // È lo stesso caso mostrato dal dialog come:
-    // "Nessuna competenza da pagare fino al mese corrente."
-    if (error.status === 404) return false;
-
-    throw error;
-  }
-}
-
 async function refreshPaymentStatus(immobileId, signal) {
   const status = paymentStatusElements.get(immobileId);
   const contracts = contractsByImmobile.get(immobileId) || [];
@@ -138,20 +121,12 @@ async function refreshPaymentStatus(immobileId, signal) {
   status.removeAttribute('aria-label');
   status.removeAttribute('title');
 
-  const tenantIds = [...new Set(
-    contracts
-      .map((contract) => contract?.inquilino?.id)
-      .filter(Boolean)
-  )];
+  const params = new URLSearchParams({ immobileId });
 
   try {
-    const pendingByTenant = await Promise.all(
-      tenantIds.map((inquilinoId) =>
-        tenantHasPendingPayment(immobileId, inquilinoId, signal)
-      )
-    );
+    const paymentStatus = await api(`/api/pagamenti/stato?${params}`, signal);
     signal.throwIfAborted();
-    setPaymentStatus(status, pendingByTenant.some(Boolean));
+    setPaymentStatus(status, paymentStatus.hasPendingPayments);
   } catch (error) {
     if (signal.aborted || error.name === 'AbortError') return;
 

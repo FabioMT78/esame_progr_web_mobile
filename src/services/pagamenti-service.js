@@ -33,6 +33,33 @@ function validateImporto(preview) {
   }
 }
 
+async function stato(proprietarioId, query) {
+  const immobileId = validateId(query.immobileId);
+  const contratti = await repository.listContrattiImmobile(immobileId, proprietarioId);
+
+  if (!contratti.length) {
+    return { hasContracts: false, hasPendingPayments: false };
+  }
+
+  const pagamenti = await repository.listPagamentiImmobile(immobileId, proprietarioId);
+  const oggi = new Date().toISOString().slice(0, 10);
+  const contrattiPerInquilino = new Map();
+
+  for (const contratto of contratti) {
+    if (!contrattiPerInquilino.has(contratto.inquilinoId)) {
+      contrattiPerInquilino.set(contratto.inquilinoId, []);
+    }
+    contrattiPerInquilino.get(contratto.inquilinoId).push(contratto);
+  }
+
+  const hasPendingPayments = [...contrattiPerInquilino.values()].some(
+    (contrattiInquilino) =>
+      Boolean(primaCompetenzaNonPagata(contrattiInquilino, pagamenti, oggi))
+  );
+
+  return { hasContracts: true, hasPendingPayments };
+}
+
 async function anteprima(proprietarioId, query) {
   const immobileId = validateId(query.immobileId);
   const inquilinoId = validateId(query.inquilinoId);
@@ -89,4 +116,4 @@ async function create(proprietarioId, body) {
   }
 }
 
-module.exports = { anteprima, create };
+module.exports = { stato, anteprima, create };
