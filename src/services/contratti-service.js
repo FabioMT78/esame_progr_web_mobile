@@ -4,6 +4,14 @@ const inquilini = require('../repositories/inquilini-repository');
 const tipologie = require('../repositories/tipologie-contrattuali-repository');
 const { calcolaDataFine, calcolaCanoneMensile } = require('./contratti-calcoli');
 
+const requiredCadastralFields = [
+  'foglio',
+  'particella',
+  'subalterno',
+  'categoria',
+  'rendita'
+];
+
 function inputError(status, message, fields) {
   return Object.assign(new Error(message), { status, fields });
 }
@@ -40,6 +48,16 @@ function validateInput(input) {
   return data;
 }
 
+function hasRequiredCadastralData(immobile) {
+  const data = immobile?.datiCatastali;
+  return data && typeof data === 'object'
+    && requiredCadastralFields.every((name) => (
+      data[name] !== null
+      && data[name] !== undefined
+      && String(data[name]).trim() !== ''
+    ));
+}
+
 async function prerequisiti(proprietarioId) {
   const [immobiliAttivi, inquiliniAttivi, tipologieContrattuali] = await Promise.all([
     immobili.list(proprietarioId), inquilini.list(proprietarioId), tipologie.list()
@@ -68,9 +86,15 @@ async function create(proprietarioId, body) {
     { inquilinoId: 'Seleziona un tuo inquilino attivo.' });
   if (!tipologia) throw inputError(404, 'Tipologia contrattuale non disponibile.',
     { tipologiaId: 'Seleziona una tipologia disponibile.' });
-  if (!immobile.datiCatastali || typeof immobile.datiCatastali !== 'object') {
-    throw inputError(400, 'Completa i dati catastali dell’immobile prima di registrare il contratto.',
-      { immobileId: 'I dati catastali dell’immobile sono obbligatori.' });
+  if (!hasRequiredCadastralData(immobile)) {
+    throw inputError(
+      400,
+      'Completa i dati catastali necessari prima di registrare il contratto.',
+      {
+        immobileId:
+          'Servono foglio, particella, subalterno, categoria e rendita.'
+      }
+    );
   }
   try {
     data.dataFine = calcolaDataFine(data.dataInizio, tipologia.durata);

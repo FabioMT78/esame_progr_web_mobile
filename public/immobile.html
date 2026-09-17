@@ -17,108 +17,26 @@
       <div id="protected-content" hidden>
         <section class="status-card" aria-labelledby="form-title">
           <h1 id="form-title">Nuovo immobile</h1>
-          <p>I dati dell'immobile sono obbligatori; URL immagine e dati catastali sono facoltativi.</p>
+          <p>I campi contrassegnati con * sono obbligatori. URL immagine e dati catastali sono facoltativi.</p>
 
-          <form id="immobile-form">
+          <form id="immobile-form" novalidate>
             <fieldset id="form-fields" disabled>
-              <div class="form-grid">
-                <div class="field">
-                  <label for="titolo">Titolo</label>
-                  <input id="titolo" name="titolo" type="text" maxlength="150" required aria-describedby="titolo-error">
-                  <p class="field-error" id="titolo-error"></p>
-                </div>
+              <section aria-labelledby="address-title">
+                <h2 id="address-title">Indirizzo</h2>
+                <div id="indirizzo-fields"></div>
+              </section>
 
-                <div class="field">
-                  <label for="immagineUrl">URL immagine (facoltativo)</label>
-                  <input id="immagineUrl" name="immagineUrl" type="url" maxlength="500" aria-describedby="immagineUrl-error">
-                  <p class="field-error" id="immagineUrl-error"></p>
-                </div>
-
-                <div class="field">
-                  <label for="via">Via</label>
-                  <input id="via" name="via" type="text" maxlength="150" required aria-describedby="via-error">
-                  <p class="field-error" id="via-error"></p>
-                </div>
-
-                <div class="field">
-                  <label for="numeroCivico">Numero civico</label>
-                  <input id="numeroCivico" name="numeroCivico" type="text" maxlength="20" required aria-describedby="numeroCivico-error">
-                  <p class="field-error" id="numeroCivico-error"></p>
-                </div>
-
-                <div class="field">
-                  <label for="cap">CAP</label>
-                  <input id="cap" name="cap" type="text" maxlength="10" required aria-describedby="cap-error">
-                  <p class="field-error" id="cap-error"></p>
-                </div>
-
-                <div class="field">
-                  <label for="comune">Comune</label>
-                  <input id="comune" name="comune" type="text" maxlength="100" required aria-describedby="comune-error">
-                  <p class="field-error" id="comune-error"></p>
-                </div>
-
-                <div class="field">
-                  <label for="provincia">Provincia</label>
-                  <input id="provincia" name="provincia" type="text" maxlength="100" required aria-describedby="provincia-error">
-                  <p class="field-error" id="provincia-error"></p>
-                </div>
+              <div class="field">
+                <label for="immagineUrl">URL immagine (facoltativo)</label>
+                <input id="immagineUrl" name="immagineUrl" type="url" maxlength="500" aria-describedby="immagineUrl-error">
+                <p class="field-error" id="immagineUrl-error"></p>
               </div>
 
               <section aria-labelledby="cadastral-title">
                 <hr>
                 <h2 id="cadastral-title">Dati catastali</h2>
-                <p class="field-hint">Facoltativi per l'immobile. Se inizi a compilarli, completa tutti i campi: saranno necessari per registrare un contratto.</p>
-
-                <div class="form-grid">
-                  <div class="field">
-                    <label for="codiceComunale">Codice comunale</label>
-                    <input id="codiceComunale" name="codiceComunale" type="text" maxlength="20" aria-describedby="codiceComunale-error">
-                    <p class="field-error" id="codiceComunale-error"></p>
-                  </div>
-
-                  <div class="field">
-                    <label for="foglio">Foglio</label>
-                    <input id="foglio" name="foglio" type="number" min="0" step="1" inputmode="numeric" aria-describedby="foglio-error">
-                    <p class="field-error" id="foglio-error"></p>
-                  </div>
-
-                  <div class="field">
-                    <label for="particella">Particella</label>
-                    <input id="particella" name="particella" type="number" min="0" step="1" inputmode="numeric" aria-describedby="particella-error">
-                    <p class="field-error" id="particella-error"></p>
-                  </div>
-
-                  <div class="field">
-                    <label for="subalterno">Sub</label>
-                    <input id="subalterno" name="subalterno" type="number" min="0" step="1" inputmode="numeric" aria-describedby="subalterno-error">
-                    <p class="field-error" id="subalterno-error"></p>
-                  </div>
-
-                  <div class="field">
-                    <label for="zona">Zona</label>
-                    <input id="zona" name="zona" type="number" min="0" step="1" inputmode="numeric" aria-describedby="zona-error">
-                    <p class="field-error" id="zona-error"></p>
-                  </div>
-
-                  <div class="field">
-                    <label for="categoria">Categoria</label>
-                    <input id="categoria" name="categoria" type="text" maxlength="20" aria-describedby="categoria-error">
-                    <p class="field-error" id="categoria-error"></p>
-                  </div>
-
-                  <div class="field">
-                    <label for="consistenza">Consistenza</label>
-                    <input id="consistenza" name="consistenza" type="text" inputmode="decimal" placeholder="es. 7,5" maxlength="20" aria-describedby="consistenza-error">
-                    <p class="field-error" id="consistenza-error"></p>
-                  </div>
-
-                  <div class="field">
-                    <label for="rendita">Rendita (€)</label>
-                    <input id="rendita" name="rendita" type="text" inputmode="decimal" placeholder="es. 825,40" maxlength="20" aria-describedby="rendita-error">
-                    <p class="field-error" id="rendita-error"></p>
-                  </div>
-                </div>
+                <p class="field-hint">Facoltativi in questa pagina. I campi necessari al contratto verranno richiesti quando servono.</p>
+                <div id="dati-catastali-fields"></div>
               </section>
 
               <div class="actions form-actions">

@@ -18,9 +18,12 @@ const fieldSteps = {
   immobileId: 1, inquilinoId: 2, tipologiaId: 3, dataInizio: 3, canoneAnnuale: 3, giornoPagamento: 3
 };
 const euro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
-const cadastralFields = [
-  'codiceComunale', 'foglio', 'particella', 'subalterno',
-  'zona', 'categoria', 'consistenza', 'rendita'
+const requiredCadastralFields = [
+  'foglio',
+  'particella',
+  'subalterno',
+  'categoria',
+  'rendita'
 ];
 let prerequisites = { immobili: [], inquilini: [], tipologie: [] };
 let step = 1;
@@ -64,7 +67,8 @@ function selected(items, name) {
 }
 
 function immobileLabel(immobile) {
-  return `${immobile.titolo} — ${immobile.via} ${immobile.numeroCivico}, ${immobile.comune}`;
+  const street = [immobile.via, immobile.numeroCivico].filter(Boolean).join(' ');
+  return `${immobile.titolo} — ${street}, ${immobile.comune}`;
 }
 
 function inquilinoLabel(inquilino) {
@@ -74,14 +78,23 @@ function inquilinoLabel(inquilino) {
 function hasDatiCatastali(immobile) {
   const data = immobile?.datiCatastali;
   return data && typeof data === 'object'
-    && cadastralFields.every((name) => data[name] !== null
+    && requiredCadastralFields.every((name) => data[name] !== null
       && data[name] !== undefined && String(data[name]).trim() !== '');
 }
 
 function cadastralSummary(immobile) {
-  if (!hasDatiCatastali(immobile)) return 'non presenti';
-  const data = immobile.datiCatastali;
-  return `Codice ${data.codiceComunale} · Foglio ${data.foglio} · Particella ${data.particella} · Sub ${data.subalterno}`;
+  const data = immobile?.datiCatastali;
+  if (!data || typeof data !== 'object') return 'non presenti';
+
+  const parts = [];
+  if (data.codiceComunale) parts.push(`Codice ${data.codiceComunale}`);
+  if (data.foglio !== null && data.foglio !== undefined) parts.push(`Foglio ${data.foglio}`);
+  if (data.particella !== null && data.particella !== undefined) parts.push(`Particella ${data.particella}`);
+  if (data.subalterno !== null && data.subalterno !== undefined) parts.push(`Sub ${data.subalterno}`);
+  if (data.categoria) parts.push(`Categoria ${data.categoria}`);
+  if (data.rendita !== null && data.rendita !== undefined) parts.push(`Rendita € ${data.rendita}`);
+
+  return parts.length ? parts.join(' · ') : 'non presenti';
 }
 
 // Solo anteprima: il POST invia la data iniziale, il server ricalcola la scadenza.
@@ -107,7 +120,7 @@ function updateDetails() {
     ? `/inquilino.html?immobileId=${encodeURIComponent(immobile.id)}` : '/inquilino.html';
   const missingCatasto = immobile && !hasDatiCatastali(immobile);
   document.querySelector('#immobileId-error').textContent = missingCatasto
-    ? 'Completa i dati catastali dell’immobile prima di proseguire.' : '';
+    ? 'Completa foglio, particella, subalterno, categoria e rendita prima di proseguire.' : '';
   if (missingCatasto) form.elements.immobileId.setAttribute('aria-invalid', 'true');
   else form.elements.immobileId.removeAttribute('aria-invalid');
   const edit = document.querySelector('#edit-immobile');
@@ -229,7 +242,10 @@ function validateStep(value) {
   if (value === 1) {
     const immobile = selected(prerequisites.immobili, 'immobileId');
     if (!immobile) fields.immobileId = 'Seleziona un immobile attivo.';
-    else if (!hasDatiCatastali(immobile)) fields.immobileId = 'Completa prima i dati catastali dell’immobile.';
+    else if (!hasDatiCatastali(immobile)) {
+      fields.immobileId =
+        'Completa foglio, particella, subalterno, categoria e rendita dell’immobile.';
+    }
   }
   if (value === 2 && !selected(prerequisites.inquilini, 'inquilinoId')) {
     fields.inquilinoId = 'Seleziona un inquilino attivo.';

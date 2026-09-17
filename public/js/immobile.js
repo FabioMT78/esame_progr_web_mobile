@@ -1,4 +1,6 @@
 import { readToken, clearToken, clearFieldErrors, showFormError } from './common.js';
+import { createIndirizzoForm } from './components/indirizzo-form.js';
+import { createDatiCatastaliForm } from './components/dati-catastali-form.js';
 
 const form = document.querySelector('#immobile-form');
 const fields = document.querySelector('#form-fields');
@@ -8,14 +10,17 @@ const sessionMessage = document.querySelector('#session-message');
 const sessionRetry = document.querySelector('#session-retry');
 const detailRetry = document.querySelector('#detail-retry');
 const cancelButton = document.querySelector('#cancel-immobile');
+const imageInput = document.querySelector('#immagineUrl');
 
-const generalFields = [
-  'titolo', 'via', 'numeroCivico', 'cap', 'comune', 'provincia', 'immagineUrl'
-];
-const cadastralFields = [
-  'codiceComunale', 'foglio', 'particella', 'subalterno',
-  'zona', 'categoria', 'consistenza', 'rendita'
-];
+const indirizzo = createIndirizzoForm({
+  container: document.querySelector('#indirizzo-fields'),
+  datiObbligatori: true
+});
+
+const datiCatastali = createDatiCatastaliForm({
+  container: document.querySelector('#dati-catastali-fields'),
+  datiObbligatori: false
+});
 
 let editingId = null;
 let busy = false;
@@ -77,97 +82,85 @@ function setBusy(value) {
 function setMode(id) {
   editingId = id;
   const editing = id !== null;
-  document.querySelector('#form-title').textContent = editing ? 'Modifica immobile' : 'Nuovo immobile';
-  document.querySelector('#save').textContent = editing ? 'Salva modifiche' : 'Crea immobile';
-  document.title = `${editing ? 'Modifica immobile' : 'Nuovo immobile'} — Gestionale Affitti`;
+  document.querySelector('#form-title').textContent =
+    editing ? 'Modifica immobile' : 'Nuovo immobile';
+  document.querySelector('#save').textContent =
+    editing ? 'Salva modifiche' : 'Crea immobile';
+  document.title =
+    `${editing ? 'Modifica immobile' : 'Nuovo immobile'} — Gestionale Affitti`;
+}
+
+function clearImageError() {
+  imageInput.removeAttribute('aria-invalid');
+  document.querySelector('#immagineUrl-error').textContent = '';
+}
+
+function validateImageUrl() {
+  clearImageError();
+  const value = imageInput.value.trim();
+  if (!value) return {};
+
+  try {
+    const url = new URL(value);
+    if (!['http:', 'https:'].includes(url.protocol) || value.length > 500) {
+      throw new Error('URL non valido');
+    }
+    return {};
+  } catch {
+    const message = 'Inserisci un URL http o https valido, di massimo 500 caratteri.';
+    imageInput.setAttribute('aria-invalid', 'true');
+    document.querySelector('#immagineUrl-error').textContent = message;
+    return { immagineUrl: message };
+  }
 }
 
 function clearFormState() {
   form.reset();
+  indirizzo.clear();
+  datiCatastali.clear();
   clearFieldErrors(form);
+  clearImageError();
   formMessage.textContent = '';
   detailRetry.hidden = true;
 }
 
 function fillDetail(immobile) {
-  for (const name of generalFields) {
-    form.elements.namedItem(name).value = immobile[name] ?? '';
-  }
-
-  const datiCatastali = immobile.datiCatastali || {};
-  for (const name of cadastralFields) {
-    form.elements.namedItem(name).value = datiCatastali[name] ?? '';
-  }
-}
-
-function normalizedDecimal(value) {
-  return String(value ?? '').trim().replace(',', '.');
-}
-
-function validateCadastralSection() {
-  const values = Object.fromEntries(
-    cadastralFields.map((name) => [name, form.elements.namedItem(name).value.trim()])
-  );
-  const hasAnyValue = Object.values(values).some(Boolean);
-  if (!hasAnyValue) return {};
-
-  const errors = {};
-  for (const name of cadastralFields) {
-    if (!values[name]) errors[name] = 'Completa questo campo oppure lascia vuota l’intera sezione catastale.';
-  }
-
-  for (const name of ['foglio', 'particella', 'subalterno', 'zona']) {
-    if (values[name] && !/^\d+$/.test(values[name])) {
-      errors[name] = 'Inserisci un numero intero non negativo.';
-    }
-  }
-
-  if (values.consistenza) {
-    const normalized = normalizedDecimal(values.consistenza);
-    if (!/^\d+(?:\.\d{1,2})?$/.test(normalized) || Number(normalized) <= 0) {
-      errors.consistenza = 'Inserisci un valore positivo con massimo 2 decimali.';
-    }
-  }
-
-  if (values.rendita) {
-    const normalized = normalizedDecimal(values.rendita);
-    if (!/^\d+(?:\.\d{1,2})?$/.test(normalized) || Number(normalized) < 0) {
-      errors.rendita = 'Inserisci un importo non negativo con massimo 2 decimali.';
-    }
-  }
-
-  return errors;
+  indirizzo.setData(immobile);
+  datiCatastali.setData(immobile.datiCatastali);
+  imageInput.value = immobile.immagineUrl ?? '';
 }
 
 function buildPayload() {
-  const data = {};
-  for (const name of generalFields) {
-    data[name] = form.elements.namedItem(name).value.trim();
-  }
+  return {
+    ...indirizzo.getData(),
+    immagineUrl: imageInput.value.trim(),
+    datiCatastali: datiCatastali.getData()
+  };
+}
 
-  const rawCatasto = Object.fromEntries(
-    cadastralFields.map((name) => [name, form.elements.namedItem(name).value.trim()])
-  );
-  const hasCatasto = Object.values(rawCatasto).some(Boolean);
+function validateForm() {
+  const errors = {
+    ...indirizzo.validate(),
+    ...datiCatastali.validate(),
+    ...validateImageUrl()
+  };
 
-  data.datiCatastali = hasCatasto ? {
-    codiceComunale: rawCatasto.codiceComunale,
-    foglio: rawCatasto.foglio,
-    particella: rawCatasto.particella,
-    subalterno: rawCatasto.subalterno,
-    zona: rawCatasto.zona,
-    categoria: rawCatasto.categoria,
-    consistenza: normalizedDecimal(rawCatasto.consistenza),
-    rendita: normalizedDecimal(rawCatasto.rendita)
-  } : null;
+  if (!Object.keys(errors).length) return true;
 
-  return data;
+  showFormError(form, formMessage, {
+    message: 'Controlla i campi indicati.',
+    fields: errors
+  });
+  return false;
 }
 
 async function loadDetail() {
   detailRetry.hidden = true;
   clearFieldErrors(form);
+  clearImageError();
   form.reset();
+  indirizzo.clear();
+  datiCatastali.clear();
 
   const id = new URLSearchParams(window.location.search).get('id');
   setMode(id === null ? null : id);
@@ -191,19 +184,20 @@ async function loadDetail() {
   }
 }
 
+form.addEventListener('input', (event) => {
+  formMessage.textContent = '';
+
+  const field = event.target.closest('[name]');
+  if (!field) return;
+
+  field.removeAttribute('aria-invalid');
+  const error = document.getElementById(`${field.name}-error`);
+  if (error) error.textContent = '';
+});
+
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
-  if (busy || fields.disabled) return;
-
-  clearFieldErrors(form);
-  const cadastralErrors = validateCadastralSection();
-  if (Object.keys(cadastralErrors).length) {
-    showFormError(form, formMessage, {
-      message: 'Controlla i dati catastali indicati.',
-      fields: cadastralErrors
-    });
-    return;
-  }
+  if (busy || fields.disabled || !validateForm()) return;
 
   const data = buildPayload();
   setBusy(true);

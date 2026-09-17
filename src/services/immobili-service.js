@@ -22,11 +22,8 @@ function normalizeDecimal(value) {
   return String(value).trim().replace(',', '.');
 }
 
-function validateIntegerField(raw, name, fields) {
-  if (isEmpty(raw)) {
-    fields[name] = 'Questo campo è obbligatorio quando inserisci i dati catastali.';
-    return null;
-  }
+function validateOptionalInteger(raw, name, fields) {
+  if (isEmpty(raw)) return null;
 
   const text = String(raw).trim();
   if (!/^\d+$/.test(text)) {
@@ -42,11 +39,8 @@ function validateIntegerField(raw, name, fields) {
   return value;
 }
 
-function validateDecimalField(raw, name, fields, allowZero) {
-  if (isEmpty(raw)) {
-    fields[name] = 'Questo campo è obbligatorio quando inserisci i dati catastali.';
-    return null;
-  }
+function validateOptionalDecimal(raw, name, fields, allowZero) {
+  if (isEmpty(raw)) return null;
 
   const normalized = normalizeDecimal(raw);
   if (!normalized || !/^\d+(?:\.\d{1,2})?$/.test(normalized)) {
@@ -67,65 +61,76 @@ function validateDecimalField(raw, name, fields, allowZero) {
   return normalized;
 }
 
+function validateOptionalText(raw, name, max, fields) {
+  if (isEmpty(raw)) return null;
+
+  if (typeof raw !== 'string') {
+    fields[name] = 'Inserisci un testo valido.';
+    return null;
+  }
+
+  const value = raw.trim();
+  if (value.length > max) {
+    fields[name] = `Inserisci al massimo ${max} caratteri.`;
+    return null;
+  }
+  return value;
+}
+
 function validateCadastralData(input, fields) {
   if (input == null) return null;
 
   if (typeof input !== 'object' || Array.isArray(input)) {
-    fields.codiceComunale = 'I dati catastali non sono validi.';
+    fields.foglio = 'I dati catastali non sono validi.';
     return null;
   }
 
-  const keys = [
-    'codiceComunale', 'foglio', 'particella', 'subalterno',
-    'zona', 'categoria', 'consistenza', 'rendita'
-  ];
+  const data = {
+    codiceComunale: validateOptionalText(
+      input.codiceComunale, 'codiceComunale', 20, fields
+    ),
+    foglio: validateOptionalInteger(input.foglio, 'foglio', fields),
+    particella: validateOptionalInteger(input.particella, 'particella', fields),
+    subalterno: validateOptionalInteger(input.subalterno, 'subalterno', fields),
+    zona: validateOptionalInteger(input.zona, 'zona', fields),
+    categoria: validateOptionalText(input.categoria, 'categoria', 20, fields),
+    consistenza: validateOptionalDecimal(
+      input.consistenza, 'consistenza', fields, false
+    ),
+    rendita: validateOptionalDecimal(input.rendita, 'rendita', fields, true)
+  };
 
-  const hasAny = keys.some((key) => !isEmpty(input[key]));
-  if (!hasAny) return null;
-
-  const data = {};
-
-  for (const [name, max] of [['codiceComunale', 20], ['categoria', 20]]) {
-    const raw = input[name];
-    if (typeof raw !== 'string' || !raw.trim()) {
-      fields[name] = 'Questo campo è obbligatorio quando inserisci i dati catastali.';
-      continue;
-    }
-
-    data[name] = raw.trim();
-    if (data[name].length > max) {
-      fields[name] = `Inserisci al massimo ${max} caratteri.`;
-    }
-  }
-
-  for (const name of ['foglio', 'particella', 'subalterno', 'zona']) {
-    data[name] = validateIntegerField(input[name], name, fields);
-  }
-
-  data.consistenza = validateDecimalField(input.consistenza, 'consistenza', fields, false);
-  data.rendita = validateDecimalField(input.rendita, 'rendita', fields, true);
-
-  return data;
+  return Object.values(data).some((value) => value !== null) ? data : null;
 }
 
 function validate(input) {
   const data = {};
   const fields = {};
-  const limits = {
+
+  const requiredAddress = {
     titolo: 150,
     via: 150,
-    numeroCivico: 20,
     cap: 10,
     comune: 100,
     provincia: 100
   };
 
-  for (const [key, max] of Object.entries(limits)) {
+  for (const [key, max] of Object.entries(requiredAddress)) {
     data[key] = typeof input?.[key] === 'string' ? input[key].trim() : '';
     if (!data[key]) fields[key] = 'Questo campo è obbligatorio.';
     else if (data[key].length > max) {
       fields[key] = `Inserisci al massimo ${max} caratteri.`;
     }
+  }
+
+  if (input?.numeroCivico != null && typeof input.numeroCivico !== 'string') {
+    fields.numeroCivico = 'Inserisci un testo valido.';
+  }
+  data.numeroCivico = typeof input?.numeroCivico === 'string'
+    ? input.numeroCivico.trim()
+    : '';
+  if (data.numeroCivico.length > 20) {
+    fields.numeroCivico = 'Inserisci al massimo 20 caratteri.';
   }
 
   if (input?.immagineUrl != null && typeof input.immagineUrl !== 'string') {
@@ -138,11 +143,13 @@ function validate(input) {
   if (data.immagineUrl) {
     try {
       const url = new URL(data.immagineUrl);
-      if (!['http:', 'https:'].includes(url.protocol) || data.immagineUrl.length > 500) {
+      if (!['http:', 'https:'].includes(url.protocol)
+          || data.immagineUrl.length > 500) {
         throw new Error('URL non valido');
       }
     } catch {
-      fields.immagineUrl = 'Inserisci un URL http o https valido, di massimo 500 caratteri.';
+      fields.immagineUrl =
+        'Inserisci un URL http o https valido, di massimo 500 caratteri.';
     }
   }
 

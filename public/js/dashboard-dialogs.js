@@ -42,6 +42,24 @@ export function paymentDescription(payment) {
   )}`;
 }
 
+async function loadTenants(api, signal, immobileId = null) {
+  if (immobileId === null) {
+    const [tenants, contracts] = await Promise.all([
+      api('/api/inquilini', signal), api('/api/contratti', signal)
+    ]);
+    signal.throwIfAborted();
+    return { tenants, contracts };
+  }
+
+  const contracts = await api('/api/contratti', signal);
+  signal.throwIfAborted();
+  const tenants = new Map();
+  for (const contract of contracts) {
+    if (contract.immobile.id === immobileId) tenants.set(contract.inquilino.id, contract.inquilino);
+  }
+  return { tenants: [...tenants.values()], contracts };
+}
+
 export function createTenantsDialog(api) {
   const dialog = document.querySelector('#tenants-dialog');
   const title = document.querySelector('#tenants-dialog-title');
@@ -97,7 +115,7 @@ export function createTenantsDialog(api) {
     empty.hidden = tenants.length > 0;
   }
 
-  async function loadTenants(notice = '') {
+  async function loadDialogTenants(notice = '') {
     controller?.abort();
     controller = new AbortController();
     const { signal } = controller;
@@ -106,10 +124,7 @@ export function createTenantsDialog(api) {
     retry.hidden = true;
     message.textContent = `${notice}Caricamento inquilini…`;
     try {
-      const [tenants, contracts] = await Promise.all([
-        api('/api/inquilini', signal), api('/api/contratti', signal)
-      ]);
-      signal.throwIfAborted();
+      const { tenants, contracts } = await loadTenants(api, signal);
       renderTenants(tenants, contracts);
       message.textContent = notice;
     } catch (error) {
@@ -129,7 +144,7 @@ export function createTenantsDialog(api) {
     try {
       await api(`/api/inquilini/${encodeURIComponent(tenant.id)}`, signal, { method: 'DELETE' });
       signal.throwIfAborted();
-      await loadTenants('Inquilino archiviato. ');
+      await loadDialogTenants('Inquilino archiviato. ');
       if (dialog.open) message.focus();
     } catch (error) {
       if (!signal.aborted) message.textContent = `Errore: ${errorText(error)}`;
@@ -141,7 +156,7 @@ export function createTenantsDialog(api) {
   dialog.querySelectorAll('[data-close]').forEach((button) => button.addEventListener('click', () => dialog.close()));
   dialog.addEventListener('cancel', (event) => { if (saving) event.preventDefault(); });
   dialog.addEventListener('close', () => { controller?.abort(); });
-  retry.addEventListener('click', () => loadTenants());
+  retry.addEventListener('click', () => loadDialogTenants());
   return {
     open(property) {
       immobile = property;
@@ -149,7 +164,7 @@ export function createTenantsDialog(api) {
       document.querySelector('#tenants-new').href = contextUrl(property.id);
       setSaving(false);
       dialog.showModal();
-      loadTenants();
+      loadDialogTenants();
     },
     close() { controller?.abort(); if (dialog.open) dialog.close(); }
   };
@@ -167,11 +182,13 @@ export function createPaymentsDialog(api, onRegistered) {
   const period = document.querySelector('#payment-period');
   const confirm = document.querySelector('#payment-confirm');
   let immobile;
-  let controller;
-  let previewController;
+  const requestState = {
+    controller: null,
+    previewController: null,
+    retryPreview: false
+  };
   let preview = null;
   let sending = false;
-  let retryPreview = false;
 
   function resetPreview() {
     preview = null;
@@ -189,12 +206,12 @@ export function createPaymentsDialog(api, onRegistered) {
   }
 
   async function loadPreview(notice = '') {
-    previewController?.abort();
-    previewController = new AbortController();
-    const { signal } = previewController;
+    requestState.previewController?.abort();
+    requestState.previewController = new AbortController();
+    const { signal } = requestState.previewController;
     resetPreview();
     retry.hidden = true;
-    retryPreview = true;
+    requestState.retryPreview = true;
     if (!select.value) { message.textContent = 'Seleziona un inquilino.'; return; }
     message.textContent = `${notice}Caricamento della competenza…`;
     const params = new URLSearchParams({ immobileId: immobile.id, inquilinoId: select.value });
@@ -213,35 +230,30 @@ export function createPaymentsDialog(api, onRegistered) {
     }
   }
 
-  async function loadTenants() {
-    controller?.abort();
-    previewController?.abort();
-    controller = new AbortController();
-    const { signal } = controller;
+  async function loadPaymentTenants() {
+    requestState.controller?.abort();
+    requestState.previewController?.abort();
+    requestState.controller = new AbortController();
+    const { signal } = requestState.controller;
     resetPreview();
     fields.hidden = true;
     empty.hidden = true;
     retry.hidden = true;
-    retryPreview = false;
+    requestState.retryPreview = false;
     select.disabled = true;
     select.replaceChildren(new Option('Seleziona un inquilino', ''));
     message.textContent = 'Caricamento inquilini con contratto…';
     try {
-      const contracts = await api('/api/contratti', signal);
-      signal.throwIfAborted();
-      const tenants = new Map();
-      for (const contract of contracts) {
-        if (contract.immobile.id === immobile.id) tenants.set(contract.inquilino.id, contract.inquilino);
-      }
-      for (const tenant of tenants.values()) {
+      const { tenants } = await loadTenants(api, signal, immobile.id);
+      for (const tenant of tenants) {
         select.add(new Option(`${tenant.nome} ${tenant.cognome}`, tenant.id));
       }
-      empty.hidden = tenants.size > 0;
-      fields.hidden = tenants.size === 0;
+      empty.hidden = tenants.length > 0;
+      fields.hidden = tenants.length === 0;
       select.disabled = false;
-      message.textContent = tenants.size ? 'Seleziona un inquilino.' : '';
-      if (tenants.size === 1) {
-        select.value = tenants.keys().next().value;
+      message.textContent = tenants.length ? 'Seleziona un inquilino.' : '';
+      if (tenants.length === 1) {
+        select.value = tenants[0].id;
         await loadPreview();
       }
     } catch (error) {
@@ -254,7 +266,7 @@ export function createPaymentsDialog(api, onRegistered) {
   async function registerPayment() {
     if (sending || !preview || !window.confirm(`Confermi il pagamento di ${paymentDescription(preview)}?`)) return;
     const { contrattoId, annoCompetenza, meseCompetenza } = preview;
-    const { signal } = controller;
+    const { signal } = requestState.controller;
     setSending(true);
     message.textContent = 'Registrazione del pagamento in corso…';
     try {
@@ -277,11 +289,15 @@ export function createPaymentsDialog(api, onRegistered) {
   }
 
   select.addEventListener('change', () => loadPreview());
-  retry.addEventListener('click', () => retryPreview ? loadPreview() : loadTenants());
+  retry.addEventListener('click', () => requestState.retryPreview ? loadPreview() : loadPaymentTenants());
   confirm.addEventListener('click', registerPayment);
   dialog.querySelectorAll('[data-close]').forEach((button) => button.addEventListener('click', () => dialog.close()));
   dialog.addEventListener('cancel', (event) => { if (sending) event.preventDefault(); });
-  dialog.addEventListener('close', () => { controller?.abort(); previewController?.abort(); resetPreview(); });
+  dialog.addEventListener('close', () => {
+    requestState.controller?.abort();
+    requestState.previewController?.abort();
+    resetPreview();
+  });
   return {
     open(property) {
       immobile = property;
@@ -289,11 +305,11 @@ export function createPaymentsDialog(api, onRegistered) {
       document.querySelector('#payment-new-tenant').href = contextUrl(property.id);
       setSending(false);
       dialog.showModal();
-      loadTenants();
+      loadPaymentTenants();
     },
     close() {
-      controller?.abort();
-      previewController?.abort();
+      requestState.controller?.abort();
+      requestState.previewController?.abort();
       if (dialog.open) dialog.close();
     }
   };
