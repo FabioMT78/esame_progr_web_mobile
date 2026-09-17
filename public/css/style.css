@@ -613,6 +613,11 @@ textarea[aria-invalid="true"] {
   background: #eef2f7;
 }
 
+.icon-cancel:hover,
+.button-cancel:hover {
+  background: #fff1f1;
+}
+
 .icon-button:disabled {
   cursor: not-allowed;
 }
@@ -654,6 +659,13 @@ textarea[aria-invalid="true"] {
 .button-secondary {
   background: #ffffff;
   color: #15385f;
+}
+
+.icon-cancel,
+.button-cancel {
+  border-color: #c94c4c;
+  background: #ffffff;
+  color: #c94c4c;
 }
 
 .dashboard-dialog {

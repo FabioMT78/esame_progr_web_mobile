@@ -17,10 +17,10 @@ export function createIcon(name) {
   return svg;
 }
 
-function iconButton(label, icon) {
+function iconButton(label, icon, cancel = false) {
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = 'icon-button';
+  button.className = cancel ? 'icon-button icon-cancel' : 'icon-button';
   button.setAttribute('aria-label', label);
   button.append(createIcon(icon));
   return button;
@@ -92,7 +92,7 @@ export function createTenantsDialog(api) {
       details.append(label);
       const actions = document.createElement('div');
       actions.className = 'dialog-tenant-actions';
-      const archive = iconButton(`Archivia ${name}`, 'archive');
+      const archive = iconButton(`Archivia ${name}`, 'archive', true);
       archive.addEventListener('click', () => archiveTenant(tenant));
       const contract = iconButton(`Registra contratto per ${name}`, 'contract');
       const active = contracts.some((item) => item.immobile.id === immobile.id
