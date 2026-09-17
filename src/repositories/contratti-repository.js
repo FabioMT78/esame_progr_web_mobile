@@ -50,19 +50,39 @@ async function create(proprietarioId, data) {
   const connection = await pool.getConnection();
   try {
     const [result] = await connection.execute(
-      `INSERT INTO contratti (proprietario_id, immobile_id, inquilino_id, tipologia_id,
-       data_inizio, data_fine, canone_annuale, giorno_pagamento)
+      `INSERT INTO contratti (
+        proprietario_id, immobile_id, inquilino_id, tipologia_id,
+        data_inizio, data_fine, canone_annuale, giorno_pagamento
+      )
        SELECT ?, i.id, q.id, t.id, ?, ?, ?, ?
        FROM immobili i
        JOIN inquilini q ON q.id = ? AND q.proprietario_id = i.proprietario_id
        JOIN tipologie_contrattuali t ON t.id = ?
        WHERE i.id = ? AND i.proprietario_id = ?
-         AND i.deleted_at IS NULL AND q.deleted_at IS NULL
+         AND i.deleted_at IS NULL
+         AND q.deleted_at IS NULL
+
          AND i.foglio IS NOT NULL
          AND i.particella IS NOT NULL
          AND i.subalterno IS NOT NULL
          AND i.categoria IS NOT NULL AND TRIM(i.categoria) <> ''
-         AND i.rendita IS NOT NULL`,
+         AND i.rendita IS NOT NULL
+
+         AND q.nome IS NOT NULL AND TRIM(q.nome) <> ''
+         AND q.cognome IS NOT NULL AND TRIM(q.cognome) <> ''
+         AND q.codice_fiscale IS NOT NULL AND TRIM(q.codice_fiscale) <> ''
+         AND q.data_nascita IS NOT NULL
+         AND q.indirizzo IS NOT NULL AND TRIM(q.indirizzo) <> ''
+         AND q.civico IS NOT NULL AND TRIM(q.civico) <> ''
+         AND q.cap IS NOT NULL AND TRIM(q.cap) <> ''
+         AND q.provincia IS NOT NULL AND TRIM(q.provincia) <> ''
+         AND q.comune IS NOT NULL AND TRIM(q.comune) <> ''
+         AND q.tipo_documento IS NOT NULL AND TRIM(q.tipo_documento) <> ''
+         AND q.numero_documento IS NOT NULL AND TRIM(q.numero_documento) <> ''
+         AND q.organo_rilascio_documento IS NOT NULL
+             AND TRIM(q.organo_rilascio_documento) <> ''
+         AND q.data_rilascio_documento IS NOT NULL
+         AND q.data_scadenza_documento IS NOT NULL`,
       [
         proprietarioId,
         data.dataInizio,
@@ -75,8 +95,11 @@ async function create(proprietarioId, data) {
         proprietarioId
       ]
     );
+
     if (!result.affectedRows) return null;
-    const [[row]] = await connection.query('SELECT CAST(LAST_INSERT_ID() AS CHAR) AS id');
+    const [[row]] = await connection.query(
+      'SELECT CAST(LAST_INSERT_ID() AS CHAR) AS id'
+    );
     return row.id;
   } finally {
     connection.release();

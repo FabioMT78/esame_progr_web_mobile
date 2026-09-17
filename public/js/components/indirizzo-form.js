@@ -18,7 +18,7 @@ const titleField = {
   hint: 'Un nome breve per riconoscere facilmente l’immobile.'
 };
 
-const requiredWhenEnabled = new Set(['titolo', 'indirizzo', 'cap', 'comune', 'provincia']);
+const baseRequiredFields = new Set(['titolo', 'indirizzo', 'cap', 'comune', 'provincia']);
 
 function assertContainer(container) {
   if (!(container instanceof Element)) {
@@ -26,12 +26,20 @@ function assertContainer(container) {
   }
 }
 
-function createField(definition) {
+function fieldId(prefix, name) {
+  return `${prefix}${name}`;
+}
+
+function createField(definition, prefix) {
   const wrapper = document.createElement('div');
   wrapper.className = 'field';
 
+  const id = fieldId(prefix, definition.name);
+  const errorId = `${id}-error`;
+  const hintId = `${id}-hint`;
+
   const label = document.createElement('label');
-  label.htmlFor = definition.name;
+  label.htmlFor = id;
   label.append(document.createTextNode(definition.label));
 
   const marker = document.createElement('span');
@@ -42,7 +50,7 @@ function createField(definition) {
   label.append(marker);
 
   const input = document.createElement('input');
-  input.id = definition.name;
+  input.id = id;
   input.name = definition.name;
   input.type = definition.type;
   if (definition.maxLength) input.maxLength = definition.maxLength;
@@ -52,22 +60,23 @@ function createField(definition) {
   if (definition.autocapitalize) input.autocapitalize = definition.autocapitalize;
   if (definition.spellcheck === false) input.spellcheck = false;
 
-  const describedBy = [`${definition.name}-error`];
-  if (definition.hint) describedBy.push(`${definition.name}-hint`);
+  const describedBy = [errorId];
+  if (definition.hint) describedBy.push(hintId);
   input.setAttribute('aria-describedby', describedBy.join(' '));
 
   wrapper.append(label, input);
+
   if (definition.hint) {
     const hint = document.createElement('p');
     hint.className = 'field-hint';
-    hint.id = `${definition.name}-hint`;
+    hint.id = hintId;
     hint.textContent = definition.hint;
     wrapper.append(hint);
   }
 
   const error = document.createElement('p');
   error.className = 'field-error';
-  error.id = `${definition.name}-error`;
+  error.id = errorId;
   wrapper.append(error);
   return wrapper;
 }
@@ -76,14 +85,19 @@ export function createIndirizzoForm({
   container,
   datiObbligatori = false,
   visibile = true,
-  mostraTitolo = false
+  mostraTitolo = false,
+  civicoObbligatorio = false,
+  idPrefix = ''
 } = {}) {
   assertContainer(container);
 
   const definitions = mostraTitolo ? [titleField, ...commonFields] : commonFields;
+  const requiredFields = new Set(baseRequiredFields);
+  if (civicoObbligatorio) requiredFields.add('civico');
+
   const grid = document.createElement('div');
   grid.className = 'form-grid';
-  for (const definition of definitions) grid.append(createField(definition));
+  for (const definition of definitions) grid.append(createField(definition, idPrefix));
   container.replaceChildren(grid);
 
   let required = Boolean(datiObbligatori);
@@ -94,7 +108,7 @@ export function createIndirizzoForm({
   }
 
   function errorElement(name) {
-    return container.querySelector(`#${name}-error`);
+    return container.querySelector(`#${CSS.escape(fieldId(idPrefix, name))}-error`);
   }
 
   function clearErrors() {
@@ -107,7 +121,7 @@ export function createIndirizzoForm({
   function setRequired(value) {
     required = Boolean(value);
     for (const { name } of definitions) {
-      const mandatory = required && requiredWhenEnabled.has(name);
+      const mandatory = required && requiredFields.has(name);
       const field = input(name);
       field.required = mandatory;
       if (mandatory) field.setAttribute('aria-required', 'true');
@@ -152,7 +166,7 @@ export function createIndirizzoForm({
 
     for (const definition of definitions) {
       const value = data[definition.name];
-      if (required && requiredWhenEnabled.has(definition.name) && !value) {
+      if (required && requiredFields.has(definition.name) && !value) {
         errors[definition.name] = 'Questo campo è obbligatorio.';
       } else if (value && definition.maxLength && value.length > definition.maxLength) {
         errors[definition.name] = `Inserisci al massimo ${definition.maxLength} caratteri.`;

@@ -133,6 +133,10 @@ nav,
   white-space: nowrap;
 }
 
+.header-menu {
+  text-decoration: none;
+}
+
 .site-header nav button {
   padding-inline: 0.75rem;
 }
@@ -140,7 +144,7 @@ nav,
 .section-actions,
 .form-actions,
 .page-actions {
-  margin-top: 1.5rem;
+  margin-top: 2.5rem;
 }
 
 .action-group--end,
@@ -179,6 +183,10 @@ input,
 button,
 textarea {
   font: inherit;
+}
+
+small {
+  font-size: 0.85rem;
 }
 
 .form-grid {
@@ -749,6 +757,10 @@ body:has(.dashboard-dialog[open]) {
   margin: 0 0 1rem;
   font-size: 1.75rem;
   font-weight: 700;
+}
+
+.required-help {
+  font-style: italic;
 }
 
 @media (max-width: 40rem) {

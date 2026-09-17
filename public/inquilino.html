@@ -22,7 +22,6 @@
 
         <section class="status-card tenant-section" aria-labelledby="form-title">
           <h1 id="form-title">Nuovo inquilino</h1>
-          <p id="form-help">I campi contrassegnati con * sono obbligatori. In questa pagina sono obbligatori solo i dati anagrafici.</p>
 
           <form id="tenant-form" novalidate>
             <fieldset id="tenant-fields" class="tenant-fields" disabled>
@@ -38,21 +37,24 @@
                 <input id="immagineUrl" name="immagineUrl" type="url" maxlength="500" aria-describedby="immagineUrl-error immagineUrl-hint">
                 <p class="field-hint" id="immagineUrl-hint">Indirizzo http o https di un’immagine.</p>
                 <p class="field-error" id="immagineUrl-error"></p>
+                <small class="required-help">* Campi obbligatori.</small>
               </div>
 
-              <hr>
+              <hr class="divider">
+
               <section aria-labelledby="address-title">
                 <h2 id="address-title">Indirizzo</h2>
-                <p class="field-hint">Facoltativo in questa pagina.</p>
                 <div id="indirizzo-fields"></div>
+                <small class="required-help">* Campi obbligatori.</small>
               </section>
 
-              <hr>
+              <hr class="divider">
+
               <section aria-labelledby="document-title">
                 <h2 id="document-title">Documento di riconoscimento</h2>
-                <p class="field-hint">Facoltativo in questa pagina.</p>
                 <div id="documento-fields"></div>
-              </section>
+                <small class="required-help">* Campi obbligatori.</small>
+              </section>            
 
               <div class="actions form-actions">
                 <button id="cancel-tenant" class="button-secondary" type="button">Annulla</button>
