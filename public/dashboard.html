@@ -35,7 +35,7 @@
       <a id="tenants-new" class="button-link" href="/inquilino.html">Nuovo inquilino</a>
     </div>
     <div class="dialog-actions">
-      <button type="button" class="button-cancel" data-close>Annulla</button>
+      <button type="button" class="button-secondary" data-close>Annulla</button>
     </div>
   </dialog>
   <dialog id="payment-dialog" class="dashboard-dialog" aria-labelledby="payment-dialog-title">
@@ -46,7 +46,7 @@
     <p id="payment-message" class="message" role="status" aria-live="polite" aria-atomic="true"></p>
     <button id="payment-retry" type="button" hidden>Riprova</button>
     <div id="payment-empty" class="dialog-empty" hidden>
-      <p>Nessun inquilino con contratto disponibile.</p>
+      <p>Non hai ancora inquilini attivi.</p>
       <a id="payment-new-tenant" class="button-link" href="/inquilino.html">Nuovo inquilino</a>
     </div>
     <div id="payment-fields" hidden>
@@ -55,11 +55,11 @@
         <option value="">Seleziona un inquilino</option>
       </select>
       <p class="payment-amount-label">Importo</p>
-      <p id="payment-amount" class="payment-amount">€ 0,00</p>
+      <p id="payment-amount" class="payment-amount">—</p>
       <p id="payment-period" class="field-hint"></p>
     </div>
     <div class="dialog-actions">
-      <button type="button" class="button-cancel" data-close>Annulla</button>
+      <button type="button" class="button-secondary" data-close>Annulla</button>
       <button id="payment-confirm" type="button" disabled>Pagato</button>
     </div>
   </dialog>

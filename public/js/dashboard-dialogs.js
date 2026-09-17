@@ -17,10 +17,10 @@ export function createIcon(name) {
   return svg;
 }
 
-function iconButton(label, icon, cancel = false) {
+function iconButton(label, icon) {
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = cancel ? 'icon-button icon-cancel' : 'icon-button';
+  button.className = 'icon-button';
   button.setAttribute('aria-label', label);
   button.append(createIcon(icon));
   return button;
@@ -92,7 +92,7 @@ export function createTenantsDialog(api) {
       details.append(label);
       const actions = document.createElement('div');
       actions.className = 'dialog-tenant-actions';
-      const archive = iconButton(`Archivia ${name}`, 'archive', true);
+      const archive = iconButton(`Archivia ${name}`, 'archive');
       archive.addEventListener('click', () => archiveTenant(tenant));
       const contract = iconButton(`Registra contratto per ${name}`, 'contract');
       const active = contracts.some((item) => item.immobile.id === immobile.id
@@ -192,7 +192,7 @@ export function createPaymentsDialog(api, onRegistered) {
 
   function resetPreview() {
     preview = null;
-    amount.textContent = euro.format(0);
+    amount.textContent = '—';
     period.textContent = '';
     confirm.disabled = true;
   }
@@ -242,9 +242,13 @@ export function createPaymentsDialog(api, onRegistered) {
     requestState.retryPreview = false;
     select.disabled = true;
     select.replaceChildren(new Option('Seleziona un inquilino', ''));
-    message.textContent = 'Caricamento inquilini con contratto…';
+    message.textContent = 'Caricamento inquilini…';
     try {
-      const { tenants } = await loadTenants(api, signal, immobile.id);
+      // Usa la stessa sorgente del dialog "Gestisci inquilini": se esistono
+      // inquilini attivi, il form pagamento deve essere visibile. Il backend
+      // stabilisce poi se per la coppia immobile/inquilino esiste una competenza
+      // pagabile e mantiene autorevoli contratto, canone e importo.
+      const { tenants } = await loadTenants(api, signal);
       for (const tenant of tenants) {
         select.add(new Option(`${tenant.nome} ${tenant.cognome}`, tenant.id));
       }

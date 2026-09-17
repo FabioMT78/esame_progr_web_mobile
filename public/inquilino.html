@@ -54,10 +54,10 @@
                 <h2 id="document-title">Documento di riconoscimento</h2>
                 <div id="documento-fields"></div>
                 <small class="required-help">* Campi obbligatori.</small>
-              </section>            
+              </section>
 
               <div class="actions form-actions">
-                <button id="cancel-tenant" class="button-cancel" type="button">Annulla</button>
+                <button id="cancel-tenant" class="button-secondary" type="button">Annulla</button>
                 <button id="save" class="action-primary" type="submit">Crea inquilino</button>
               </div>
             </fieldset>
@@ -70,6 +70,18 @@
       <noscript><p>Abilita JavaScript per gestire i tuoi inquilini.</p></noscript>
     </div>
   </main>
+
+  <dialog id="tenant-created-dialog" class="dashboard-dialog" aria-labelledby="tenant-created-title" aria-describedby="tenant-created-message">
+    <div class="dialog-heading">
+      <h2 id="tenant-created-title">Inquilino creato</h2>
+    </div>
+    <p id="tenant-created-message">L’inquilino è stato registrato correttamente. Vuoi creare ora un contratto per questo immobile?</p>
+    <div class="dialog-actions">
+      <button id="tenant-created-dashboard" class="button-secondary" type="button">Torna alla dashboard</button>
+      <button id="tenant-created-contract" type="button">Crea contratto</button>
+    </div>
+  </dialog>
+
   <footer id="site-footer" class="site-footer"></footer>
 </body>
 </html>

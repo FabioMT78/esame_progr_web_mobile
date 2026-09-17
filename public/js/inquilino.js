@@ -12,6 +12,9 @@ const formMessage = document.querySelector('#form-message');
 const warning = document.querySelector('#prerequisite-warning');
 const cancel = document.querySelector('#cancel-tenant');
 const imageInput = document.querySelector('#immagineUrl');
+const tenantCreatedDialog = document.querySelector('#tenant-created-dialog');
+const tenantCreatedDashboard = document.querySelector('#tenant-created-dashboard');
+const tenantCreatedContract = document.querySelector('#tenant-created-contract');
 const immobileContext = readIdParameter('immobileId');
 
 const anagrafica = createAnagraficaForm({
@@ -35,6 +38,7 @@ let hasImmobili = false;
 let editorReady = false;
 let busy = false;
 let request;
+let createdTenantId = null;
 
 function logout() {
   request?.abort();
@@ -238,8 +242,9 @@ form.addEventListener('submit', async (event) => {
     );
 
     if (creating && immobileContext) {
-      const params = new URLSearchParams({ immobileId: immobileContext, inquilinoId: tenant.id });
-      window.location.assign(`/contratto.html?${params}`);
+      createdTenantId = String(tenant.id);
+      clearFormState();
+      tenantCreatedDialog.showModal();
       return;
     }
 
@@ -258,6 +263,23 @@ form.addEventListener('submit', async (event) => {
     busy = false;
     syncControls();
   }
+});
+
+tenantCreatedDialog.addEventListener('cancel', (event) => {
+  event.preventDefault();
+});
+
+tenantCreatedDashboard.addEventListener('click', () => {
+  window.location.replace('/dashboard.html');
+});
+
+tenantCreatedContract.addEventListener('click', () => {
+  if (!immobileContext || !createdTenantId) return;
+  const params = new URLSearchParams({
+    immobileId: immobileContext,
+    inquilinoId: createdTenantId
+  });
+  window.location.replace(`/contratto.html?${params}`);
 });
 
 cancel.addEventListener('click', () => {
@@ -285,5 +307,7 @@ retry.addEventListener('click', loadPage);
 window.addEventListener('pageshow', loadPage);
 window.addEventListener('pagehide', () => {
   request?.abort();
+  if (tenantCreatedDialog.open) tenantCreatedDialog.close();
+  createdTenantId = null;
   content.hidden = true;
 });
