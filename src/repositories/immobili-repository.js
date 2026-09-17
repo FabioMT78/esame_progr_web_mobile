@@ -1,6 +1,6 @@
 const pool = require('../db/pool');
 
-const columns = `CAST(id AS CHAR) AS id, titolo, via, numero_civico AS numeroCivico,
+const columns = `CAST(id AS CHAR) AS id, titolo, indirizzo, civico,
   cap, comune, provincia, codice_comunale AS codiceComunale, foglio, particella,
   subalterno, zona, categoria, consistenza, rendita, immagine_url AS immagineUrl`;
 
@@ -43,8 +43,8 @@ function values(data) {
   const catasto = data.datiCatastali || {};
   return [
     data.titolo,
-    data.via,
-    data.numeroCivico,
+    data.indirizzo,
+    data.civico,
     data.cap,
     data.comune,
     data.provincia,
@@ -65,15 +65,13 @@ async function create(data, proprietarioId) {
   try {
     await connection.execute(
       `INSERT INTO immobili (
-        titolo, via, numero_civico, cap, comune, provincia,
+        titolo, indirizzo, civico, cap, comune, provincia,
         codice_comunale, foglio, particella, subalterno, zona, categoria,
         consistenza, rendita, immagine_url, proprietario_id
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [...values(data), proprietarioId]
     );
-    const [[row]] = await connection.query(
-      'SELECT CAST(LAST_INSERT_ID() AS CHAR) AS id'
-    );
+    const [[row]] = await connection.query('SELECT CAST(LAST_INSERT_ID() AS CHAR) AS id');
     return row.id;
   } finally {
     connection.release();
@@ -83,7 +81,7 @@ async function create(data, proprietarioId) {
 async function update(id, data, proprietarioId) {
   const [result] = await pool.execute(
     `UPDATE immobili SET
-      titolo = ?, via = ?, numero_civico = ?, cap = ?, comune = ?, provincia = ?,
+      titolo = ?, indirizzo = ?, civico = ?, cap = ?, comune = ?, provincia = ?,
       codice_comunale = ?, foglio = ?, particella = ?, subalterno = ?, zona = ?,
       categoria = ?, consistenza = ?, rendita = ?, immagine_url = ?
      WHERE id = ? AND proprietario_id = ? AND deleted_at IS NULL`,

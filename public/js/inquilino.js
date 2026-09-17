@@ -1,4 +1,7 @@
 import { readToken, clearToken, clearFieldErrors, showFormError, readIdParameter } from './common.js';
+import { createAnagraficaForm } from './components/anagrafica-form.js';
+import { createIndirizzoForm } from './components/indirizzo-form.js';
+import { createDocumentoIdentitaForm } from './components/documento-identita-form.js';
 
 const content = document.querySelector('#protected-content');
 const sessionMessage = document.querySelector('#session-message');
@@ -8,10 +11,25 @@ const fields = document.querySelector('#tenant-fields');
 const formMessage = document.querySelector('#form-message');
 const warning = document.querySelector('#prerequisite-warning');
 const cancel = document.querySelector('#cancel-tenant');
-const dataNascita = form.elements.dataNascita;
-const dataRilascioDocumento = form.elements.dataRilascioDocumento;
-const dataScadenzaDocumento = form.elements.dataScadenzaDocumento;
+const imageInput = document.querySelector('#immagineUrl');
 const immobileContext = readIdParameter('immobileId');
+
+const anagrafica = createAnagraficaForm({
+  container: document.querySelector('#anagrafica-fields'),
+  datiObbligatori: true
+});
+
+const indirizzo = createIndirizzoForm({
+  container: document.querySelector('#indirizzo-fields'),
+  datiObbligatori: false,
+  mostraTitolo: false
+});
+
+const documento = createDocumentoIdentitaForm({
+  container: document.querySelector('#documento-fields'),
+  datiObbligatori: false
+});
+
 let editId = new URLSearchParams(window.location.search).get('id');
 let hasImmobili = false;
 let editorReady = false;
@@ -30,17 +48,20 @@ async function api(url, options = {}) {
     logout();
     throw new Error('Accedi nuovamente.');
   }
+
   const response = await fetch(url, {
     ...options,
     cache: 'no-store',
     signal: request.signal,
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
   });
+
   if (response.status === 401) {
     logout();
     throw new Error('Sessione scaduta. Accedi nuovamente.');
   }
   if (response.status === 204) return null;
+
   const data = await response.json();
   if (!response.ok) {
     throw Object.assign(new Error(data.error || 'Operazione non riuscita.'), {
@@ -58,11 +79,72 @@ function syncControls() {
   form.setAttribute('aria-busy', String(busy));
 }
 
-function syncDateLimits() {
-  const today = new Date().toISOString().slice(0, 10);
-  dataNascita.max = today;
-  dataRilascioDocumento.max = today;
-  dataScadenzaDocumento.min = dataRilascioDocumento.value || '1000-01-01';
+function clearImageError() {
+  imageInput.removeAttribute('aria-invalid');
+  document.querySelector('#immagineUrl-error').textContent = '';
+}
+
+function validateImageUrl() {
+  clearImageError();
+  const value = imageInput.value.trim();
+  if (!value) return {};
+
+  try {
+    const url = new URL(value);
+    if (!['http:', 'https:'].includes(url.protocol) || value.length > 500) {
+      throw new Error('URL non valido');
+    }
+    return {};
+  } catch {
+    const message = 'Inserisci un URL http o https valido, di massimo 500 caratteri.';
+    imageInput.setAttribute('aria-invalid', 'true');
+    document.querySelector('#immagineUrl-error').textContent = message;
+    return { immagineUrl: message };
+  }
+}
+
+function clearFormState() {
+  form.reset();
+  anagrafica.clear();
+  indirizzo.clear();
+  documento.clear();
+  imageInput.value = '';
+  clearFieldErrors(form);
+  clearImageError();
+  formMessage.textContent = '';
+}
+
+function fillEditor(tenant) {
+  anagrafica.setData(tenant);
+  indirizzo.setData(tenant);
+  documento.setData(tenant);
+  imageInput.value = tenant.immagineUrl ?? '';
+}
+
+function buildPayload() {
+  return {
+    ...anagrafica.getData(),
+    ...indirizzo.getData(),
+    ...documento.getData(),
+    immagineUrl: imageInput.value.trim()
+  };
+}
+
+function validateForm() {
+  clearFieldErrors(form);
+  const errors = {
+    ...anagrafica.validate(),
+    ...indirizzo.validate(),
+    ...documento.validate(),
+    ...validateImageUrl()
+  };
+
+  if (!Object.keys(errors).length) return true;
+  showFormError(form, formMessage, {
+    message: 'Controlla i campi indicati.',
+    fields: errors
+  });
+  return false;
 }
 
 async function loadPrerequisites() {
@@ -77,18 +159,18 @@ async function loadPrerequisites() {
 async function loadEditor() {
   document.querySelector('#form-title').textContent = editId !== null ? 'Modifica inquilino' : 'Nuovo inquilino';
   document.querySelector('#save').textContent = editId !== null ? 'Salva modifiche' : 'Crea inquilino';
+  document.title = `${editId !== null ? 'Modifica inquilino' : 'Nuovo inquilino'} — Gestionale Affitti`;
+
   editorReady = false;
   syncControls();
+  clearFormState();
 
   if (editId !== null) {
     if (!/^[1-9]\d*$/.test(editId)) throw new Error('Inquilino non trovato.');
     const tenant = await api(`/api/inquilini/${encodeURIComponent(editId)}`);
-    for (const element of form.querySelectorAll('input[name], select[name]')) {
-      element.value = tenant[element.name] ?? '';
-    }
+    fillEditor(tenant);
   }
 
-  syncDateLimits();
   editorReady = true;
   syncControls();
 }
@@ -108,13 +190,12 @@ async function loadPage() {
     content.hidden = false;
     formMessage.textContent = '';
     clearFieldErrors(form);
+
     const results = await Promise.allSettled([loadPrerequisites(), loadEditor()]);
     if (controller.signal.aborted) return;
 
     const errors = results.filter((result) => result.status === 'rejected');
-    if (results[1].status === 'rejected') {
-      showFormError(form, formMessage, results[1].reason);
-    }
+    if (results[1].status === 'rejected') showFormError(form, formMessage, results[1].reason);
     sessionMessage.textContent = errors.length
       ? 'Alcuni dati non sono disponibili. Riprova caricamento.'
       : '';
@@ -131,64 +212,30 @@ async function loadPage() {
   }
 }
 
-function clientValidationError() {
-  const validationFields = {};
-  const cap = form.elements.cap.value.trim();
-  const provincia = form.elements.provincia.value.trim().toUpperCase();
-  const rilascio = dataRilascioDocumento.value;
-  const scadenza = dataScadenzaDocumento.value;
-  const today = new Date().toISOString().slice(0, 10);
-
-  if (cap && !/^\d{5}$/.test(cap)) {
-    validationFields.cap = 'Il CAP deve contenere esattamente 5 cifre.';
-  }
-  if (provincia && !/^[A-Z]{2}$/.test(provincia)) {
-    validationFields.provincia = 'Inserisci la sigla della provincia di 2 lettere.';
-  }
-  if (dataNascita.value && dataNascita.value > today) {
-    validationFields.dataNascita = 'La data di nascita non può essere futura.';
-  }
-  if (rilascio && rilascio > today) {
-    validationFields.dataRilascioDocumento = 'La data di rilascio non può essere futura.';
-  }
-  if (rilascio && scadenza && scadenza < rilascio) {
-    validationFields.dataScadenzaDocumento = 'La scadenza non può precedere la data di rilascio.';
-  }
-
-  return Object.keys(validationFields).length
-    ? Object.assign(new Error('Controlla i campi indicati.'), { fields: validationFields })
-    : null;
-}
+form.addEventListener('input', (event) => {
+  formMessage.textContent = '';
+  const field = event.target.closest('[name]');
+  if (!field) return;
+  field.removeAttribute('aria-invalid');
+  const error = document.getElementById(`${field.name}-error`);
+  if (error) error.textContent = '';
+});
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
-  if (fields.disabled || busy) return;
+  if (fields.disabled || busy || !validateForm()) return;
 
-  clearFieldErrors(form);
-  formMessage.textContent = '';
-
-  if (!form.reportValidity()) return;
-  const validationError = clientValidationError();
-  if (validationError) {
-    showFormError(form, formMessage, validationError);
-    return;
-  }
-
-  form.elements.codiceFiscale.value = form.elements.codiceFiscale.value.trim().toUpperCase();
-  form.elements.provincia.value = form.elements.provincia.value.trim().toUpperCase();
-  form.elements.numeroDocumento.value = form.elements.numeroDocumento.value.trim().toUpperCase();
-
-  const input = Object.fromEntries(new FormData(form));
+  const input = buildPayload();
   const creating = editId === null;
   busy = true;
   syncControls();
   formMessage.textContent = 'Salvataggio in corso…';
 
   try {
-    const tenant = await api(creating ? '/api/inquilini' : `/api/inquilini/${encodeURIComponent(editId)}`, {
-      method: creating ? 'POST' : 'PUT',
-      body: JSON.stringify(input)
-    });
+    const tenant = await api(
+      creating ? '/api/inquilini' : `/api/inquilini/${encodeURIComponent(editId)}`,
+      { method: creating ? 'POST' : 'PUT', body: JSON.stringify(input) }
+    );
 
     if (creating && immobileContext) {
       const params = new URLSearchParams({ immobileId: immobileContext, inquilinoId: tenant.id });
@@ -196,10 +243,8 @@ form.addEventListener('submit', async (event) => {
       return;
     }
 
-    if (creating) {
-      form.reset();
-      syncDateLimits();
-    }
+    if (creating) clearFormState();
+    else fillEditor(tenant);
 
     formMessage.textContent = creating ? 'Inquilino creato.' : 'Modifiche salvate.';
     formMessage.focus();
@@ -215,19 +260,9 @@ form.addEventListener('submit', async (event) => {
   }
 });
 
-dataRilascioDocumento.addEventListener('change', () => {
-  syncDateLimits();
-  if (dataScadenzaDocumento.value
-      && dataScadenzaDocumento.value < dataRilascioDocumento.value) {
-    dataScadenzaDocumento.value = '';
-  }
-});
-
 cancel.addEventListener('click', () => {
   if (busy) return;
-  form.reset();
-  clearFieldErrors(form);
-  formMessage.textContent = '';
+  clearFormState();
 
   let previousIsSafe = false;
   try {
@@ -241,11 +276,8 @@ cancel.addEventListener('click', () => {
     previousIsSafe = false;
   }
 
-  if (previousIsSafe && window.history.length > 1) {
-    window.history.back();
-  } else {
-    window.location.assign('/dashboard.html');
-  }
+  if (previousIsSafe && window.history.length > 1) window.history.back();
+  else window.location.assign('/dashboard.html');
 });
 
 document.querySelector('#logout').addEventListener('click', logout);

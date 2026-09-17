@@ -67,7 +67,7 @@ function selected(items, name) {
 }
 
 function immobileLabel(immobile) {
-  const street = [immobile.via, immobile.numeroCivico].filter(Boolean).join(' ');
+  const street = [immobile.indirizzo, immobile.civico].filter(Boolean).join(' ');
   return `${immobile.titolo} — ${street}, ${immobile.comune}`;
 }
 

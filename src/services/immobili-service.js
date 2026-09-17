@@ -86,17 +86,13 @@ function validateCadastralData(input, fields) {
   }
 
   const data = {
-    codiceComunale: validateOptionalText(
-      input.codiceComunale, 'codiceComunale', 20, fields
-    ),
+    codiceComunale: validateOptionalText(input.codiceComunale, 'codiceComunale', 20, fields),
     foglio: validateOptionalInteger(input.foglio, 'foglio', fields),
     particella: validateOptionalInteger(input.particella, 'particella', fields),
     subalterno: validateOptionalInteger(input.subalterno, 'subalterno', fields),
     zona: validateOptionalInteger(input.zona, 'zona', fields),
     categoria: validateOptionalText(input.categoria, 'categoria', 20, fields),
-    consistenza: validateOptionalDecimal(
-      input.consistenza, 'consistenza', fields, false
-    ),
+    consistenza: validateOptionalDecimal(input.consistenza, 'consistenza', fields, false),
     rendita: validateOptionalDecimal(input.rendita, 'rendita', fields, true)
   };
 
@@ -106,31 +102,34 @@ function validateCadastralData(input, fields) {
 function validate(input) {
   const data = {};
   const fields = {};
-
   const requiredAddress = {
     titolo: 150,
-    via: 150,
-    cap: 10,
+    indirizzo: 150,
+    cap: 5,
     comune: 100,
-    provincia: 100
+    provincia: 2
   };
 
   for (const [key, max] of Object.entries(requiredAddress)) {
     data[key] = typeof input?.[key] === 'string' ? input[key].trim() : '';
     if (!data[key]) fields[key] = 'Questo campo è obbligatorio.';
-    else if (data[key].length > max) {
-      fields[key] = `Inserisci al massimo ${max} caratteri.`;
-    }
+    else if (data[key].length > max) fields[key] = `Inserisci al massimo ${max} caratteri.`;
   }
 
-  if (input?.numeroCivico != null && typeof input.numeroCivico !== 'string') {
-    fields.numeroCivico = 'Inserisci un testo valido.';
+  data.provincia = data.provincia.toUpperCase();
+  if (data.cap && !/^\d{5}$/.test(data.cap)) {
+    fields.cap = 'Il CAP deve contenere esattamente 5 cifre.';
   }
-  data.numeroCivico = typeof input?.numeroCivico === 'string'
-    ? input.numeroCivico.trim()
-    : '';
-  if (data.numeroCivico.length > 20) {
-    fields.numeroCivico = 'Inserisci al massimo 20 caratteri.';
+  if (data.provincia && !/^[A-Z]{2}$/.test(data.provincia)) {
+    fields.provincia = 'Inserisci la sigla della provincia di 2 lettere.';
+  }
+
+  if (input?.civico != null && typeof input.civico !== 'string') {
+    fields.civico = 'Inserisci un testo valido.';
+  }
+  data.civico = typeof input?.civico === 'string' ? input.civico.trim() || null : null;
+  if (data.civico && data.civico.length > 20) {
+    fields.civico = 'Inserisci al massimo 20 caratteri.';
   }
 
   if (input?.immagineUrl != null && typeof input.immagineUrl !== 'string') {
@@ -143,25 +142,19 @@ function validate(input) {
   if (data.immagineUrl) {
     try {
       const url = new URL(data.immagineUrl);
-      if (!['http:', 'https:'].includes(url.protocol)
-          || data.immagineUrl.length > 500) {
+      if (!['http:', 'https:'].includes(url.protocol) || data.immagineUrl.length > 500) {
         throw new Error('URL non valido');
       }
     } catch {
-      fields.immagineUrl =
-        'Inserisci un URL http o https valido, di massimo 500 caratteri.';
+      fields.immagineUrl = 'Inserisci un URL http o https valido, di massimo 500 caratteri.';
     }
   }
 
   data.datiCatastali = validateCadastralData(input?.datiCatastali, fields);
 
   if (Object.keys(fields).length) {
-    throw Object.assign(new Error('Controlla i campi indicati.'), {
-      status: 400,
-      fields
-    });
+    throw Object.assign(new Error('Controlla i campi indicati.'), { status: 400, fields });
   }
-
   return data;
 }
 

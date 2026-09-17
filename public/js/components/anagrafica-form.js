@@ -1,29 +1,31 @@
-const commonFields = [
-  { name: 'indirizzo', label: 'Indirizzo', type: 'text', maxLength: 150, autocomplete: 'street-address' },
-  { name: 'civico', label: 'Civico', type: 'text', maxLength: 20 },
+const fieldsDefinition = [
+  { name: 'nome', label: 'Nome', type: 'text', maxLength: 100, autocomplete: 'given-name' },
+  { name: 'cognome', label: 'Cognome', type: 'text', maxLength: 100, autocomplete: 'family-name' },
   {
-    name: 'cap', label: 'CAP', type: 'text', minLength: 5, maxLength: 5,
-    inputMode: 'numeric', autocomplete: 'postal-code', hint: '5 cifre.'
+    name: 'codiceFiscale', label: 'Codice fiscale', type: 'text', minLength: 16,
+    maxLength: 16, autocapitalize: 'characters', spellcheck: false,
+    hint: 'Esattamente 16 caratteri alfanumerici.'
   },
   {
-    name: 'provincia', label: 'Provincia', type: 'text', minLength: 2, maxLength: 2,
-    autocapitalize: 'characters', spellcheck: false, autocomplete: 'address-level1',
-    hint: 'Sigla di 2 lettere.'
-  },
-  { name: 'comune', label: 'Comune', type: 'text', maxLength: 100, autocomplete: 'address-level2' }
+    name: 'dataNascita', label: 'Data di nascita', type: 'date', min: '1000-01-01',
+    autocomplete: 'bday'
+  }
 ];
 
-const titleField = {
-  name: 'titolo', label: 'Soprannome immobile', type: 'text', maxLength: 150,
-  hint: 'Un nome breve per riconoscere facilmente l’immobile.'
-};
-
-const requiredWhenEnabled = new Set(['titolo', 'indirizzo', 'cap', 'comune', 'provincia']);
+const requiredWhenEnabled = new Set(fieldsDefinition.map(({ name }) => name));
 
 function assertContainer(container) {
   if (!(container instanceof Element)) {
-    throw new TypeError('Il container del componente indirizzo non è valido.');
+    throw new TypeError('Il container del componente anagrafica non è valido.');
   }
+}
+
+function validDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime())
+    && date.getUTCFullYear() >= 1000
+    && date.toISOString().slice(0, 10) === value;
 }
 
 function createField(definition) {
@@ -47,7 +49,7 @@ function createField(definition) {
   input.type = definition.type;
   if (definition.maxLength) input.maxLength = definition.maxLength;
   if (definition.minLength) input.minLength = definition.minLength;
-  if (definition.inputMode) input.inputMode = definition.inputMode;
+  if (definition.min) input.min = definition.min;
   if (definition.autocomplete) input.autocomplete = definition.autocomplete;
   if (definition.autocapitalize) input.autocapitalize = definition.autocapitalize;
   if (definition.spellcheck === false) input.spellcheck = false;
@@ -57,6 +59,7 @@ function createField(definition) {
   input.setAttribute('aria-describedby', describedBy.join(' '));
 
   wrapper.append(label, input);
+
   if (definition.hint) {
     const hint = document.createElement('p');
     hint.className = 'field-hint';
@@ -72,18 +75,12 @@ function createField(definition) {
   return wrapper;
 }
 
-export function createIndirizzoForm({
-  container,
-  datiObbligatori = false,
-  visibile = true,
-  mostraTitolo = false
-} = {}) {
+export function createAnagraficaForm({ container, datiObbligatori = false, visibile = true } = {}) {
   assertContainer(container);
 
-  const definitions = mostraTitolo ? [titleField, ...commonFields] : commonFields;
   const grid = document.createElement('div');
   grid.className = 'form-grid';
-  for (const definition of definitions) grid.append(createField(definition));
+  for (const definition of fieldsDefinition) grid.append(createField(definition));
   container.replaceChildren(grid);
 
   let required = Boolean(datiObbligatori);
@@ -98,7 +95,7 @@ export function createIndirizzoForm({
   }
 
   function clearErrors() {
-    for (const { name } of definitions) {
+    for (const { name } of fieldsDefinition) {
       input(name).removeAttribute('aria-invalid');
       errorElement(name).textContent = '';
     }
@@ -106,7 +103,7 @@ export function createIndirizzoForm({
 
   function setRequired(value) {
     required = Boolean(value);
-    for (const { name } of definitions) {
+    for (const { name } of fieldsDefinition) {
       const mandatory = required && requiredWhenEnabled.has(name);
       const field = input(name);
       field.required = mandatory;
@@ -119,19 +116,20 @@ export function createIndirizzoForm({
   function setVisible(value) {
     visible = Boolean(value);
     container.hidden = !visible;
-    for (const { name } of definitions) input(name).disabled = !visible;
+    for (const { name } of fieldsDefinition) input(name).disabled = !visible;
   }
 
   function getData() {
-    const data = Object.fromEntries(
-      definitions.map(({ name }) => [name, input(name).value.trim()])
-    );
-    if (Object.hasOwn(data, 'provincia')) data.provincia = data.provincia.toUpperCase();
-    return data;
+    return {
+      nome: input('nome').value.trim(),
+      cognome: input('cognome').value.trim(),
+      codiceFiscale: input('codiceFiscale').value.trim().toUpperCase(),
+      dataNascita: input('dataNascita').value
+    };
   }
 
   function setData(data = {}) {
-    for (const { name } of definitions) input(name).value = data?.[name] ?? '';
+    for (const { name } of fieldsDefinition) input(name).value = data?.[name] ?? '';
     clearErrors();
   }
 
@@ -149,21 +147,27 @@ export function createIndirizzoForm({
 
     const data = getData();
     const errors = {};
+    const today = new Date().toISOString().slice(0, 10);
 
-    for (const definition of definitions) {
+    for (const definition of fieldsDefinition) {
       const value = data[definition.name];
-      if (required && requiredWhenEnabled.has(definition.name) && !value) {
+      if (required && !value) {
         errors[definition.name] = 'Questo campo è obbligatorio.';
       } else if (value && definition.maxLength && value.length > definition.maxLength) {
         errors[definition.name] = `Inserisci al massimo ${definition.maxLength} caratteri.`;
       }
     }
 
-    if (data.cap && !/^\d{5}$/.test(data.cap)) {
-      errors.cap = 'Il CAP deve contenere esattamente 5 cifre.';
+    if (data.codiceFiscale && !/^[A-Z0-9]{16}$/.test(data.codiceFiscale)) {
+      errors.codiceFiscale = 'Il codice fiscale deve contenere esattamente 16 caratteri alfanumerici.';
     }
-    if (data.provincia && !/^[A-Z]{2}$/.test(data.provincia)) {
-      errors.provincia = 'Inserisci la sigla della provincia di 2 lettere.';
+
+    if (data.dataNascita) {
+      if (!validDate(data.dataNascita)) {
+        errors.dataNascita = 'Inserisci una data valida.';
+      } else if (data.dataNascita > today) {
+        errors.dataNascita = 'La data di nascita non può essere futura.';
+      }
     }
 
     for (const [name, message] of Object.entries(errors)) {
@@ -177,6 +181,7 @@ export function createIndirizzoForm({
     container.querySelector('[aria-invalid="true"]')?.focus();
   }
 
+  input('dataNascita').max = new Date().toISOString().slice(0, 10);
   setRequired(required);
   setVisible(visible);
 

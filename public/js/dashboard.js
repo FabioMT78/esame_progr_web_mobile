@@ -86,7 +86,7 @@ function createCard(immobile) {
 
   const address = document.createElement('p');
   address.className = 'property-card-address';
-  const street = [immobile.via, immobile.numeroCivico].filter(Boolean).join(' ');
+  const street = [immobile.indirizzo, immobile.civico].filter(Boolean).join(' ');
   const town = [immobile.cap, immobile.comune].filter(Boolean).join(' ');
   const locality = [town, immobile.provincia ? `(${immobile.provincia})` : ''].filter(Boolean).join(' ');
   address.textContent = [street, locality].filter(Boolean).join(', ') || 'Indirizzo non disponibile';
@@ -119,9 +119,7 @@ function createCard(immobile) {
 
 function renderImmobili(immobili) {
   const cards = document.createDocumentFragment();
-  for (const immobile of immobili) {
-    cards.append(createCard(immobile));
-  }
+  for (const immobile of immobili) cards.append(createCard(immobile));
   grid.replaceChildren(cards);
   grid.hidden = immobili.length === 0;
   emptyState.hidden = immobili.length > 0;

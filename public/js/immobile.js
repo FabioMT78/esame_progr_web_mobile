@@ -14,7 +14,8 @@ const imageInput = document.querySelector('#immagineUrl');
 
 const indirizzo = createIndirizzoForm({
   container: document.querySelector('#indirizzo-fields'),
-  datiObbligatori: true
+  datiObbligatori: true,
+  mostraTitolo: true
 });
 
 const datiCatastali = createDatiCatastaliForm({

@@ -567,6 +567,12 @@ textarea[aria-invalid="true"] {
   color: #15385f;
 }
 
+.divider {
+  margin: 3rem 1rem;
+  border: 0;
+  border-top: 1px solid #dbe2ea;
+}
+
 @media (max-width: 40rem) {
   .contract-stepper {
     grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -24,8 +24,8 @@ CREATE TABLE immobili (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   proprietario_id BIGINT UNSIGNED NOT NULL,
   titolo VARCHAR(150) NOT NULL,
-  via VARCHAR(150) NOT NULL,
-  numero_civico VARCHAR(20) NOT NULL,
+  indirizzo VARCHAR(150) NOT NULL,
+  civico VARCHAR(20) NULL,
   cap VARCHAR(10) NOT NULL,
   comune VARCHAR(100) NOT NULL,
   provincia VARCHAR(100) NOT NULL,
@@ -52,30 +52,34 @@ CREATE TABLE inquilini (
   cognome VARCHAR(100) NOT NULL,
   codice_fiscale CHAR(16) NOT NULL,
   data_nascita DATE NOT NULL,
-  indirizzo VARCHAR(150) NOT NULL,
-  civico VARCHAR(20) NOT NULL,
-  cap CHAR(5) NOT NULL,
-  provincia CHAR(2) NOT NULL,
-  comune VARCHAR(100) NOT NULL,
+  indirizzo VARCHAR(150) NULL,
+  civico VARCHAR(20) NULL,
+  cap CHAR(5) NULL,
+  provincia CHAR(2) NULL,
+  comune VARCHAR(100) NULL,
   immagine_url VARCHAR(500) NULL,
-  tipo_documento VARCHAR(20) NOT NULL,
-  numero_documento VARCHAR(50) NOT NULL,
-  organo_rilascio_documento VARCHAR(150) NOT NULL,
-  data_rilascio_documento DATE NOT NULL,
-  data_scadenza_documento DATE NOT NULL,
+  tipo_documento VARCHAR(20) NULL,
+  numero_documento VARCHAR(50) NULL,
+  organo_rilascio_documento VARCHAR(150) NULL,
+  data_rilascio_documento DATE NULL,
+  data_scadenza_documento DATE NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL DEFAULT NULL,
   CONSTRAINT uq_inquilini_proprietario_cf
     UNIQUE (proprietario_id, codice_fiscale),
   CONSTRAINT chk_inquilini_tipo_documento
-    CHECK (tipo_documento IN ('CARTA_IDENTITA', 'PASSAPORTO')),
+    CHECK (tipo_documento IS NULL OR tipo_documento IN ('CARTA_IDENTITA', 'PASSAPORTO')),
   CONSTRAINT chk_inquilini_cap
-    CHECK (CHAR_LENGTH(cap) = 5),
+    CHECK (cap IS NULL OR CHAR_LENGTH(cap) = 5),
   CONSTRAINT chk_inquilini_provincia
-    CHECK (CHAR_LENGTH(provincia) = 2),
+    CHECK (provincia IS NULL OR CHAR_LENGTH(provincia) = 2),
   CONSTRAINT chk_inquilini_documento_date
-    CHECK (data_scadenza_documento >= data_rilascio_documento),
+    CHECK (
+      data_rilascio_documento IS NULL
+      OR data_scadenza_documento IS NULL
+      OR data_scadenza_documento >= data_rilascio_documento
+    ),
   CONSTRAINT fk_inquilini_proprietario
     FOREIGN KEY (proprietario_id) REFERENCES proprietari(id)
 );
