@@ -48,6 +48,7 @@ let editorReady = false;
 let busy = false;
 let request;
 let createdTenantId = null;
+let existingImageUrl = '';
 
 function logout() {
   request?.abort();
@@ -66,15 +67,24 @@ async function api(url, options = {}) {
     throw new Error('Accedi nuovamente.');
   }
 
-  const response = await fetch(url, {
-    ...options,
-    cache: 'no-store',
-    signal: request.signal,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
-  });
+  let response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      cache: 'no-store',
+      signal: request.signal,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+  } catch (error) {
+    if (error.name === 'AbortError') throw error;
+    throw Object.assign(
+      new Error('Impossibile contattare il server. Riprova caricamento.'),
+      { networkError: true }
+    );
+  }
 
   if (response.status === 401) {
     logout();
@@ -113,11 +123,16 @@ function fillImmobileOptions() {
 }
 
 function clearImageError() {
+  if (!imageInput) return;
+
   imageInput.removeAttribute('aria-invalid');
-  document.querySelector('#immagineUrl-error').textContent = '';
+  const error = document.querySelector('#immagineUrl-error');
+  if (error) error.textContent = '';
 }
 
 function validateImageUrl() {
+  if (!imageInput) return {};
+
   clearImageError();
   const value = imageInput.value.trim();
   if (!value) return {};
@@ -131,7 +146,8 @@ function validateImageUrl() {
   } catch {
     const message = 'Inserisci un URL http o https valido, di massimo 500 caratteri.';
     imageInput.setAttribute('aria-invalid', 'true');
-    document.querySelector('#immagineUrl-error').textContent = message;
+    const error = document.querySelector('#immagineUrl-error');
+    if (error) error.textContent = message;
     return { immagineUrl: message };
   }
 }
@@ -151,7 +167,8 @@ function clearFormState() {
   anagrafica.clear();
   indirizzo.clear();
   documento.clear();
-  imageInput.value = '';
+  existingImageUrl = '';
+  if (imageInput) imageInput.value = '';
   clearFieldErrors(form);
   clearImageError();
   formMessage.textContent = '';
@@ -162,7 +179,8 @@ function fillEditor(tenant) {
   anagrafica.setData(tenant);
   indirizzo.setData(tenant);
   documento.setData(tenant);
-  imageInput.value = tenant.immagineUrl ?? '';
+  existingImageUrl = tenant.immagineUrl ?? '';
+  if (imageInput) imageInput.value = existingImageUrl;
 }
 
 function buildPayload() {
@@ -171,7 +189,7 @@ function buildPayload() {
     ...anagrafica.getData(),
     ...indirizzo.getData(),
     ...documento.getData(),
-    immagineUrl: imageInput.value.trim()
+    immagineUrl: imageInput ? imageInput.value.trim() : existingImageUrl
   };
 }
 
@@ -259,7 +277,7 @@ async function loadPage() {
   } catch (error) {
     if (controller.signal.aborted) return;
     sessionMessage.textContent = `Errore: ${
-      error instanceof TypeError
+      error.networkError
         ? 'Impossibile contattare il server. Riprova caricamento.'
         : error.message
     }`;
