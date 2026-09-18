@@ -86,6 +86,7 @@ export function createDatiCatastaliForm({
   container.replaceChildren(grid);
 
   let required = Boolean(datiObbligatori);
+  let visible = Boolean(visibile);
 
   function input(name) {
     return container.querySelector(`[name="${name}"]`);
@@ -100,6 +101,19 @@ export function createDatiCatastaliForm({
       const field = input(definition.name);
       field.removeAttribute('aria-invalid');
       errorElement(definition.name).textContent = '';
+    }
+  }
+
+  function setFieldError(name, message = '') {
+    const field = input(name);
+    const error = errorElement(name);
+
+    if (message) {
+      field.setAttribute('aria-invalid', 'true');
+      error.textContent = message;
+    } else {
+      field.removeAttribute('aria-invalid');
+      error.textContent = '';
     }
   }
 
@@ -152,8 +166,9 @@ export function createDatiCatastaliForm({
     return getData() === null;
   }
 
-  function validate() {
-    clearErrors();
+  function collectErrors() {
+    if (!visible) return {};
+
     const data = rawData();
     const errors = {};
 
@@ -194,12 +209,22 @@ export function createDatiCatastaliForm({
       }
     }
 
-    for (const [name, message] of Object.entries(errors)) {
-      input(name).setAttribute('aria-invalid', 'true');
-      errorElement(name).textContent = message;
-    }
-
     return errors;
+  }
+
+  function validate({ showErrors = true } = {}) {
+    const errors = collectErrors();
+    if (!showErrors) return errors;
+
+    clearErrors();
+    for (const [name, message] of Object.entries(errors)) {
+      setFieldError(name, message);
+    }
+    return errors;
+  }
+
+  function isValid() {
+    return Object.keys(validate({ showErrors: false })).length === 0;
   }
 
   function focusFirstInvalid() {
@@ -207,11 +232,24 @@ export function createDatiCatastaliForm({
   }
 
   function setVisible(value) {
-    container.hidden = !Boolean(value);
+    visible = Boolean(value);
+    container.hidden = !visible;
+    for (const definition of fieldsDefinition) {
+      input(definition.name).disabled = !visible;
+    }
   }
 
+  function handleFieldEvent(event) {
+    const field = event.target.closest('[name]');
+    if (!field || !container.contains(field)) return;
+    setFieldError(field.name);
+  }
+
+  container.addEventListener('input', handleFieldEvent);
+  container.addEventListener('change', handleFieldEvent);
+
   setRequired(required);
-  setVisible(visibile);
+  setVisible(visible);
 
   return {
     getData,
@@ -219,6 +257,7 @@ export function createDatiCatastaliForm({
     clear,
     isEmpty,
     validate,
+    isValid,
     clearErrors,
     focusFirstInvalid,
     setRequired,
