@@ -133,7 +133,7 @@ nav,
   white-space: nowrap;
 }
 
-.header-menu {
+.no-decoration {
   text-decoration: none;
 }
 
@@ -375,8 +375,8 @@ textarea[aria-invalid="true"] {
 }
 
 .immobili-grid {
-  display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: grid;
   align-items: start;
   gap: 1.5rem;
 }
@@ -431,56 +431,6 @@ textarea[aria-invalid="true"] {
   padding: 1rem;
   border-top: 1px solid #dbe2ea;
   overflow-wrap: anywhere;
-}
-
-@media (max-width: 62rem) {
-  .immobili-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 40rem) {
-  .layout-wide,
-  .dashboard-container {
-    width: calc(100% - 2rem);
-  }
-
-  .immobili-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .site-header .container,
-  .site-footer .container {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .site-header nav {
-    margin-left: 0;
-  }
-
-  main {
-    padding-block: 1.5rem;
-  }
-
-  .status-card {
-    padding: 1.25rem;
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr;
-    gap: 1.1rem;
-  }
-
-  .form-actions,
-  .page-actions,
-  .section-actions {
-    gap: 0.75rem;
-  }
-
-  .action-group--end {
-    margin-left: auto;
-  }
 }
 
 /* Registrazione e consultazione dei contratti. */
@@ -581,21 +531,7 @@ textarea[aria-invalid="true"] {
   border-top: 1px solid #dbe2ea;
 }
 
-@media (max-width: 40rem) {
-  .contract-stepper {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .contract-summary {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* Azioni delle card e dialog della dashboard. */
-#contract-preview-dialog {
-  width: 80%;
-}
-
 .icon-cancel,
 .icon-button {
   display: inline-flex;
@@ -780,7 +716,73 @@ body:has(.dashboard-dialog[open]) {
   font-style: italic;
 }
 
+#contract-preview-dialog {
+    width: 80%;
+  }
+
+/* Tablet. */
+@media (min-width: 40rem) and (max-width: 62rem) {
+  .immobili-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Cellulare. */
 @media (max-width: 40rem) {
+  .layout-wide,
+  .dashboard-container {
+    width: calc(100% - 2rem);
+  }
+
+  .immobili-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .site-header .container,
+  .site-footer .container {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .site-header nav {
+    margin-left: 0;
+  }
+
+  main {
+    padding-block: 1.5rem;
+  }
+
+  .status-card {
+    padding: 1.25rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 1.1rem;
+  }
+
+  .form-actions,
+  .page-actions,
+  .section-actions {
+    gap: 0.75rem;
+  }
+
+  .action-group--end {
+    margin-left: auto;
+  }
+
+  .contract-stepper {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .contract-summary {
+    grid-template-columns: 1fr;
+  }
+
+  #contract-preview-dialog {
+    width: 100%;
+  }
+
   .dashboard-dialog {
     padding: 1rem;
   }
