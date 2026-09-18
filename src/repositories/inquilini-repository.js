@@ -27,18 +27,18 @@ async function listAvailableForContract(ownerId, immobileId) {
     `SELECT ${columns}
      FROM inquilini
      WHERE proprietario_id = ?
-       AND immobile_id = ?
+       AND (immobile_id = ? OR immobile_id IS NULL)
        AND deleted_at IS NULL
        AND NOT EXISTS (
          SELECT 1
          FROM contratti c
          WHERE c.proprietario_id = inquilini.proprietario_id
-           AND c.immobile_id = inquilini.immobile_id
+           AND c.immobile_id = ?
            AND c.inquilino_id = inquilini.id
            AND c.deleted_at IS NULL
        )
      ORDER BY cognome, nome, id`,
-    [ownerId, immobileId]
+    [ownerId, immobileId, immobileId]
   );
   return rows;
 }
