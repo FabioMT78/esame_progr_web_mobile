@@ -1,10 +1,10 @@
 import {
-  readToken,
   clearToken,
   clearFieldErrors,
   showFormError,
   readIdParameter
 } from './common.js';
+import { createAuthenticatedApi } from './api.js';
 import { createAnagraficaForm } from './forms/anagrafica.js';
 import { createIndirizzoForm } from './forms/indirizzo.js';
 import { createDocumentoIdentitaForm } from './forms/documento.js';
@@ -60,47 +60,10 @@ function logout() {
   }
 }
 
-async function api(url, options = {}) {
-  const token = readToken();
-  if (!token) {
-    logout();
-    throw new Error('Accedi nuovamente.');
-  }
-
-  let response;
-  try {
-    response = await fetch(url, {
-      ...options,
-      cache: 'no-store',
-      signal: request.signal,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-  } catch (error) {
-    if (error.name === 'AbortError') throw error;
-    throw Object.assign(
-      new Error('Impossibile contattare il server. Riprova caricamento.'),
-      { networkError: true }
-    );
-  }
-
-  if (response.status === 401) {
-    logout();
-    throw new Error('Sessione scaduta. Accedi nuovamente.');
-  }
-  if (response.status === 204) return null;
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw Object.assign(new Error(data.error || 'Operazione non riuscita.'), {
-      status: response.status,
-      fields: data.fields
-    });
-  }
-  return data;
-}
+const api = createAuthenticatedApi({
+  onUnauthorized: logout,
+  getSignal: () => request?.signal
+});
 
 function syncControls() {
   const unavailable = busy || !editorReady || (editId === null && !hasImmobili);

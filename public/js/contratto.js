@@ -1,10 +1,10 @@
 import {
-  readToken,
   clearToken,
   clearFieldErrors,
   showFormError,
   readIdParameter
 } from './common.js';
+import { createAuthenticatedApi } from './api.js';
 import { createIndirizzoForm } from './forms/indirizzo.js';
 import { createDatiCatastaliForm } from './forms/dati-catastali.js';
 import { createAnagraficaForm } from './forms/anagrafica.js';
@@ -111,40 +111,10 @@ function logout() {
   }
 }
 
-async function api(url, options = {}) {
-  const token = readToken();
-  if (!token) {
-    logout();
-    throw new DOMException('Sessione terminata', 'AbortError');
-  }
-
-  const response = await fetch(url, {
-    ...options,
-    cache: 'no-store',
-    signal: request.signal,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...(options.headers || {})
-    }
-  });
-
-  if (response.status === 401) {
-    logout();
-    throw new DOMException('Sessione terminata', 'AbortError');
-  }
-
-  const data = response.status === 204 ? null : await response.json();
-
-  if (!response.ok) {
-    throw Object.assign(
-      new Error(data?.error || 'Operazione non riuscita.'),
-      { status: response.status, fields: data?.fields }
-    );
-  }
-
-  return data;
-}
+const api = createAuthenticatedApi({
+  onUnauthorized: logout,
+  getSignal: () => request?.signal
+});
 
 function present(value) {
   return value !== null && value !== undefined && String(value).trim() !== '';

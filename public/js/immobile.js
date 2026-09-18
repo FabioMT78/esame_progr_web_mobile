@@ -1,4 +1,5 @@
-import { readToken, clearToken, clearFieldErrors, showFormError } from './common.js';
+import { clearToken, clearFieldErrors, showFormError } from './common.js';
+import { createAuthenticatedApi } from './api.js';
 import { createIndirizzoForm } from './forms/indirizzo.js';
 import { createDatiCatastaliForm } from './forms/dati-catastali.js';
 import { createImmagineForm } from './components/immagine-form.js';
@@ -47,73 +48,18 @@ function logout() {
   try { clearToken(); } finally { window.location.replace('/'); }
 }
 
-async function request(path, options = {}) {
-  const token = readToken();
-  if (!token) {
-    logout();
-    throw new DOMException('Sessione terminata', 'AbortError');
-  }
-
-  const response = await fetch(path, {
-    ...options,
-    cache: 'no-store',
-    signal: controller.signal,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...(options.headers || {})
-    }
-  });
-
-  if (response.status === 401) {
-    logout();
-    throw new DOMException('Sessione terminata', 'AbortError');
-  }
-
-  const data = response.status === 204 ? null : await response.json();
-  if (!response.ok) {
-    throw Object.assign(new Error(data.error || 'Operazione non riuscita.'), {
-      fields: data.fields,
-      status: response.status
-    });
-  }
-  return data;
-}
+const api = createAuthenticatedApi({
+  onUnauthorized: logout,
+  getSignal: () => controller?.signal
+});
 
 async function uploadImage(immobileId, file) {
-  const token = readToken();
-  if (!token) {
-    logout();
-    throw new DOMException('Sessione terminata', 'AbortError');
-  }
-
-  const response = await fetch(
-    `/api/immobili/${encodeURIComponent(immobileId)}/immagine`,
-    {
-      method: 'PUT',
-      cache: 'no-store',
-      signal: controller.signal,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': file.type
-      },
-      body: file
-    }
-  );
-
-  if (response.status === 401) {
-    logout();
-    throw new DOMException('Sessione terminata', 'AbortError');
-  }
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw Object.assign(
-      new Error(data.error || 'Impossibile caricare la foto.'),
-      { status: response.status }
-    );
-  }
-  return data;
+  return api(`/api/immobili/${encodeURIComponent(immobileId)}/immagine`, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type },
+    body: file,
+    errorMessage: 'Impossibile caricare la foto.'
+  });
 }
 
 function errorText(error) {
@@ -207,7 +153,7 @@ async function loadDetail() {
 
   formMessage.textContent = 'Caricamento immobile…';
   try {
-    const immobile = await request(`/api/immobili/${encodeURIComponent(id || '0')}`);
+    const immobile = await api(`/api/immobili/${encodeURIComponent(id || '0')}`);
     fillDetail(immobile);
     formMessage.textContent = 'Immobile caricato. Puoi modificare i dati.';
     return true;
@@ -244,7 +190,7 @@ form.addEventListener('submit', async (event) => {
   let createdNow = false;
 
   try {
-    const saved = await request(
+    const saved = await api(
       updating ? `/api/immobili/${encodeURIComponent(editingId)}` : '/api/immobili',
       {
         method: updating ? 'PUT' : 'POST',
@@ -315,7 +261,7 @@ async function initialize() {
   setBusy(true);
 
   try {
-    await request('/api/auth/me');
+    await api('/api/auth/me');
     content.hidden = false;
     sessionMessage.textContent = '';
 

@@ -1,4 +1,5 @@
-import { readToken, clearToken } from './common.js';
+import { clearToken } from './common.js';
+import { createAuthenticatedApi } from './api.js';
 import {
   createIcon,
   createContractPreviewDialog,
@@ -50,32 +51,14 @@ function logout() {
   }
 }
 
-async function api(path, signal, options = {}) {
-  const token = readToken();
-  if (!token) {
-    logout();
-    throw new DOMException('Sessione terminata', 'AbortError');
-  }
-  const response = await fetch(path, {
-    ...options,
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    cache: 'no-store',
-    signal
-  });
-  signal.throwIfAborted();
-  if (response.status === 401) {
-    logout();
-    throw new DOMException('Sessione terminata', 'AbortError');
-  }
-  const data = response.status === 204 ? null : await response.json();
-  signal.throwIfAborted();
-  if (!response.ok) {
-    throw Object.assign(
-      new Error(data.error || 'Operazione non riuscita. Riprova.'),
-      { status: response.status }
-    );
-  }
-  return data;
+const requestApi = createAuthenticatedApi({
+  onUnauthorized: logout,
+  getSignal: () => request?.signal,
+  defaultErrorMessage: 'Operazione non riuscita. Riprova.'
+});
+
+function api(path, signal, options = {}) {
+  return requestApi(path, { ...options, signal });
 }
 
 function groupContractsByImmobile(contracts) {
@@ -254,9 +237,6 @@ async function loadDashboard() {
   message.textContent = 'Caricamento immobili…';
 
   try {
-    const token = readToken();
-    if (!token) return logout();
-
     const owner = await api('/api/auth/me', controller.signal);
     controller.signal.throwIfAborted();
     if (!owner?.nome || !owner?.cognome) {
