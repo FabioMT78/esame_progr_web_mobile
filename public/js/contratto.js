@@ -635,7 +635,7 @@ document.querySelector('#contract-stepper').addEventListener('click', async (eve
     await saveDraft(draft?.stepCompletato ?? 0);
     showStep(target);
   } catch (error) {
-    if (error.name !== 'AbortEror') {
+    if (error.name !== 'AbortError') {
       formMessage.textContent = `Errore: ${error.message}`;
     }
   } finally {
