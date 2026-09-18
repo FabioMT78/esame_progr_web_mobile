@@ -3,6 +3,7 @@ const auth = require('../services/auth-service');
 const requireAuth = require('../middleware/auth-middleware');
 
 const router = express.Router();
+
 router.use((_req, res, next) => {
   res.set('Cache-Control', 'no-store');
   next();

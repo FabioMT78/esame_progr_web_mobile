@@ -62,7 +62,7 @@ function createField(definition) {
   if (definition.inputMode) input.inputMode = definition.inputMode;
   if (definition.placeholder) input.placeholder = definition.placeholder;
 
-  const error = document.createElement('p');
+  const error = document.createElement('small');
   error.className = 'field-error';
   error.id = `${definition.name}-error`;
 

@@ -34,9 +34,7 @@ function resolveMenuScope() {
 function configureBrand(header, menuScope) {
   const brand = header.querySelector('.brand');
 
-  if (!brand) {
-    return;
-  }
+  if (!brand) return;
 
   brand.href = menuScope === 'private'
     ? '/dashboard.html'
@@ -67,19 +65,32 @@ function configureMenu(nav, menuScope) {
 }
 
 function configureDropdowns(nav) {
-  const dropdowns = [...nav.querySelectorAll('.nav-dropdown')];
+  const dropdowns = [
+    ...nav.querySelectorAll('.nav-dropdown')
+  ];
 
-  function setOpen(dropdown, isOpen, { focusToggle = false } = {}) {
-    const toggle = dropdown.querySelector('.nav-dropdown-toggle');
+  function setOpen(
+    dropdown,
+    isOpen,
+    { focusToggle = false } = {}
+  ) {
+    const toggle =
+      dropdown.querySelector('.nav-dropdown-toggle');
+
     if (!toggle) return;
 
     dropdown.classList.toggle('is-open', isOpen);
-    toggle.setAttribute('aria-expanded', String(isOpen));
+    toggle.setAttribute(
+      'aria-expanded',
+      String(isOpen)
+    );
 
     if (toggle.classList.contains('nav-user-toggle')) {
       toggle.setAttribute(
         'aria-label',
-        isOpen ? 'Chiudi menu utente' : 'Apri menu utente'
+        isOpen
+          ? 'Chiudi menu utente'
+          : 'Apri menu utente'
       );
     }
 
@@ -88,24 +99,35 @@ function configureDropdowns(nav) {
 
   function closeAll(except = null) {
     for (const dropdown of dropdowns) {
-      if (dropdown !== except) setOpen(dropdown, false);
+      if (dropdown !== except) {
+        setOpen(dropdown, false);
+      }
     }
   }
 
   for (const dropdown of dropdowns) {
-    const toggle = dropdown.querySelector('.nav-dropdown-toggle');
+    const toggle =
+      dropdown.querySelector('.nav-dropdown-toggle');
+
     if (!toggle) continue;
 
     toggle.addEventListener('click', (event) => {
       event.stopPropagation();
-      const nextOpen = toggle.getAttribute('aria-expanded') !== 'true';
+
+      const nextOpen =
+        toggle.getAttribute('aria-expanded') !== 'true';
+
       closeAll(dropdown);
       setOpen(dropdown, nextOpen);
     });
   }
 
   nav.addEventListener('click', (event) => {
-    if (event.target.closest('.nav-dropdown-menu a, .nav-dropdown-menu button')) {
+    if (
+      event.target.closest(
+        '.nav-dropdown-menu a, .nav-dropdown-menu button'
+      )
+    ) {
       closeAll();
     }
   });
@@ -118,38 +140,59 @@ function configureDropdowns(nav) {
     if (event.key !== 'Escape') return;
 
     const openDropdown = dropdowns.find(
-      (dropdown) => dropdown.classList.contains('is-open')
+      (dropdown) =>
+        dropdown.classList.contains('is-open')
     );
 
     if (openDropdown) {
-      setOpen(openDropdown, false, { focusToggle: true });
+      setOpen(
+        openDropdown,
+        false,
+        { focusToggle: true }
+      );
     }
   });
 
-  const mobileMedia = window.matchMedia('(max-width: 40rem)');
-  mobileMedia.addEventListener('change', () => closeAll());
+  const mobileMedia =
+    window.matchMedia('(max-width: 40rem)');
+
+  mobileMedia.addEventListener(
+    'change',
+    () => closeAll()
+  );
 }
 
 function configureMobileMenu(header, nav) {
-  const toggle = header.querySelector('#menu-toggle');
-  const icon = toggle?.querySelector('[aria-hidden="true"]');
+  const toggle =
+    header.querySelector('#menu-toggle');
 
-  if (!toggle || !icon) {
-    return;
-  }
+  const icon =
+    toggle?.querySelector('[aria-hidden="true"]');
+
+  if (!toggle || !icon) return;
 
   function setMenuOpen(isOpen) {
     nav.classList.toggle('is-open', isOpen);
-    toggle.setAttribute('aria-expanded', String(isOpen));
+
+    toggle.setAttribute(
+      'aria-expanded',
+      String(isOpen)
+    );
+
     toggle.setAttribute(
       'aria-label',
-      isOpen ? 'Chiudi menu di navigazione' : 'Apri menu di navigazione'
+      isOpen
+        ? 'Chiudi menu di navigazione'
+        : 'Apri menu di navigazione'
     );
+
     icon.textContent = isOpen ? '×' : '☰';
   }
 
   toggle.addEventListener('click', () => {
-    setMenuOpen(toggle.getAttribute('aria-expanded') !== 'true');
+    setMenuOpen(
+      toggle.getAttribute('aria-expanded') !== 'true'
+    );
   });
 
   nav.addEventListener('click', (event) => {
@@ -159,7 +202,10 @@ function configureMobileMenu(header, nav) {
   });
 
   document.addEventListener('keydown', (event) => {
-    if (event.key !== 'Escape' || toggle.getAttribute('aria-expanded') !== 'true') {
+    if (
+      event.key !== 'Escape'
+      || toggle.getAttribute('aria-expanded') !== 'true'
+    ) {
       return;
     }
 
@@ -167,7 +213,8 @@ function configureMobileMenu(header, nav) {
     toggle.focus();
   });
 
-  const mobileMedia = window.matchMedia('(max-width: 40rem)');
+  const mobileMedia =
+    window.matchMedia('(max-width: 40rem)');
 
   mobileMedia.addEventListener('change', (event) => {
     if (!event.matches) {
@@ -177,18 +224,24 @@ function configureMobileMenu(header, nav) {
 }
 
 async function loadLayout() {
-  const header = document.querySelector('#site-header');
-  const footer = document.querySelector('#site-footer');
+  const header =
+    document.querySelector('#site-header');
+
+  const footer =
+    document.querySelector('#site-footer');
 
   if (!header || !footer) {
-    throw new Error('Contenitori header/footer non trovati.');
+    throw new Error(
+      'Contenitori header/footer non trovati.'
+    );
   }
 
-  const [headerHtml, menuHtml, footerHtml] = await Promise.all([
-    fetchPartial('/partials/header.html'),
-    fetchPartial('/partials/menu.html'),
-    fetchPartial('/partials/footer.html')
-  ]);
+  const [headerHtml, menuHtml, footerHtml] =
+    await Promise.all([
+      fetchPartial('/partials/header.html'),
+      fetchPartial('/partials/menu.html'),
+      fetchPartial('/partials/footer.html')
+    ]);
 
   header.innerHTML = headerHtml;
   footer.innerHTML = footerHtml;
@@ -199,7 +252,9 @@ async function loadLayout() {
   const nav = header.querySelector('#site-nav');
 
   if (!nav) {
-    throw new Error('Contenitore del menu non trovato.');
+    throw new Error(
+      'Contenitore del menu non trovato.'
+    );
   }
 
   nav.innerHTML = menuHtml;
@@ -211,9 +266,7 @@ async function loadLayout() {
 function showBootstrapError(message) {
   const main = document.querySelector('main');
 
-  if (!main) {
-    return;
-  }
+  if (!main) return;
 
   const notice = document.createElement('p');
   notice.className = 'message';
@@ -226,29 +279,39 @@ async function bootstrap() {
   try {
     await loadLayout();
   } catch (error) {
-    console.error('Caricamento layout fallito:', error);
+    console.error(
+      'Caricamento layout fallito:',
+      error
+    );
+
     showBootstrapError(
       'Errore: impossibile caricare header, menu e footer. Ricarica la pagina.'
     );
+
     return;
   }
 
   enableDialogBackdropClose();
 
-  const pageScript = document.body.dataset.pageScript;
+  const pageScript =
+    document.body.dataset.pageScript;
 
-  if (!pageScript) {
-    return;
-  }
+  if (!pageScript) return;
 
   try {
     await import(pageScript);
 
     if (pageShowOccurred) {
-      window.dispatchEvent(new Event('pageshow'));
+      window.dispatchEvent(
+        new Event('pageshow')
+      );
     }
   } catch (error) {
-    console.error('Avvio pagina fallito:', error);
+    console.error(
+      'Avvio pagina fallito:',
+      error
+    );
+
     showBootstrapError(
       'Errore: impossibile avviare la pagina. Ricarica e riprova.'
     );

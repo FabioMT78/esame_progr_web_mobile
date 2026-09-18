@@ -1,4 +1,8 @@
-import { clearToken } from './common.js';
+import {
+  clearToken,
+  consumeFlashMessage,
+  showTransientMessage
+} from './common.js';
 import { createAuthenticatedApi } from './api.js';
 import { createImageWorkerClient } from './components/image-worker-client.js';
 import {
@@ -18,15 +22,31 @@ const grid = document.querySelector('#immobili-grid');
 const feedback = document.querySelector('#dashboard-feedback');
 
 const contractPreviewDialog = createContractPreviewDialog(api);
-const tenantsDialog = createTenantsDialog(api, (contractId) => {
-  contractPreviewDialog.open(contractId);
-});
+
+const tenantsDialog = createTenantsDialog(
+  api,
+  (contractId) => {
+    contractPreviewDialog.open(contractId);
+  }
+);
+
 const paymentsDialog = createPaymentsDialog(
   api,
   (payment) => {
-    feedback.textContent = `Pagamento registrato: ${paymentDescription(payment)}.`;
-    if (activePaymentImmobileId && request?.signal && !request.signal.aborted) {
-      refreshPaymentStatus(activePaymentImmobileId, request.signal);
+    showTransientMessage(
+      feedback,
+      `Pagamento registrato: ${paymentDescription(payment)}.`
+    );
+
+    if (
+      activePaymentImmobileId
+      && request?.signal
+      && !request.signal.aborted
+    ) {
+      refreshPaymentStatus(
+        activePaymentImmobileId,
+        request.signal
+      );
     }
   },
   (property) => {
@@ -35,9 +55,25 @@ const paymentsDialog = createPaymentsDialog(
   },
   (result) => {
     const count = result.importedCount || 0;
-    feedback.textContent = `${count} ${count === 1 ? 'movimento importato' : 'movimenti importati'} e associati ai pagamenti.`;
-    if (activePaymentImmobileId && request?.signal && !request.signal.aborted) {
-      refreshPaymentStatus(activePaymentImmobileId, request.signal);
+
+    showTransientMessage(
+      feedback,
+      `${count} ${
+        count === 1
+          ? 'movimento importato'
+          : 'movimenti importati'
+      } e associati ai pagamenti.`
+    );
+
+    if (
+      activePaymentImmobileId
+      && request?.signal
+      && !request.signal.aborted
+    ) {
+      refreshPaymentStatus(
+        activePaymentImmobileId,
+        request.signal
+      );
     }
   }
 );
@@ -45,13 +81,19 @@ const paymentsDialog = createPaymentsDialog(
 let request;
 let activePaymentImmobileId = null;
 let contractsByImmobile = new Map();
+
 const paymentStatusElements = new Map();
+
 let imageWorkerClient = null;
 let imageGeneration = 0;
+
 const imageObjectUrls = new Map();
 
 function releaseImageObjectUrls() {
-  for (const url of imageObjectUrls.values()) URL.revokeObjectURL(url);
+  for (const url of imageObjectUrls.values()) {
+    URL.revokeObjectURL(url);
+  }
+
   imageObjectUrls.clear();
 }
 
@@ -64,24 +106,46 @@ function resetImageWorker() {
 
 function previewUrlFromFull(url) {
   if (typeof url !== 'string') return null;
+
   const dot = url.lastIndexOf('.');
   const slash = url.lastIndexOf('/');
+
   if (dot <= slash) return null;
+
   return `${url.slice(0, dot)}.preview.webp`;
 }
 
 function setBlobImage(image, blob, generation) {
-  if (generation !== imageGeneration || !(blob instanceof Blob)) return;
+  if (
+    generation !== imageGeneration
+    || !(blob instanceof Blob)
+  ) {
+    return;
+  }
+
   const nextUrl = URL.createObjectURL(blob);
-  const previousUrl = imageObjectUrls.get(image);
+  const previousUrl =
+    imageObjectUrls.get(image);
+
   imageObjectUrls.set(image, nextUrl);
   image.src = nextUrl;
-  if (previousUrl) URL.revokeObjectURL(previousUrl);
+
+  if (previousUrl) {
+    URL.revokeObjectURL(previousUrl);
+  }
 }
 
-function showDirectImage(image, url, alt, generation) {
+function showDirectImage(
+  image,
+  url,
+  alt,
+  generation
+) {
   if (generation !== imageGeneration) return;
-  const previousUrl = imageObjectUrls.get(image);
+
+  const previousUrl =
+    imageObjectUrls.get(image);
+
   if (previousUrl) {
     URL.revokeObjectURL(previousUrl);
     imageObjectUrls.delete(image);
@@ -89,31 +153,65 @@ function showDirectImage(image, url, alt, generation) {
 
   image.alt = alt;
   image.src = url;
-  image.addEventListener('error', () => {
-    if (generation !== imageGeneration) return;
-    image.src = PLACEHOLDER_IMAGE;
-    image.alt = 'Nessuna immagine disponibile';
-  }, { once: true });
+
+  image.addEventListener(
+    'error',
+    () => {
+      if (generation !== imageGeneration) return;
+
+      image.src = PLACEHOLDER_IMAGE;
+      image.alt = 'Nessuna immagine disponibile';
+    },
+    { once: true }
+  );
 }
 
-function loadProgressiveImage(image, immobile, alt) {
+function loadProgressiveImage(
+  image,
+  immobile,
+  alt
+) {
   const generation = imageGeneration;
   const client = imageWorkerClient;
+
   if (!client || !immobile.immagineUrl) return;
 
   image.alt = alt;
+
   client.loadProgressive({
-    previewUrl: previewUrlFromFull(immobile.immagineUrl),
+    previewUrl:
+      previewUrlFromFull(immobile.immagineUrl),
     fullUrl: immobile.immagineUrl,
     maxDimension: 1200
   }, (stage) => {
-    if (stage.stage === 'preview') setBlobImage(image, stage.blob, generation);
+    if (stage.stage === 'preview') {
+      setBlobImage(
+        image,
+        stage.blob,
+        generation
+      );
+    }
   }).then((result) => {
-    setBlobImage(image, result.blob, generation);
+    setBlobImage(
+      image,
+      result.blob,
+      generation
+    );
   }).catch((error) => {
-    if (error.name === 'AbortError' || generation !== imageGeneration) return;
+    if (
+      error.name === 'AbortError'
+      || generation !== imageGeneration
+    ) {
+      return;
+    }
+
     if (!imageObjectUrls.has(image)) {
-      showDirectImage(image, immobile.immagineUrl, alt, generation);
+      showDirectImage(
+        image,
+        immobile.immagineUrl,
+        alt,
+        generation
+      );
     }
   });
 }
@@ -123,10 +221,13 @@ function logout() {
   paymentsDialog.close();
   contractPreviewDialog.close();
   request?.abort();
+
   imageWorkerClient?.terminate();
   imageWorkerClient = null;
+
   releaseImageObjectUrls();
   content.hidden = true;
+
   try {
     clearToken();
   } finally {
@@ -137,31 +238,49 @@ function logout() {
 const requestApi = createAuthenticatedApi({
   onUnauthorized: logout,
   getSignal: () => request?.signal,
-  defaultErrorMessage: 'Operazione non riuscita. Riprova.'
+  defaultErrorMessage:
+    'Operazione non riuscita. Riprova.'
 });
 
 function api(path, signal, options = {}) {
-  return requestApi(path, { ...options, signal });
+  return requestApi(
+    path,
+    { ...options, signal }
+  );
 }
 
 function groupContractsByImmobile(contracts) {
   const grouped = new Map();
 
   for (const contract of contracts) {
-    const immobileId = contract?.immobile?.id;
+    const immobileId =
+      contract?.immobile?.id;
+
     if (!immobileId) continue;
 
-    if (!grouped.has(immobileId)) grouped.set(immobileId, []);
+    if (!grouped.has(immobileId)) {
+      grouped.set(immobileId, []);
+    }
+
     grouped.get(immobileId).push(contract);
   }
 
   return grouped;
 }
 
-function setPaymentStatus(status, hasPendingPayments) {
+function setPaymentStatus(
+  status,
+  hasPendingPayments
+) {
   status.hidden = false;
-  status.textContent = hasPendingPayments ? '✕' : '✓';
-  status.style.color = hasPendingPayments ? '#b42318' : '#1f7a3f';
+  status.textContent =
+    hasPendingPayments ? '✕' : '✓';
+
+  status.style.color =
+    hasPendingPayments
+      ? '#b42318'
+      : '#1f7a3f';
+
   status.style.fontSize = '1.2rem';
   status.style.fontWeight = '700';
   status.style.lineHeight = '1';
@@ -171,15 +290,30 @@ function setPaymentStatus(status, hasPendingPayments) {
     : 'Tutti gli inquilini sono in regola con i pagamenti.';
 
   status.setAttribute('role', 'img');
-  status.setAttribute('aria-label', description);
+  status.setAttribute(
+    'aria-label',
+    description
+  );
   status.title = description;
 }
 
-async function refreshPaymentStatus(immobileId, signal) {
-  const status = paymentStatusElements.get(immobileId);
-  const contracts = contractsByImmobile.get(immobileId) || [];
+async function refreshPaymentStatus(
+  immobileId,
+  signal
+) {
+  const status =
+    paymentStatusElements.get(immobileId);
 
-  if (!status || !contracts.length || signal.aborted) return;
+  const contracts =
+    contractsByImmobile.get(immobileId) || [];
+
+  if (
+    !status
+    || !contracts.length
+    || signal.aborted
+  ) {
+    return;
+  }
 
   status.hidden = true;
   status.textContent = '';
@@ -187,113 +321,237 @@ async function refreshPaymentStatus(immobileId, signal) {
   status.removeAttribute('aria-label');
   status.removeAttribute('title');
 
-  const params = new URLSearchParams({ immobileId });
+  const params =
+    new URLSearchParams({ immobileId });
 
   try {
-    const paymentStatus = await api(`/api/pagamenti/stato?${params}`, signal);
-    signal.throwIfAborted();
-    setPaymentStatus(status, paymentStatus.hasPendingPayments);
-  } catch (error) {
-    if (signal.aborted || error.name === 'AbortError') return;
+    const paymentStatus =
+      await api(
+        `/api/pagamenti/stato?${params}`,
+        signal
+      );
 
-    // In caso di errore non mostriamo uno stato potenzialmente falso.
+    signal.throwIfAborted();
+
+    setPaymentStatus(
+      status,
+      paymentStatus.hasPendingPayments
+    );
+  } catch (error) {
+    if (
+      signal.aborted
+      || error.name === 'AbortError'
+    ) {
+      return;
+    }
+
     status.hidden = true;
     status.textContent = '';
-    status.title = 'Stato pagamenti non disponibile.';
+    status.title =
+      'Stato pagamenti non disponibile.';
   }
 }
 
 function createCard(immobile) {
-  const card = document.createElement('article');
+  const card =
+    document.createElement('article');
+
   card.className = 'property-card';
 
-  const title = document.createElement('h2');
-  title.textContent = immobile.titolo || 'Immobile';
+  const title =
+    document.createElement('h2');
 
-  const media = document.createElement('div');
+  title.textContent =
+    immobile.titolo || 'Immobile';
+
+  const media =
+    document.createElement('div');
+
   media.className = 'property-card-media';
 
-  const image = document.createElement('img');
+  const image =
+    document.createElement('img');
+
   image.src = PLACEHOLDER_IMAGE;
+
   image.alt = immobile.immagineUrl
     ? `Immobile ${title.textContent}`
     : 'Nessuna immagine disponibile';
+
   image.decoding = 'async';
   media.append(image);
 
   if (immobile.immagineUrl) {
-    loadProgressiveImage(image, immobile, `Immobile ${title.textContent}`);
+    loadProgressiveImage(
+      image,
+      immobile,
+      `Immobile ${title.textContent}`
+    );
   }
 
-  const edit = document.createElement('a');
-  edit.className = 'icon-button property-card-edit';
-  edit.href = `/immobile.html?id=${encodeURIComponent(immobile.id)}`;
-  edit.setAttribute('aria-label', `Modifica ${title.textContent}`);
+  const edit =
+    document.createElement('a');
+
+  edit.className =
+    'icon-button property-card-edit';
+
+  edit.href =
+    `/immobile.html?id=${
+      encodeURIComponent(immobile.id)
+    }`;
+
+  edit.setAttribute(
+    'aria-label',
+    `Modifica ${title.textContent}`
+  );
+
   edit.append(createIcon('edit'));
   media.append(edit);
 
-  const address = document.createElement('p');
-  address.className = 'property-card-address';
-  const street = [immobile.indirizzo, immobile.civico].filter(Boolean).join(' ');
-  const town = [immobile.cap, immobile.comune].filter(Boolean).join(' ');
-  const locality = [town, immobile.provincia ? `(${immobile.provincia})` : ''].filter(Boolean).join(' ');
-  address.textContent = [street, locality].filter(Boolean).join(', ') || 'Indirizzo non disponibile';
+  const address =
+    document.createElement('p');
 
-  const payments = document.createElement('div');
-  payments.className = 'property-card-payments';
-  const label = document.createElement('p');
-  label.className = 'property-card-payments-label';
+  address.className =
+    'property-card-address';
+
+  const street = [
+    immobile.indirizzo,
+    immobile.civico
+  ].filter(Boolean).join(' ');
+
+  const town = [
+    immobile.cap,
+    immobile.comune
+  ].filter(Boolean).join(' ');
+
+  const locality = [
+    town,
+    immobile.provincia
+      ? `(${immobile.provincia})`
+      : ''
+  ].filter(Boolean).join(' ');
+
+  address.textContent = [
+    street,
+    locality
+  ].filter(Boolean).join(', ')
+    || 'Indirizzo non disponibile';
+
+  const payments =
+    document.createElement('div');
+
+  payments.className =
+    'property-card-payments';
+
+  const label =
+    document.createElement('p');
+
+  label.className =
+    'property-card-payments-label';
+
   label.textContent = 'Pagamenti';
 
-  const propertyContracts = contractsByImmobile.get(immobile.id) || [];
-  label.style.visibility = propertyContracts.length ? 'visible' : 'hidden';
+  const propertyContracts =
+    contractsByImmobile.get(immobile.id) || [];
 
-  const status = document.createElement('span');
-  status.className = 'property-card-payment-status';
+  label.style.visibility =
+    propertyContracts.length
+      ? 'visible'
+      : 'hidden';
+
+  const status =
+    document.createElement('span');
+
+  status.className =
+    'property-card-payment-status';
+
   status.hidden = true;
   label.append(status);
 
   if (propertyContracts.length) {
-    paymentStatusElements.set(immobile.id, status);
+    paymentStatusElements.set(
+      immobile.id,
+      status
+    );
   }
 
-  const actions = document.createElement('div');
-  actions.className = 'property-card-actions';
+  const actions =
+    document.createElement('div');
 
-  const payment = document.createElement('button');
+  actions.className =
+    'property-card-actions';
+
+  const payment =
+    document.createElement('button');
+
   payment.type = 'button';
-  payment.textContent = 'Registra pagamento';
+  payment.textContent =
+    'Registra pagamento';
+
   payment.addEventListener('click', () => {
     activePaymentImmobileId = immobile.id;
     paymentsDialog.open(immobile);
   });
 
-  const tenants = document.createElement('button');
+  const tenants =
+    document.createElement('button');
+
   tenants.type = 'button';
   tenants.className = 'button-secondary';
-  tenants.textContent = 'Gestisci inquilini';
-  tenants.addEventListener('click', () => tenantsDialog.open(immobile));
+  tenants.textContent =
+    'Gestisci inquilini';
+
+  tenants.addEventListener(
+    'click',
+    () => tenantsDialog.open(immobile)
+  );
 
   actions.append(payment, tenants);
   payments.append(label, actions);
-  card.append(title, media, address, payments);
+  card.append(
+    title,
+    media,
+    address,
+    payments
+  );
+
   return card;
 }
 
-function renderImmobili(immobili, contracts, signal) {
-  contractsByImmobile = groupContractsByImmobile(contracts);
+function renderImmobili(
+  immobili,
+  contracts,
+  signal
+) {
+  contractsByImmobile =
+    groupContractsByImmobile(contracts);
+
   paymentStatusElements.clear();
 
-  const cards = document.createDocumentFragment();
-  for (const immobile of immobili) cards.append(createCard(immobile));
+  const cards =
+    document.createDocumentFragment();
+
+  for (const immobile of immobili) {
+    cards.append(createCard(immobile));
+  }
+
   grid.replaceChildren(cards);
   grid.hidden = immobili.length === 0;
   emptyState.hidden = immobili.length > 0;
   content.hidden = false;
 
   for (const immobile of immobili) {
-    if ((contractsByImmobile.get(immobile.id) || []).length) {
-      refreshPaymentStatus(immobile.id, signal);
+    if (
+      (
+        contractsByImmobile.get(
+          immobile.id
+        ) || []
+      ).length
+    ) {
+      refreshPaymentStatus(
+        immobile.id,
+        signal
+      );
     }
   }
 }
@@ -304,60 +562,127 @@ async function loadDashboard() {
   contractPreviewDialog.close();
   request?.abort();
   resetImageWorker();
+
   feedback.textContent = '';
   activePaymentImmobileId = null;
   contractsByImmobile = new Map();
   paymentStatusElements.clear();
 
-  const controller = new AbortController();
+  const controller =
+    new AbortController();
+
   request = controller;
   content.hidden = true;
   grid.replaceChildren();
   retry.hidden = true;
-  message.textContent = 'Caricamento immobili…';
+
+  message.textContent =
+    'Caricamento immobili…';
 
   try {
-    const owner = await api('/api/auth/me', controller.signal);
+    const owner =
+      await api(
+        '/api/auth/me',
+        controller.signal
+      );
+
     controller.signal.throwIfAborted();
+
     if (!owner?.nome || !owner?.cognome) {
-      throw new Error('Dati del profilo non disponibili. Riprova.');
+      throw new Error(
+        'Dati del profilo non disponibili. Riprova.'
+      );
     }
 
-    const [immobili, contracts] = await Promise.all([
-      api('/api/immobili', controller.signal),
-      api('/api/contratti', controller.signal)
-    ]);
+    const [immobili, contracts] =
+      await Promise.all([
+        api(
+          '/api/immobili',
+          controller.signal
+        ),
+        api(
+          '/api/contratti',
+          controller.signal
+        )
+      ]);
+
     controller.signal.throwIfAborted();
 
     if (!Array.isArray(immobili)) {
-      throw new Error('Elenco immobili non disponibile. Riprova.');
-    }
-    if (!Array.isArray(contracts)) {
-      throw new Error('Elenco contratti non disponibile. Riprova.');
+      throw new Error(
+        'Elenco immobili non disponibile. Riprova.'
+      );
     }
 
-    renderImmobili(immobili, contracts, controller.signal);
+    if (!Array.isArray(contracts)) {
+      throw new Error(
+        'Elenco contratti non disponibile. Riprova.'
+      );
+    }
+
+    renderImmobili(
+      immobili,
+      contracts,
+      controller.signal
+    );
+
     message.textContent = '';
+
+    const flashMessage =
+      consumeFlashMessage();
+
+    if (flashMessage) {
+      showTransientMessage(
+        feedback,
+        flashMessage
+      );
+    }
   } catch (error) {
-    if (controller.signal.aborted || error.name === 'AbortError') return;
-    message.textContent = `Errore: ${error instanceof TypeError
-      ? 'Impossibile contattare il server. Riprova.'
-      : 'Impossibile caricare la dashboard. Riprova.'}`;
+    if (
+      controller.signal.aborted
+      || error.name === 'AbortError'
+    ) {
+      return;
+    }
+
+    message.textContent =
+      `Errore: ${
+        error instanceof TypeError
+          ? 'Impossibile contattare il server. Riprova.'
+          : 'Impossibile caricare la dashboard. Riprova.'
+      }`;
+
     retry.hidden = false;
   }
 }
 
-document.querySelector('#logout').addEventListener('click', logout);
-retry.addEventListener('click', loadDashboard);
-window.addEventListener('pageshow', loadDashboard);
-window.addEventListener('pagehide', () => {
-  tenantsDialog.close();
-  paymentsDialog.close();
-  contractPreviewDialog.close();
-  request?.abort();
-  imageWorkerClient?.terminate();
-  imageWorkerClient = null;
-  imageGeneration += 1;
-  releaseImageObjectUrls();
-  content.hidden = true;
-});
+document
+  .querySelector('#logout')
+  .addEventListener('click', logout);
+
+retry.addEventListener(
+  'click',
+  loadDashboard
+);
+
+window.addEventListener(
+  'pageshow',
+  loadDashboard
+);
+
+window.addEventListener(
+  'pagehide',
+  () => {
+    tenantsDialog.close();
+    paymentsDialog.close();
+    contractPreviewDialog.close();
+    request?.abort();
+
+    imageWorkerClient?.terminate();
+    imageWorkerClient = null;
+    imageGeneration += 1;
+
+    releaseImageObjectUrls();
+    content.hidden = true;
+  }
+);

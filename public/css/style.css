@@ -301,6 +301,10 @@ small {
   margin: 0;
 }
 
+.field--full {
+  grid-column: 1 / -1;
+}
+
 form > .field + .field {
   margin-top: 1.25rem;
 }

@@ -52,7 +52,7 @@ function createSelectField(prefix) {
     new Option('Passaporto', 'PASSAPORTO')
   );
 
-  const error = document.createElement('p');
+  const error = document.createElement('small');
   error.className = 'field-error';
   error.id = errorId;
   wrapper.append(label, select, error);
@@ -82,7 +82,7 @@ function createInputField(definition, prefix) {
   }
   input.setAttribute('aria-describedby', errorId);
 
-  const error = document.createElement('p');
+  const error = document.createElement('small');
   error.className = 'field-error';
   error.id = errorId;
   wrapper.append(label, input, error);

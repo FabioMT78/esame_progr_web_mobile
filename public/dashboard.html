@@ -70,16 +70,16 @@
         <h3 id="payment-manual-title">Registrazione manuale</h3>
         <p class="payment-amount-label">Importo</p>
         <p id="payment-amount" class="payment-amount">—</p>
-        <p id="payment-period" class="field-hint"></p>
+        <small id="payment-period" class="field-hint"></small>
       </section>
 
       <details id="payment-import-details" class="payment-import">
         <summary>Importa movimenti da CSV</summary>
         <fieldset id="payment-import-fields" disabled>
-          <p class="field-hint">
+          <small class="field-hint">
             Formato: data_movimento, importo, descrizione, riferimento_esterno.
             Le ultime due colonne possono essere vuote. Massimo 200 movimenti per file.
-          </p>
+          </small>
           <label for="payment-import-file">File CSV</label>
           <input
             id="payment-import-file"
@@ -87,7 +87,7 @@
             accept=".csv,text/csv"
             aria-describedby="payment-import-file-name payment-import-message"
           >
-          <p id="payment-import-file-name" class="field-hint"></p>
+          <small id="payment-import-file-name" class="field-hint"></small>
           <p id="payment-import-message" class="message" role="status" aria-live="polite" aria-atomic="true"></p>
 
           <div id="payment-import-preview" hidden>

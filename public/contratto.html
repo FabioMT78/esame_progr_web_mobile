@@ -17,7 +17,6 @@
       <div id="protected-content" class="card-stack">
         <section class="status-card contract-section" aria-labelledby="form-title">
           <h1 id="form-title">Nuovo contratto di locazione</h1>
-          <p>Completa i dati necessari e verifica il riepilogo prima di registrare il contratto.</p>
 
           <ol id="contract-stepper" class="contract-stepper" aria-label="Avanzamento registrazione">
             <li aria-current="step">1. Immobile</li>
@@ -43,8 +42,8 @@
                     aria-describedby="immobile-detail immobileId-error">
                     <option value="">Seleziona un immobile</option>
                   </select>
-                  <p id="immobile-detail" class="field-hint"></p>
-                  <p id="immobileId-error" class="field-error" aria-live="polite"></p>
+                  <small id="immobile-detail" class="field-hint"></small>
+                  <small id="immobileId-error" class="field-error" aria-live="polite"></small>
                 </div>
 
                 <div class="actions section-actions">
@@ -57,7 +56,7 @@
               <section id="immobile-editor" hidden aria-labelledby="immobile-editor-title">
                 <hr class="divider">
                 <h2 id="immobile-editor-title">Completa immobile</h2>
-                <p id="immobile-editor-help" class="field-hint"></p>
+                <small id="immobile-editor-help" class="field-hint"></small>
 
                 <section id="immobile-address-section" aria-labelledby="immobile-address-title" hidden>
                   <h3 id="immobile-address-title">Indirizzo</h3>
@@ -82,8 +81,8 @@
                     aria-describedby="inquilino-detail inquilinoId-error">
                     <option value="">Seleziona un inquilino</option>
                   </select>
-                  <p id="inquilino-detail" class="field-hint"></p>
-                  <p id="inquilinoId-error" class="field-error" aria-live="polite"></p>
+                  <small id="inquilino-detail" class="field-hint"></small>
+                  <small id="inquilinoId-error" class="field-error" aria-live="polite"></small>
                 </div>
 
                 <div class="actions section-actions">
@@ -130,8 +129,8 @@
                     aria-describedby="tipologia-detail tipologiaId-error">
                     <option value="">Seleziona una tipologia</option>
                   </select>
-                  <p id="tipologia-detail" class="field-hint"></p>
-                  <p id="tipologiaId-error" class="field-error"></p>
+                  <small id="tipologia-detail" class="field-hint"></small>
+                  <small id="tipologiaId-error" class="field-error"></small>
                 </div>
 
                 <div class="field">
@@ -139,15 +138,15 @@
                   <input id="dataInizio" name="dataInizio" type="date"
                     min="1000-01-01" max="9999-12-31" required
                     aria-describedby="dataInizio-error">
-                  <p id="dataInizio-error" class="field-error"></p>
+                  <small id="dataInizio-error" class="field-error"></small>
                 </div>
 
                 <div class="field">
                   <label for="dataFine">Decorrenza al</label>
                   <input id="dataFine" type="date" readonly aria-describedby="dataFine-hint">
-                  <p id="dataFine-hint" class="field-hint">
+                  <small id="dataFine-hint" class="field-hint">
                     Calcolata dalla durata della tipologia. Il rinnovo non estende automaticamente il contratto.
-                  </p>
+                  </small>
                 </div>
 
                 <div class="field">
@@ -155,16 +154,16 @@
                   <input id="canoneAnnuale" name="canoneAnnuale" type="number"
                     min="0.01" max="99999999.99" step="0.01" required
                     aria-describedby="canoneAnnuale-error">
-                  <p id="canoneAnnuale-error" class="field-error"></p>
+                  <small id="canoneAnnuale-error" class="field-error"></small>
                 </div>
 
                 <div class="field">
                   <label for="canoneMensile">Canone mensile (€)</label>
                   <input id="canoneMensile" type="text" readonly
                     aria-describedby="canoneMensile-hint">
-                  <p id="canoneMensile-hint" class="field-hint">
+                  <small id="canoneMensile-hint" class="field-hint">
                     Canone annuale diviso 12.
-                  </p>
+                  </small>
                 </div>
 
                 <div class="field">
@@ -172,10 +171,10 @@
                   <input id="giornoPagamento" name="giornoPagamento" type="number"
                     min="1" max="28" step="1" required
                     aria-describedby="giornoPagamento-hint giornoPagamento-error">
-                  <p id="giornoPagamento-hint" class="field-hint">
+                  <small id="giornoPagamento-hint" class="field-hint">
                     Un giorno intero tra 1 e 28 di ogni mese.
-                  </p>
-                  <p id="giornoPagamento-error" class="field-error"></p>
+                  </small>
+                  <small id="giornoPagamento-error" class="field-error"></small>
                 </div>
               </div>
             </fieldset>

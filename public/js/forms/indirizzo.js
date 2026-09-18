@@ -1,24 +1,57 @@
 const commonFields = [
-  { name: 'indirizzo', label: 'Indirizzo', type: 'text', maxLength: 150, autocomplete: 'street-address' },
-  { name: 'civico', label: 'Civico', type: 'text', maxLength: 20 },
-  { name: 'comune', label: 'Comune', type: 'text', maxLength: 100, autocomplete: 'address-level2' },
   {
-    name: 'provincia', label: 'Prov.', type: 'text', minLength: 2, maxLength: 2,
-    autocapitalize: 'characters', spellcheck: false, autocomplete: 'address-level1',
+    name: 'indirizzo',
+    label: 'Indirizzo',
+    type: 'text',
+    maxLength: 150,
+    autocomplete: 'street-address'
+  },
+  { name: 'civico', label: 'Civico', type: 'text', maxLength: 20 },
+  {
+    name: 'comune',
+    label: 'Comune',
+    type: 'text',
+    maxLength: 100,
+    autocomplete: 'address-level2'
+  },
+  {
+    name: 'provincia',
+    label: 'Prov.',
+    type: 'text',
+    minLength: 2,
+    maxLength: 2,
+    autocapitalize: 'characters',
+    spellcheck: false,
+    autocomplete: 'address-level1',
     hint: ''
   },
   {
-    name: 'cap', label: 'CAP', type: 'text', minLength: 5, maxLength: 10,
-    inputMode: 'numeric', autocomplete: 'postal-code', hint: ''
+    name: 'cap',
+    label: 'CAP',
+    type: 'text',
+    minLength: 5,
+    maxLength: 10,
+    inputMode: 'numeric',
+    autocomplete: 'postal-code',
+    hint: ''
   }
 ];
 
 const titleField = {
-  name: 'titolo', label: 'Soprannome immobile', type: 'text', maxLength: 150,
+  name: 'titolo',
+  label: 'Soprannome immobile',
+  type: 'text',
+  maxLength: 150,
   hint: 'Un nome breve per riconoscere facilmente l’immobile.'
 };
 
-const baseRequiredFields = new Set(['titolo', 'indirizzo', 'cap', 'comune', 'provincia']);
+const baseRequiredFields = new Set([
+  'titolo',
+  'indirizzo',
+  'cap',
+  'comune',
+  'provincia'
+]);
 
 function assertContainer(container, name = 'container') {
   if (!(container instanceof Element)) {
@@ -54,6 +87,7 @@ function createField(definition, prefix) {
   input.id = id;
   input.name = definition.name;
   input.type = definition.type;
+
   if (definition.maxLength) input.maxLength = definition.maxLength;
   if (definition.minLength) input.minLength = definition.minLength;
   if (definition.inputMode) input.inputMode = definition.inputMode;
@@ -68,18 +102,38 @@ function createField(definition, prefix) {
   wrapper.append(label, input);
 
   if (definition.hint) {
-    const hint = document.createElement('p');
+    const hint = document.createElement('small');
     hint.className = 'field-hint';
     hint.id = hintId;
     hint.textContent = definition.hint;
     wrapper.append(hint);
   }
 
-  const error = document.createElement('p');
+  const error = document.createElement('small');
   error.className = 'field-error';
   error.id = errorId;
   wrapper.append(error);
+
   return wrapper;
+}
+
+function resolveCommonFields(campiInclusi) {
+  if (campiInclusi == null) return commonFields;
+
+  if (!Array.isArray(campiInclusi) || !campiInclusi.length) {
+    throw new TypeError('campiInclusi deve contenere almeno un campo indirizzo.');
+  }
+
+  const requested = new Set(campiInclusi);
+  const known = new Set(commonFields.map(({ name }) => name));
+
+  for (const name of requested) {
+    if (!known.has(name)) {
+      throw new TypeError(`Campo indirizzo non supportato: ${name}.`);
+    }
+  }
+
+  return commonFields.filter(({ name }) => requested.has(name));
 }
 
 export function createIndirizzoForm({
@@ -89,19 +143,27 @@ export function createIndirizzoForm({
   mostraTitolo = false,
   titoloContainer = null,
   civicoObbligatorio = false,
-  idPrefix = ''
+  idPrefix = '',
+  campiInclusi = null
 } = {}) {
   assertContainer(container);
-  if (titoloContainer !== null) assertContainer(titoloContainer, 'titoloContainer');
 
+  if (titoloContainer !== null) {
+    assertContainer(titoloContainer, 'titoloContainer');
+  }
+
+  const selectedCommonFields = resolveCommonFields(campiInclusi);
   const requiredFields = new Set(baseRequiredFields);
+
   if (civicoObbligatorio) requiredFields.add('civico');
 
   const commonGrid = document.createElement('div');
   commonGrid.className = 'form-grid address-form-grid';
-  for (const definition of commonFields) {
+
+  for (const definition of selectedCommonFields) {
     commonGrid.append(createField(definition, idPrefix));
   }
+
   container.replaceChildren(commonGrid);
 
   const titleIsSeparate = mostraTitolo && titoloContainer;
@@ -115,12 +177,17 @@ export function createIndirizzoForm({
     }
   }
 
-  const definitions = mostraTitolo ? [titleField, ...commonFields] : commonFields;
+  const definitions = mostraTitolo
+    ? [titleField, ...selectedCommonFields]
+    : selectedCommonFields;
+
   let required = Boolean(datiObbligatori);
   let visible = Boolean(visibile);
 
   function rootFor(name) {
-    return titleIsSeparate && name === 'titolo' ? titoloContainer : container;
+    return titleIsSeparate && name === 'titolo'
+      ? titoloContainer
+      : container;
   }
 
   function input(name) {
@@ -134,7 +201,9 @@ export function createIndirizzoForm({
   }
 
   function requiredMarker(name) {
-    return rootFor(name).querySelector(`[data-required-marker="${name}"]`);
+    return rootFor(name).querySelector(
+      `[data-required-marker="${name}"]`
+    );
   }
 
   function clearErrors() {
@@ -159,12 +228,19 @@ export function createIndirizzoForm({
 
   function setRequired(value) {
     required = Boolean(value);
+
     for (const { name } of definitions) {
       const mandatory = required && requiredFields.has(name);
       const field = input(name);
+
       field.required = mandatory;
-      if (mandatory) field.setAttribute('aria-required', 'true');
-      else field.removeAttribute('aria-required');
+
+      if (mandatory) {
+        field.setAttribute('aria-required', 'true');
+      } else {
+        field.removeAttribute('aria-required');
+      }
+
       requiredMarker(name).hidden = !mandatory;
     }
   }
@@ -172,6 +248,7 @@ export function createIndirizzoForm({
   function setVisible(value) {
     visible = Boolean(value);
     container.hidden = !visible;
+
     if (titleIsSeparate) titoloContainer.hidden = !visible;
 
     for (const { name } of definitions) {
@@ -181,11 +258,15 @@ export function createIndirizzoForm({
 
   function getData() {
     const data = Object.fromEntries(
-      definitions.map(({ name }) => [name, input(name).value.trim()])
+      definitions.map(
+        ({ name }) => [name, input(name).value.trim()]
+      )
     );
+
     if (Object.hasOwn(data, 'provincia')) {
       data.provincia = data.provincia.toUpperCase();
     }
+
     return data;
   }
 
@@ -193,6 +274,7 @@ export function createIndirizzoForm({
     for (const { name } of definitions) {
       input(name).value = data?.[name] ?? '';
     }
+
     clearErrors();
   }
 
@@ -212,9 +294,18 @@ export function createIndirizzoForm({
 
     for (const definition of definitions) {
       const value = data[definition.name];
-      if (required && requiredFields.has(definition.name) && !value) {
+
+      if (
+        required
+        && requiredFields.has(definition.name)
+        && !value
+      ) {
         errors[definition.name] = 'Questo campo è obbligatorio.';
-      } else if (value && definition.maxLength && value.length > definition.maxLength) {
+      } else if (
+        value
+        && definition.maxLength
+        && value.length > definition.maxLength
+      ) {
         errors[definition.name] =
           `Inserisci al massimo ${definition.maxLength} caratteri.`;
       }
@@ -223,8 +314,10 @@ export function createIndirizzoForm({
     if (data.cap && !/^\d{5}$/.test(data.cap)) {
       errors.cap = 'Il CAP deve contenere esattamente 5 cifre.';
     }
+
     if (data.provincia && !/^[A-Z]{2}$/.test(data.provincia)) {
-      errors.provincia = 'Inserisci la sigla della provincia di 2 lettere.';
+      errors.provincia =
+        'Inserisci la sigla della provincia di 2 lettere.';
     }
 
     return errors;
@@ -232,22 +325,28 @@ export function createIndirizzoForm({
 
   function validate({ showErrors = true } = {}) {
     const errors = collectErrors();
+
     if (!showErrors) return errors;
 
     clearErrors();
+
     for (const [name, message] of Object.entries(errors)) {
       setFieldError(name, message);
     }
+
     return errors;
   }
 
   function isValid() {
-    return Object.keys(validate({ showErrors: false })).length === 0;
+    return Object.keys(
+      validate({ showErrors: false })
+    ).length === 0;
   }
 
   function focusFirstInvalid() {
     for (const { name } of definitions) {
       const field = input(name);
+
       if (field.getAttribute('aria-invalid') === 'true') {
         field.focus();
         break;
@@ -259,8 +358,10 @@ export function createIndirizzoForm({
     const field = event.target.closest('[name]');
     if (!field) return;
 
-    const ownsField = definitions.some(({ name }) => name === field.name)
-      && rootFor(field.name).contains(field);
+    const ownsField = definitions.some(
+      ({ name }) => name === field.name
+    ) && rootFor(field.name).contains(field);
+
     if (!ownsField) return;
 
     setFieldError(field.name);
@@ -268,6 +369,7 @@ export function createIndirizzoForm({
 
   container.addEventListener('input', handleFieldEvent);
   container.addEventListener('change', handleFieldEvent);
+
   if (titleIsSeparate) {
     titoloContainer.addEventListener('input', handleFieldEvent);
     titoloContainer.addEventListener('change', handleFieldEvent);

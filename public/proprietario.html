@@ -17,7 +17,7 @@
 
       <section class="status-card" aria-labelledby="owner-title">
         <h1 id="owner-title">Registrazione proprietario</h1>
-        <p id="owner-intro">Crea il tuo account proprietario.</p>
+        <p id="owner-intro">Crea il tuo account. Tutti i campi contrassegnati con * sono obbligatori.</p>
 
         <form id="owner-form" novalidate>
           <fieldset id="owner-fields" class="owner-fields">
@@ -35,11 +35,13 @@
                     maxlength="255"
                     aria-describedby="email-error"
                   >
-                  <p class="field-error" id="email-error"></p>
+                  <small class="field-error" id="email-error"></small>
                 </div>
 
                 <div class="field">
-                  <label for="password">Password <span id="password-required" aria-hidden="true">*</span></label>
+                  <label for="password">
+                    Password <span id="password-required" aria-hidden="true">*</span>
+                  </label>
                   <input
                     id="password"
                     name="password"
@@ -49,8 +51,27 @@
                     maxlength="128"
                     aria-describedby="password-error password-hint"
                   >
-                  <p class="field-hint" id="password-hint">Da 8 a 128 caratteri.</p>
-                  <p class="field-error" id="password-error"></p>
+                  <small class="field-hint" id="password-hint">Da 8 a 128 caratteri.</small>
+                  <small class="field-error" id="password-error"></small>
+                </div>
+
+                <div class="field"></div>
+
+                <div class="field">
+                  <label for="confermaPassword">
+                    Conferma password
+                    <span id="confirm-password-required" aria-hidden="true">*</span>
+                  </label>
+                  <input
+                    id="confermaPassword"
+                    name="confermaPassword"
+                    type="password"
+                    autocomplete="new-password"
+                    minlength="8"
+                    maxlength="128"
+                    aria-describedby="confermaPassword-error"
+                  >
+                  <small class="field-error" id="confermaPassword-error"></small>
                 </div>
               </div>
             </section>
@@ -67,43 +88,16 @@
 
             <section aria-labelledby="residenza-title">
               <h2 id="residenza-title">Residenza</h2>
-              <div class="form-grid">
-                <div class="field">
-                  <label for="indirizzoResidenza">Indirizzo di residenza *</label>
-                  <input
-                    id="indirizzoResidenza"
-                    name="indirizzoResidenza"
-                    type="text"
-                    required
-                    autocomplete="street-address"
-                    maxlength="255"
-                    aria-describedby="indirizzoResidenza-error"
-                  >
-                  <p class="field-error" id="indirizzoResidenza-error"></p>
-                </div>
-
-                <div class="field">
-                  <label for="comuneResidenza">Comune di residenza *</label>
-                  <input
-                    id="comuneResidenza"
-                    name="comuneResidenza"
-                    type="text"
-                    required
-                    autocomplete="address-level2"
-                    maxlength="100"
-                    aria-describedby="comuneResidenza-error"
-                  >
-                  <p class="field-error" id="comuneResidenza-error"></p>
-                </div>
-              </div>
+              <div id="residenza-fields"></div>
+              <small class="required-help">* Campi obbligatori.</small>
             </section>
 
             <hr class="divider">
 
             <section aria-labelledby="payment-data-title">
-              <h2 id="payment-data-title">Dati di pagamento e profilo</h2>
+              <h2 id="payment-data-title">Dati di pagamento</h2>
               <div class="form-grid">
-                <div class="field">
+                <div class="field field--full">
                   <label for="iban">IBAN *</label>
                   <input
                     id="iban"
@@ -117,25 +111,10 @@
                     spellcheck="false"
                     aria-describedby="iban-error iban-hint"
                   >
-                  <p class="field-hint" id="iban-hint">
+                  <small class="field-hint" id="iban-hint">
                     Inserisci l’IBAN senza spazi. Le lettere vengono convertite automaticamente in maiuscolo.
-                  </p>
-                  <p class="field-error" id="iban-error"></p>
-                </div>
-
-                <div class="field">
-                  <label for="immagineUrl">URL immagine profilo</label>
-                  <input
-                    id="immagineUrl"
-                    name="immagineUrl"
-                    type="url"
-                    maxlength="500"
-                    aria-describedby="immagineUrl-error immagineUrl-hint"
-                  >
-                  <p class="field-hint" id="immagineUrl-hint">
-                    Facoltativo. Indirizzo http o https di un’immagine.
-                  </p>
-                  <p class="field-error" id="immagineUrl-error"></p>
+                  </small>
+                  <small class="field-error" id="iban-error"></small>
                 </div>
               </div>
             </section>

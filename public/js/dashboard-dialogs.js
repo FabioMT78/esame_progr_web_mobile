@@ -188,7 +188,7 @@ export function createTenantsDialog(api, openContractPreview) {
 
       const activeContract = activeByTenant.get(tenant.id);
       if (activeContract) {
-        const hint = document.createElement('p');
+        const hint = document.createElement('small');
         hint.className = 'field-hint';
         hint.textContent = `Contratto attivo fino al ${formatDate(activeContract.dataFine)}.`;
         details.append(hint);

@@ -78,14 +78,14 @@ function createField(definition, prefix) {
   wrapper.append(label, input);
 
   if (definition.hint) {
-    const hint = document.createElement('p');
+    const hint = document.createElement('small');
     hint.className = 'field-hint';
     hint.id = hintId;
     hint.textContent = definition.hint;
     wrapper.append(hint);
   }
 
-  const error = document.createElement('p');
+  const error = document.createElement('small');
   error.className = 'field-error';
   error.id = errorId;
   wrapper.append(error);
