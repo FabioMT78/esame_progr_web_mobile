@@ -68,6 +68,10 @@ body {
   object-fit: contain;
 }
 
+.site-header .menu-toggle {
+  display: none;
+}
+
 main {
   flex: 1;
   padding-block: 2rem;
@@ -738,14 +742,59 @@ body:has(.dashboard-dialog[open]) {
     grid-template-columns: 1fr;
   }
 
-  .site-header .container,
-  .site-footer .container {
-    align-items: flex-start;
-    flex-direction: column;
+  .site-header .container {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .site-header .menu-toggle {
+    display: inline-flex;
+    flex-shrink: 0;
+    width: 2.75rem;
+    height: 2.75rem;
+    min-height: 2.75rem;
+    margin-left: auto;
+    padding: 0;
+    border-color: rgb(255 255 255 / 65%);
+    background: transparent;
+    color: #ffffff;
+    font-size: 1.65rem;
+    line-height: 1;
+  }
+
+  .site-header .menu-toggle:hover {
+    background: #244e7c;
   }
 
   .site-header nav {
+    display: none;
+    width: 100%;
     margin-left: 0;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgb(255 255 255 / 25%);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+  }
+
+  .site-header nav.is-open {
+    display: flex;
+  }
+
+  .site-header nav a,
+  .site-header nav button {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .site-header nav a {
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.35rem;
+  }
+
+  .site-header nav button {
+    border-color: transparent;
   }
 
   main {
