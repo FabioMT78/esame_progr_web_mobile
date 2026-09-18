@@ -1,3 +1,4 @@
+import { readToken } from './common.js';
 import { enableDialogBackdropClose } from './components/dialog-backdrop.js';
 
 let pageShowOccurred = false;
@@ -20,21 +21,29 @@ function normalizePath(pathname) {
   return pathname === '/index.html' ? '/' : pathname;
 }
 
-function configureBrand(header) {
+function resolveMenuScope() {
+  const declaredScope = document.body.dataset.menu || 'public';
+
+  if (declaredScope === 'account') {
+    return readToken() ? 'private' : 'public';
+  }
+
+  return declaredScope;
+}
+
+function configureBrand(header, menuScope) {
   const brand = header.querySelector('.brand');
 
   if (!brand) {
     return;
   }
 
-  brand.href = document.body.dataset.menu === 'private'
+  brand.href = menuScope === 'private'
     ? '/dashboard.html'
     : '/';
 }
 
-function configureMenu(nav) {
-  const menuScope = document.body.dataset.menu || 'public';
-
+function configureMenu(nav, menuScope) {
   nav.querySelectorAll('[data-menu]').forEach((item) => {
     if (item.dataset.menu !== menuScope) {
       item.remove();
@@ -55,6 +64,70 @@ function configureMenu(nav) {
       link.setAttribute('aria-current', 'page');
     }
   });
+}
+
+function configureDropdowns(nav) {
+  const dropdowns = [...nav.querySelectorAll('.nav-dropdown')];
+
+  function setOpen(dropdown, isOpen, { focusToggle = false } = {}) {
+    const toggle = dropdown.querySelector('.nav-dropdown-toggle');
+    if (!toggle) return;
+
+    dropdown.classList.toggle('is-open', isOpen);
+    toggle.setAttribute('aria-expanded', String(isOpen));
+
+    if (toggle.classList.contains('nav-user-toggle')) {
+      toggle.setAttribute(
+        'aria-label',
+        isOpen ? 'Chiudi menu utente' : 'Apri menu utente'
+      );
+    }
+
+    if (focusToggle) toggle.focus();
+  }
+
+  function closeAll(except = null) {
+    for (const dropdown of dropdowns) {
+      if (dropdown !== except) setOpen(dropdown, false);
+    }
+  }
+
+  for (const dropdown of dropdowns) {
+    const toggle = dropdown.querySelector('.nav-dropdown-toggle');
+    if (!toggle) continue;
+
+    toggle.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const nextOpen = toggle.getAttribute('aria-expanded') !== 'true';
+      closeAll(dropdown);
+      setOpen(dropdown, nextOpen);
+    });
+  }
+
+  nav.addEventListener('click', (event) => {
+    if (event.target.closest('.nav-dropdown-menu a, .nav-dropdown-menu button')) {
+      closeAll();
+    }
+  });
+
+  document.addEventListener('click', (event) => {
+    if (!nav.contains(event.target)) closeAll();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+
+    const openDropdown = dropdowns.find(
+      (dropdown) => dropdown.classList.contains('is-open')
+    );
+
+    if (openDropdown) {
+      setOpen(openDropdown, false, { focusToggle: true });
+    }
+  });
+
+  const mobileMedia = window.matchMedia('(max-width: 40rem)');
+  mobileMedia.addEventListener('change', () => closeAll());
 }
 
 function configureMobileMenu(header, nav) {
@@ -80,7 +153,7 @@ function configureMobileMenu(header, nav) {
   });
 
   nav.addEventListener('click', (event) => {
-    if (event.target.closest('a, button')) {
+    if (event.target.closest('a, #logout')) {
       setMenuOpen(false);
     }
   });
@@ -120,7 +193,8 @@ async function loadLayout() {
   header.innerHTML = headerHtml;
   footer.innerHTML = footerHtml;
 
-  configureBrand(header);
+  const menuScope = resolveMenuScope();
+  configureBrand(header, menuScope);
 
   const nav = header.querySelector('#site-nav');
 
@@ -129,7 +203,8 @@ async function loadLayout() {
   }
 
   nav.innerHTML = menuHtml;
-  configureMenu(nav);
+  configureMenu(nav, menuScope);
+  configureDropdowns(nav);
   configureMobileMenu(header, nav);
 }
 

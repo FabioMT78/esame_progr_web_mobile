@@ -20,4 +20,8 @@ router.get('/me', requireAuth, async (req, res) => {
   res.status(200).json(await auth.me(req.proprietarioId));
 });
 
+router.put('/me', requireAuth, async (req, res) => {
+  res.status(200).json(await auth.update(req.proprietarioId, req.body));
+});
+
 module.exports = router;

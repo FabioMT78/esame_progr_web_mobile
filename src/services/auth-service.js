@@ -21,18 +21,27 @@ function adultBirthDateLimit() {
   )).toISOString().slice(0, 10);
 }
 
-function validateRegistration(input) {
+function validateProfile(input, { passwordRequired = false } = {}) {
   const data = {};
   const fields = {};
   const limits = {
-    email: 255, nome: 100, cognome: 100, codiceFiscale: 16,
-    dataNascita: 10, indirizzoResidenza: 255, comuneResidenza: 100
+    email: 255,
+    nome: 100,
+    cognome: 100,
+    codiceFiscale: 16,
+    dataNascita: 10,
+    indirizzoResidenza: 255,
+    comuneResidenza: 100
   };
 
   for (const [key, max] of Object.entries(limits)) {
     data[key] = typeof input?.[key] === 'string' ? input[key].trim() : '';
-    if (!data[key]) fields[key] = 'Questo campo è obbligatorio.';
-    else if (data[key].length > max) fields[key] = `Inserisci al massimo ${max} caratteri.`;
+
+    if (!data[key]) {
+      fields[key] = 'Questo campo è obbligatorio.';
+    } else if (data[key].length > max) {
+      fields[key] = `Inserisci al massimo ${max} caratteri.`;
+    }
   }
 
   data.email = data.email.toLowerCase();
@@ -43,8 +52,9 @@ function validateRegistration(input) {
     fields.email = 'Inserisci un indirizzo email valido.';
   }
 
-  if (data.codiceFiscale && data.codiceFiscale.length !== 16) {
-    fields.codiceFiscale = 'Il codice fiscale deve contenere esattamente 16 caratteri.';
+  if (data.codiceFiscale && !/^[A-Z0-9]{16}$/.test(data.codiceFiscale)) {
+    fields.codiceFiscale =
+      'Il codice fiscale deve contenere esattamente 16 caratteri alfanumerici.';
   }
 
   if (!data.iban) {
@@ -67,38 +77,57 @@ function validateRegistration(input) {
   if (data.dataNascita && !validBirthDate) {
     fields.dataNascita = 'Inserisci una data valida.';
   } else if (validBirthDate && data.dataNascita > adultBirthDateLimit()) {
-    fields.dataNascita = 'il proprietario deve essere maggiorenne';
+    fields.dataNascita =
+      'La data di nascita deve riferirsi a una persona maggiorenne.';
   }
 
-  if (typeof input?.password !== 'string' || !input.password.trim()
-      || input.password.length < 8 || input.password.length > 128) {
+  data.password = typeof input?.password === 'string' ? input.password : '';
+
+  if (passwordRequired && !data.password) {
+    fields.password = 'Questo campo è obbligatorio.';
+  } else if (
+    data.password
+    && (data.password.length < 8 || data.password.length > 128)
+  ) {
     fields.password = 'La password deve contenere da 8 a 128 caratteri.';
+  } else if (data.password && !data.password.trim()) {
+    fields.password = 'La password non può contenere solo spazi.';
   }
 
-  data.immagineUrl = typeof input?.immagineUrl === 'string' ? input.immagineUrl.trim() : '';
+  data.immagineUrl =
+    typeof input?.immagineUrl === 'string' ? input.immagineUrl.trim() : '';
+
   if (input?.immagineUrl != null && typeof input.immagineUrl !== 'string') {
     fields.immagineUrl = 'Inserisci un URL valido.';
   } else if (data.immagineUrl) {
     try {
       const url = new URL(data.immagineUrl);
-      if (!['http:', 'https:'].includes(url.protocol) || data.immagineUrl.length > 500) {
+
+      if (
+        !['http:', 'https:'].includes(url.protocol)
+        || data.immagineUrl.length > 500
+      ) {
         throw new Error('URL non valido');
       }
     } catch {
-      fields.immagineUrl = 'Inserisci un URL http o https valido, di massimo 500 caratteri.';
+      fields.immagineUrl =
+        'Inserisci un URL http o https valido, di massimo 500 caratteri.';
     }
   }
+
   data.immagineUrl ||= null;
 
   if (Object.keys(fields).length) {
     throw authError(400, 'Controlla i campi indicati.', fields);
   }
+
   return data;
 }
 
 async function register(input) {
-  const data = validateRegistration(input);
-  const passwordHash = await hashPassword(input.password);
+  const data = validateProfile(input, { passwordRequired: true });
+  const passwordHash = await hashPassword(data.password);
+
   try {
     await repository.create(data, passwordHash);
   } catch (error) {
@@ -107,32 +136,90 @@ async function register(input) {
     }
     throw error;
   }
+
   return { message: 'Registrazione completata. Ora puoi accedere.' };
 }
 
+async function update(id, input) {
+  const owner = await repository.findActiveById(id);
+
+  if (!owner) {
+    throw authError(401, 'Sessione non valida. Accedi nuovamente.');
+  }
+
+  const data = validateProfile(input);
+  const passwordHash = data.password
+    ? await hashPassword(data.password)
+    : null;
+
+  try {
+    await repository.update(id, data, passwordHash);
+  } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      throw authError(409, 'Email o codice fiscale già registrati.');
+    }
+    throw error;
+  }
+
+  const profile = await repository.findActiveById(id);
+
+  if (!profile) {
+    throw authError(401, 'Sessione non valida. Accedi nuovamente.');
+  }
+
+  return profile;
+}
+
 async function login(input) {
-  const email = typeof input?.email === 'string' ? input.email.trim().toLowerCase() : '';
-  if (!email || email.length > 255 || typeof input?.password !== 'string'
-      || !input.password || input.password.length > 128) {
+  const email =
+    typeof input?.email === 'string' ? input.email.trim().toLowerCase() : '';
+
+  if (
+    !email
+    || email.length > 255
+    || typeof input?.password !== 'string'
+    || !input.password
+    || input.password.length > 128
+  ) {
     throw authError(400, 'Inserisci email e password valide.');
   }
+
   const owner = await repository.findActiveByEmail(email);
+
   if (!owner || !await verifyPassword(input.password, owner.password_hash)) {
     throw authError(401, 'Email o password non corrette');
   }
+
   const token = jwt.sign({}, process.env.JWT_SECRET, {
-    subject: String(owner.id), expiresIn: '8h', algorithm: 'HS256'
+    subject: String(owner.id),
+    expiresIn: '8h',
+    algorithm: 'HS256'
   });
+
   return {
     token,
-    proprietario: { id: owner.id, email: owner.email, nome: owner.nome, cognome: owner.cognome }
+    proprietario: {
+      id: owner.id,
+      email: owner.email,
+      nome: owner.nome,
+      cognome: owner.cognome
+    }
   };
 }
 
 async function me(id) {
   const owner = await repository.findActiveById(id);
-  if (!owner) throw authError(401, 'Sessione non valida. Accedi nuovamente.');
+
+  if (!owner) {
+    throw authError(401, 'Sessione non valida. Accedi nuovamente.');
+  }
+
   return owner;
 }
 
-module.exports = { register, login, me };
+module.exports = {
+  register,
+  update,
+  login,
+  me
+};

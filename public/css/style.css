@@ -145,6 +145,103 @@ nav,
   padding-inline: 0.75rem;
 }
 
+/* Navigazione privata desktop/tablet. */
+.nav-dropdown {
+  position: relative;
+}
+
+.nav-dropdown-toggle {
+  gap: 0.45rem;
+  min-height: 2.75rem;
+  padding: 0.45rem 0.65rem;
+  border-color: transparent;
+  background: transparent;
+  color: #ffffff;
+}
+
+.nav-dropdown-toggle:hover,
+.nav-dropdown.is-open > .nav-dropdown-toggle {
+  border-color: rgb(255 255 255 / 35%);
+  background: #244e7c;
+}
+
+.nav-dropdown-chevron {
+  font-size: 0.8rem;
+  transition: transform 0.15s ease;
+}
+
+.nav-dropdown.is-open .nav-dropdown-chevron {
+  transform: rotate(180deg);
+}
+
+.nav-user-toggle {
+  width: 2.75rem;
+  padding: 0.45rem;
+  border-radius: 50%;
+}
+
+.nav-user-toggle svg {
+  display: block;
+}
+
+.nav-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  z-index: 20;
+  display: none;
+  min-width: 13rem;
+  padding: 0.4rem;
+  border: 1px solid #dbe2ea;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: #15385f;
+  box-shadow: 0 0.75rem 1.75rem rgb(15 30 50 / 18%);
+}
+
+.nav-dropdown-menu--user {
+  right: 0;
+  left: auto;
+  min-width: 10rem;
+}
+
+.nav-dropdown.is-open > .nav-dropdown-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.site-header .nav-dropdown-menu a,
+.site-header .nav-dropdown-menu button {
+  width: 100%;
+  min-height: 2.5rem;
+  justify-content: flex-start;
+  padding: 0.55rem 0.7rem;
+  border: 0;
+  border-radius: 0.35rem;
+  background: transparent;
+  color: #15385f;
+  font-weight: 700;
+  text-align: left;
+}
+
+.site-header .nav-dropdown-menu a:hover,
+.site-header .nav-dropdown-menu button:hover,
+.site-header .nav-dropdown-menu a[aria-current="page"] {
+  background: #eef2f7;
+}
+
+.nav-menu-divider {
+  width: 100%;
+  margin: 0.3rem 0;
+  border: 0;
+  border-top: 1px solid #dbe2ea;
+}
+
+.nav-menu-divider--mobile {
+  display: none;
+}
+
 .section-actions,
 .form-actions,
 .page-actions {
@@ -329,7 +426,8 @@ textarea[aria-invalid="true"] {
 }
 
 .immobili-page fieldset,
-.tenant-fields {
+.tenant-fields,
+.owner-fields {
   min-width: 0;
   margin: 0;
   padding: 0;
@@ -886,6 +984,54 @@ body:has(.dashboard-dialog[open]) {
 
   .site-header nav button {
     border-color: transparent;
+  }
+
+  .nav-dashboard-link {
+    display: none !important;
+  }
+
+  .nav-dropdown {
+    display: contents;
+  }
+
+  .site-header .nav-dropdown-toggle {
+    display: none;
+  }
+
+  .nav-dropdown-menu,
+  .nav-dropdown.is-open > .nav-dropdown-menu {
+    position: static;
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .site-header .nav-dropdown-menu a,
+  .site-header .nav-dropdown-menu button {
+    min-height: 2.75rem;
+    padding: 0.65rem 0.75rem;
+    background: transparent;
+    color: #ffffff;
+  }
+
+  .site-header .nav-dropdown-menu a:hover,
+  .site-header .nav-dropdown-menu button:hover,
+  .site-header .nav-dropdown-menu a[aria-current="page"] {
+    background: #244e7c;
+  }
+
+  .nav-menu-divider,
+  .nav-menu-divider--mobile {
+    display: block;
+    margin: 0.25rem 0.75rem;
+    border-top-color: rgb(255 255 255 / 25%);
   }
 
   main {
