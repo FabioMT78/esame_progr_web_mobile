@@ -20,6 +20,10 @@ function assertContainer(container) {
   }
 }
 
+function fieldId(prefix, name) {
+  return `${prefix}${name}`;
+}
+
 function validDate(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T00:00:00.000Z`);
@@ -37,12 +41,16 @@ function adultBirthDateLimit() {
   )).toISOString().slice(0, 10);
 }
 
-function createField(definition) {
+function createField(definition, prefix) {
   const wrapper = document.createElement('div');
   wrapper.className = 'field';
 
+  const id = fieldId(prefix, definition.name);
+  const errorId = `${id}-error`;
+  const hintId = `${id}-hint`;
+
   const label = document.createElement('label');
-  label.htmlFor = definition.name;
+  label.htmlFor = id;
   label.append(document.createTextNode(definition.label));
 
   const marker = document.createElement('span');
@@ -53,7 +61,7 @@ function createField(definition) {
   label.append(marker);
 
   const input = document.createElement('input');
-  input.id = definition.name;
+  input.id = id;
   input.name = definition.name;
   input.type = definition.type;
   if (definition.maxLength) input.maxLength = definition.maxLength;
@@ -63,8 +71,8 @@ function createField(definition) {
   if (definition.autocapitalize) input.autocapitalize = definition.autocapitalize;
   if (definition.spellcheck === false) input.spellcheck = false;
 
-  const describedBy = [`${definition.name}-error`];
-  if (definition.hint) describedBy.push(`${definition.name}-hint`);
+  const describedBy = [errorId];
+  if (definition.hint) describedBy.push(hintId);
   input.setAttribute('aria-describedby', describedBy.join(' '));
 
   wrapper.append(label, input);
@@ -72,24 +80,29 @@ function createField(definition) {
   if (definition.hint) {
     const hint = document.createElement('p');
     hint.className = 'field-hint';
-    hint.id = `${definition.name}-hint`;
+    hint.id = hintId;
     hint.textContent = definition.hint;
     wrapper.append(hint);
   }
 
   const error = document.createElement('p');
   error.className = 'field-error';
-  error.id = `${definition.name}-error`;
+  error.id = errorId;
   wrapper.append(error);
   return wrapper;
 }
 
-export function createAnagraficaForm({ container, datiObbligatori = false, visibile = true } = {}) {
+export function createAnagraficaForm({
+  container,
+  datiObbligatori = false,
+  visibile = true,
+  idPrefix = ''
+} = {}) {
   assertContainer(container);
 
   const grid = document.createElement('div');
   grid.className = 'form-grid';
-  for (const definition of fieldsDefinition) grid.append(createField(definition));
+  for (const definition of fieldsDefinition) grid.append(createField(definition, idPrefix));
   container.replaceChildren(grid);
 
   let required = Boolean(datiObbligatori);
@@ -100,7 +113,7 @@ export function createAnagraficaForm({ container, datiObbligatori = false, visib
   }
 
   function errorElement(name) {
-    return container.querySelector(`#${name}-error`);
+    return container.querySelector(`#${CSS.escape(fieldId(idPrefix, name))}-error`);
   }
 
   function clearErrors() {
@@ -133,7 +146,9 @@ export function createAnagraficaForm({ container, datiObbligatori = false, visib
     }
 
     if (value > adultBirthDateLimit()) {
-      if (showError) setFieldError(name, "l'inquilino deve essere maggiorenne");
+      if (showError) {
+        setFieldError(name, 'La data di nascita deve riferirsi a una persona maggiorenne.');
+      }
       return false;
     }
 
@@ -181,8 +196,7 @@ export function createAnagraficaForm({ container, datiObbligatori = false, visib
     return Object.values(getData()).every((value) => !value);
   }
 
-  function validate() {
-    clearErrors();
+  function collectErrors() {
     if (!visible) return {};
 
     const data = getData();
@@ -206,20 +220,46 @@ export function createAnagraficaForm({ container, datiObbligatori = false, visib
       if (!validDate(data.dataNascita)) {
         errors.dataNascita = 'Inserisci una data valida.';
       } else if (data.dataNascita > maxBirthDate) {
-        errors.dataNascita = "l'inquilino deve essere maggiorenne";
+        errors.dataNascita = 'La data di nascita deve riferirsi a una persona maggiorenne.';
       }
     }
 
+    return errors;
+  }
+
+  function validate({ showErrors = true } = {}) {
+    const errors = collectErrors();
+    if (!showErrors) return errors;
+
+    clearErrors();
     for (const [name, message] of Object.entries(errors)) {
-      input(name).setAttribute('aria-invalid', 'true');
-      errorElement(name).textContent = message;
+      setFieldError(name, message);
     }
     return errors;
+  }
+
+  function isValid() {
+    return Object.keys(validate({ showErrors: false })).length === 0;
+  }
+
+  function isBirthDateValid() {
+    return validateField('dataNascita', { showError: false });
   }
 
   function focusFirstInvalid() {
     container.querySelector('[aria-invalid="true"]')?.focus();
   }
+
+  function handleFieldEvent(event) {
+    const field = event.target.closest('[name]');
+    if (!field || !container.contains(field)) return;
+
+    setFieldError(field.name);
+    if (field.name === 'dataNascita') validateField(field.name);
+  }
+
+  container.addEventListener('input', handleFieldEvent);
+  container.addEventListener('change', handleFieldEvent);
 
   setRequired(required);
   setVisible(visible);
@@ -230,10 +270,12 @@ export function createAnagraficaForm({ container, datiObbligatori = false, visib
     clear,
     isEmpty,
     validate,
+    isValid,
     clearErrors,
     focusFirstInvalid,
     setRequired,
     setVisible,
-    validateField
+    validateField,
+    isBirthDateValid
   };
 }

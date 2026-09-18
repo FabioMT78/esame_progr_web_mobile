@@ -11,6 +11,10 @@ function assertContainer(container) {
   }
 }
 
+function fieldId(prefix, name) {
+  return `${prefix}${name}`;
+}
+
 function validDate(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T00:00:00.000Z`);
@@ -28,18 +32,21 @@ function createRequiredMarker(name) {
   return marker;
 }
 
-function createSelectField() {
+function createSelectField(prefix) {
   const wrapper = document.createElement('div');
   wrapper.className = 'field';
 
+  const id = fieldId(prefix, 'tipoDocumento');
+  const errorId = `${id}-error`;
+
   const label = document.createElement('label');
-  label.htmlFor = 'tipoDocumento';
+  label.htmlFor = id;
   label.append(document.createTextNode('Tipo documento'), createRequiredMarker('tipoDocumento'));
 
   const select = document.createElement('select');
-  select.id = 'tipoDocumento';
+  select.id = id;
   select.name = 'tipoDocumento';
-  select.setAttribute('aria-describedby', 'tipoDocumento-error');
+  select.setAttribute('aria-describedby', errorId);
   select.append(
     new Option("Carta d'Identità", 'CARTA_IDENTITA', true, true),
     new Option('Passaporto', 'PASSAPORTO')
@@ -47,21 +54,24 @@ function createSelectField() {
 
   const error = document.createElement('p');
   error.className = 'field-error';
-  error.id = 'tipoDocumento-error';
+  error.id = errorId;
   wrapper.append(label, select, error);
   return wrapper;
 }
 
-function createInputField(definition) {
+function createInputField(definition, prefix) {
   const wrapper = document.createElement('div');
   wrapper.className = 'field';
 
+  const id = fieldId(prefix, definition.name);
+  const errorId = `${id}-error`;
+
   const label = document.createElement('label');
-  label.htmlFor = definition.name;
+  label.htmlFor = id;
   label.append(document.createTextNode(definition.label), createRequiredMarker(definition.name));
 
   const input = document.createElement('input');
-  input.id = definition.name;
+  input.id = id;
   input.name = definition.name;
   input.type = definition.type;
   if (definition.maxLength) input.maxLength = definition.maxLength;
@@ -70,11 +80,11 @@ function createInputField(definition) {
     input.autocapitalize = 'characters';
     input.spellcheck = false;
   }
-  input.setAttribute('aria-describedby', `${definition.name}-error`);
+  input.setAttribute('aria-describedby', errorId);
 
   const error = document.createElement('p');
   error.className = 'field-error';
-  error.id = `${definition.name}-error`;
+  error.id = errorId;
   wrapper.append(label, input, error);
   return wrapper;
 }
@@ -82,15 +92,16 @@ function createInputField(definition) {
 export function createDocumentoIdentitaForm({
   container,
   datiObbligatori = false,
-  visibile = true
+  visibile = true,
+  idPrefix = ''
 } = {}) {
   assertContainer(container);
   container.classList.add('contract-step');
 
   const grid = document.createElement('div');
   grid.className = 'form-grid';
-  grid.append(createSelectField());
-  for (const definition of fieldDefinitions) grid.append(createInputField(definition));
+  grid.append(createSelectField(idPrefix));
+  for (const definition of fieldDefinitions) grid.append(createInputField(definition, idPrefix));
   container.replaceChildren(grid);
 
   const names = ['tipoDocumento', ...fieldDefinitions.map(({ name }) => name)];
@@ -102,7 +113,7 @@ export function createDocumentoIdentitaForm({
   }
 
   function errorElement(name) {
-    return container.querySelector(`#${name}-error`);
+    return container.querySelector(`#${CSS.escape(fieldId(idPrefix, name))}-error`);
   }
 
   function clearErrors() {
@@ -140,14 +151,14 @@ export function createDocumentoIdentitaForm({
 
     if (name === 'dataRilascioDocumento' && value >= today) {
       if (showError) {
-        setFieldError(name, 'il rilascio del documento deve essere anteriore ad oggi');
+        setFieldError(name, 'Il rilascio del documento deve essere anteriore ad oggi.');
       }
       return false;
     }
 
     if (name === 'dataScadenzaDocumento' && value <= today) {
       if (showError) {
-        setFieldError(name, 'la scadenza del documento deve essere posteriore ad oggi');
+        setFieldError(name, 'La scadenza del documento deve essere posteriore ad oggi.');
       }
       return false;
     }
@@ -222,8 +233,7 @@ export function createDocumentoIdentitaForm({
     return !hasMeaningfulData(rawData());
   }
 
-  function validate() {
-    clearErrors();
+  function collectErrors() {
     if (!visible) return {};
 
     const data = rawData();
@@ -249,14 +259,14 @@ export function createDocumentoIdentitaForm({
       if (!validDate(data.dataRilascioDocumento)) {
         errors.dataRilascioDocumento = 'Inserisci una data valida.';
       } else if (data.dataRilascioDocumento >= today) {
-        errors.dataRilascioDocumento = 'il rilascio del documento deve essere anteriore ad oggi';
+        errors.dataRilascioDocumento = 'Il rilascio del documento deve essere anteriore ad oggi.';
       }
     }
     if (data.dataScadenzaDocumento) {
       if (!validDate(data.dataScadenzaDocumento)) {
         errors.dataScadenzaDocumento = 'Inserisci una data valida.';
       } else if (data.dataScadenzaDocumento <= today) {
-        errors.dataScadenzaDocumento = 'la scadenza del documento deve essere posteriore ad oggi';
+        errors.dataScadenzaDocumento = 'La scadenza del documento deve essere posteriore ad oggi.';
       }
     }
     if (validDate(data.dataRilascioDocumento) && validDate(data.dataScadenzaDocumento)
@@ -264,22 +274,55 @@ export function createDocumentoIdentitaForm({
       errors.dataScadenzaDocumento = 'La scadenza non può precedere la data di rilascio.';
     }
 
+    return errors;
+  }
+
+  function validate({ showErrors = true } = {}) {
+    const errors = collectErrors();
+    if (!showErrors) return errors;
+
+    clearErrors();
     for (const [name, message] of Object.entries(errors)) {
-      input(name).setAttribute('aria-invalid', 'true');
-      errorElement(name).textContent = message;
+      setFieldError(name, message);
     }
     return errors;
+  }
+
+  function isValid() {
+    return Object.keys(validate({ showErrors: false })).length === 0;
+  }
+
+  function areDocumentDatesValid() {
+    return validateField('dataRilascioDocumento', { showError: false })
+      && validateField('dataScadenzaDocumento', { showError: false });
   }
 
   function focusFirstInvalid() {
     container.querySelector('[aria-invalid="true"]')?.focus();
   }
 
-  input('dataRilascioDocumento').addEventListener('change', () => {
-    syncExpiryMin();
-    const expiry = input('dataScadenzaDocumento');
-    if (expiry.value && expiry.value < input('dataRilascioDocumento').value) expiry.value = '';
-  });
+  function handleFieldEvent(event) {
+    const field = event.target.closest('[name]');
+    if (!field || !container.contains(field)) return;
+
+    setFieldError(field.name);
+
+    if (field.name === 'dataRilascioDocumento') {
+      syncExpiryMin();
+      const expiry = input('dataScadenzaDocumento');
+      if (expiry.value && expiry.value < field.value) {
+        expiry.value = '';
+        setFieldError('dataScadenzaDocumento');
+      }
+    }
+
+    if (field.name === 'dataRilascioDocumento' || field.name === 'dataScadenzaDocumento') {
+      validateField(field.name);
+    }
+  }
+
+  container.addEventListener('input', handleFieldEvent);
+  container.addEventListener('change', handleFieldEvent);
 
   setRequired(required);
   setVisible(visible);
@@ -291,10 +334,12 @@ export function createDocumentoIdentitaForm({
     clear,
     isEmpty,
     validate,
+    isValid,
     clearErrors,
     focusFirstInvalid,
     setRequired,
     setVisible,
-    validateField
+    validateField,
+    areDocumentDatesValid
   };
 }

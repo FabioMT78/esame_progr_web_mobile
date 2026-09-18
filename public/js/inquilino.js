@@ -5,9 +5,9 @@ import {
   showFormError,
   readIdParameter
 } from './common.js';
-import { createAnagraficaForm } from './components/anagrafica-form.js';
-import { createIndirizzoForm } from './components/indirizzo-form.js';
-import { createDocumentoIdentitaForm } from './components/documento-identita-form.js';
+import { createAnagraficaForm } from './forms/anagrafica.js';
+import { createIndirizzoForm } from './forms/indirizzo.js';
+import { createDocumentoIdentitaForm } from './forms/documento.js';
 
 const content = document.querySelector('#protected-content');
 const sessionMessage = document.querySelector('#session-message');
@@ -162,6 +162,14 @@ function validateImmobile() {
   return { immobileId: message };
 }
 
+function clearStandaloneFieldError(field) {
+  if (!field || (field !== immobileSelect && field !== imageInput)) return;
+
+  field.removeAttribute('aria-invalid');
+  const error = document.getElementById(`${field.name}-error`);
+  if (error) error.textContent = '';
+}
+
 function clearFormState() {
   form.reset();
   anagrafica.clear();
@@ -250,17 +258,6 @@ async function loadEditor() {
   syncControls();
 }
 
-function validateLiveDateField(name) {
-  if (name === 'dataNascita') {
-    anagrafica.validateField(name);
-    return;
-  }
-
-  if (name === 'dataRilascioDocumento' || name === 'dataScadenzaDocumento') {
-    documento.validateField(name);
-  }
-}
-
 async function loadPage() {
   request?.abort();
   const controller = new AbortController();
@@ -303,25 +300,12 @@ async function loadPage() {
 
 form.addEventListener('input', (event) => {
   formMessage.textContent = '';
-  const field = event.target.closest('[name]');
-  if (!field) return;
-
-  field.removeAttribute('aria-invalid');
-  const error = document.getElementById(`${field.name}-error`);
-  if (error) error.textContent = '';
-
-  validateLiveDateField(field.name);
+  clearStandaloneFieldError(event.target.closest('[name]'));
 });
 
 form.addEventListener('change', (event) => {
-  const field = event.target.closest('[name]');
-  if (!field) return;
-
-  field.removeAttribute('aria-invalid');
-  const error = document.getElementById(`${field.name}-error`);
-  if (error) error.textContent = '';
-
-  validateLiveDateField(field.name);
+  formMessage.textContent = '';
+  clearStandaloneFieldError(event.target.closest('[name]'));
 });
 
 form.addEventListener('submit', async (event) => {

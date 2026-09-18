@@ -5,10 +5,10 @@ import {
   showFormError,
   readIdParameter
 } from './common.js';
-import { createIndirizzoForm } from './components/indirizzo-form.js';
+export { createIndirizzoForm } from '../forms/indirizzo.js';
 import { createDatiCatastaliForm } from './components/dati-catastali-form.js';
-import { createAnagraficaForm } from './components/anagrafica-form.js';
-import { createDocumentoIdentitaForm } from './components/documento-identita-form.js';
+export { createAnagraficaForm } from '../forms/anagrafica.js';
+export { createDocumentoIdentitaForm } from '../forms/documento.js';
 import { renderContrattoPreview } from './components/contratto-preview.js';
 
 const content = document.querySelector('#protected-content');

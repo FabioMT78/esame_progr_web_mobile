@@ -1,7 +1,7 @@
 const commonFields = [
   { name: 'indirizzo', label: 'Indirizzo', type: 'text', maxLength: 150, autocomplete: 'street-address' },
   { name: 'civico', label: 'Civico', type: 'text', maxLength: 20 },
-  { name: 'comune', label: 'Comune', type: 'text', maxLength: 100, autocomplete: 'address-level2' },  
+  { name: 'comune', label: 'Comune', type: 'text', maxLength: 100, autocomplete: 'address-level2' },
   {
     name: 'provincia', label: 'Prov.', type: 'text', minLength: 2, maxLength: 2,
     autocapitalize: 'characters', spellcheck: false, autocomplete: 'address-level1',
@@ -144,6 +144,19 @@ export function createIndirizzoForm({
     }
   }
 
+  function setFieldError(name, message = '') {
+    const field = input(name);
+    const error = errorElement(name);
+
+    if (message) {
+      field.setAttribute('aria-invalid', 'true');
+      error.textContent = message;
+    } else {
+      field.removeAttribute('aria-invalid');
+      error.textContent = '';
+    }
+  }
+
   function setRequired(value) {
     required = Boolean(value);
     for (const { name } of definitions) {
@@ -191,8 +204,7 @@ export function createIndirizzoForm({
     return Object.values(getData()).every((value) => !value);
   }
 
-  function validate() {
-    clearErrors();
+  function collectErrors() {
     if (!visible) return {};
 
     const data = getData();
@@ -215,11 +227,22 @@ export function createIndirizzoForm({
       errors.provincia = 'Inserisci la sigla della provincia di 2 lettere.';
     }
 
+    return errors;
+  }
+
+  function validate({ showErrors = true } = {}) {
+    const errors = collectErrors();
+    if (!showErrors) return errors;
+
+    clearErrors();
     for (const [name, message] of Object.entries(errors)) {
-      input(name).setAttribute('aria-invalid', 'true');
-      errorElement(name).textContent = message;
+      setFieldError(name, message);
     }
     return errors;
+  }
+
+  function isValid() {
+    return Object.keys(validate({ showErrors: false })).length === 0;
   }
 
   function focusFirstInvalid() {
@@ -232,6 +255,24 @@ export function createIndirizzoForm({
     }
   }
 
+  function handleFieldEvent(event) {
+    const field = event.target.closest('[name]');
+    if (!field) return;
+
+    const ownsField = definitions.some(({ name }) => name === field.name)
+      && rootFor(field.name).contains(field);
+    if (!ownsField) return;
+
+    setFieldError(field.name);
+  }
+
+  container.addEventListener('input', handleFieldEvent);
+  container.addEventListener('change', handleFieldEvent);
+  if (titleIsSeparate) {
+    titoloContainer.addEventListener('input', handleFieldEvent);
+    titoloContainer.addEventListener('change', handleFieldEvent);
+  }
+
   setRequired(required);
   setVisible(visible);
 
@@ -241,6 +282,7 @@ export function createIndirizzoForm({
     clear,
     isEmpty,
     validate,
+    isValid,
     clearErrors,
     focusFirstInvalid,
     setRequired,
