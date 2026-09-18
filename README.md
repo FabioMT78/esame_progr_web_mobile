@@ -1,92 +1,73 @@
 # Gestionale Affitti
 
-Baseline tecnica del progetto d'esame di Programmazione Web e Mobile con Laboratorio.
+Applicazione web per la gestione di immobili, inquilini, contratti e pagamenti,
+realizzata per il progetto d'esame di Programmazione Web e Mobile con Laboratorio.
 
-## Struttura iniziale
-
-- `public/`: frontend HTML/CSS/JavaScript
-- `src/`: backend Node.js/Express
-- `src/db/`: configurazione MySQL
-- `database/`: schema SQL
-- `docker/`: ambiente Docker Compose
+Stack principale: HTML5, CSS3, JavaScript vanilla, Web Worker, Node.js, Express.js,
+MySQL con `mysql2` e autenticazione JWT.
 
 ## Prerequisiti
 
-Per eseguire il progetto con Docker sono necessari:
+Per l'avvio consigliato con Docker sono necessari:
 
-- Git
-- Docker Desktop con Docker Compose
+- Git;
+- Docker Desktop con Docker Compose.
 
-## Installazione e setup del progetto
+Il progetto usa le immagini Docker:
 
-Nei comandi seguenti le espressioni racchiuse tra parentesi quadre, come
-`[NOME_CARTELLA_PROGETTO]`, sono segnaposto da sostituire con un valore reale.
+- `node:24.21.0-alpine3.24`;
+- `mysql:8.4`.
 
-### 1. Clonare il repository
+## Installazione e primo avvio
 
-Dalla cartella nella quale si vuole creare il progetto, eseguire:
-
-```bash
-git clone https://github.com/FabioMT78/esame_progr_web_mobile.git ./[NOME_CARTELLA_PROGETTO]
-```
-
-Entrare quindi nella cartella del progetto:
+Clonare il repository ed entrare nella cartella del progetto:
 
 ```bash
-cd [NOME_CARTELLA_PROGETTO]
+git clone https://github.com/FabioMT78/esame_progr_web_mobile.git
+cd esame_progr_web_mobile
 ```
 
-### 2. Configurare le variabili d'ambiente
-
-Creare il file locale di configurazione copiando il template:
+Creare la configurazione locale:
 
 ```bash
 cp docker/.env.example docker/.env
 ```
 
-Personalizzare i valori presenti in `docker/.env` quando necessario.
+Per un ambiente non di sviluppo sostituire almeno il valore di `JWT_SECRET`
+presente in `docker/.env`.
 
-`docker/.env` contiene la configurazione locale e non deve essere versionato;
-`docker/.env.example` rimane nel repository come template riproducibile.
-
-### 3. Scaricare le immagini Docker
+Scaricare le immagini Docker:
 
 ```bash
-docker compose \
-  --env-file docker/.env \
-  -f docker/compose.yaml \
-  pull
+docker compose   --env-file docker/.env   -f docker/compose.yaml   pull
 ```
 
-Le immagini di riferimento sono:
-
-```text
-node:24.21.0-alpine3.24
-mysql:8.4
-```
-
-## Avvio con Docker Compose
-
-Dalla root del progetto:
+Avviare applicazione e database:
 
 ```bash
-docker compose \
-  --env-file docker/.env \
-  -f docker/compose.yaml \
-  up
+docker compose   --env-file docker/.env   -f docker/compose.yaml   up
 ```
 
-Al primo avvio:
+Al primo avvio Docker:
 
-- vengono installate le dipendenze npm nel volume Docker dedicato;
-- viene avviato MySQL;
-- viene creato lo schema definito in `database/schema.sql`;
-- viene avviata l'applicazione Node.js.
+- installa le dipendenze npm nel volume dedicato;
+- avvia MySQL;
+- inizializza il database con `database/schema.sql`;
+- avvia il server Node.js sulla porta `3000`.
 
-Aprire nel browser:
+Dopo che i servizi sono avviati, caricare i template contrattuali:
 
-- applicazione: `http://localhost:3000`
-- health check API: `http://localhost:3000/api/health`
+```bash
+docker compose   --env-file docker/.env   -f docker/compose.yaml   exec app npm run db:seed:templates
+```
+
+Il seed può essere rieseguito: valida i template JSON e aggiorna le tipologie
+contrattuali e i relativi articoli in un'unica transazione.
+
+Aprire quindi:
+
+- applicazione: `http://localhost:3000`;
+- health check: `http://localhost:3000/api/health`.
 
 L'health check deve restituire:
 
@@ -97,171 +78,149 @@ L'health check deve restituire:
 }
 ```
 
+## Utilizzo essenziale
+
+Il flusso principale dell'applicazione è:
+
+1. registrare un proprietario ed effettuare il login;
+2. creare un immobile;
+3. creare un inquilino e associarlo a un immobile;
+4. registrare il contratto di locazione;
+5. dalla dashboard registrare i pagamenti oppure importare i movimenti da CSV.
+
+La dashboard permette inoltre di modificare gli immobili, gestire gli inquilini,
+visualizzare i contratti e controllare lo stato dei pagamenti.
+
+### Importazione pagamenti da CSV
+
+L'importazione è disponibile dal dialog **Registrazione pagamento**, dopo aver
+selezionato l'inquilino.
+
+Il CSV deve avere esattamente questa intestazione:
+
+```text
+data_movimento,importo,descrizione,riferimento_esterno
+```
+
+`descrizione` e `riferimento_esterno` possono essere vuoti. Sono accettati al
+massimo 200 movimenti per file e il file non può superare 2 MB.
+
+Il parsing, la normalizzazione e la prima validazione vengono eseguiti nel browser
+tramite Web Worker; il server verifica poi duplicati e possibili associazioni con
+le competenze non pagate prima della conferma.
+
+Nel repository è presente il file di esempio:
+
+```text
+storage/pagamenti_test_5.csv
+```
+
+### Immagini degli immobili
+
+Le immagini JPG, PNG e WebP possono essere caricate dalla pagina dell'immobile,
+con dimensione massima di 5 MB.
+
+Un Web Worker viene utilizzato lato client per l'elaborazione delle immagini e
+per il caricamento progressivo della preview e dell'immagine completa nella
+dashboard.
+
 ## Arresto
 
-Per arrestare i container:
+Per arrestare i container senza eliminare i dati:
 
 ```bash
-docker compose \
-  --env-file docker/.env \
-  -f docker/compose.yaml \
-  down
+docker compose   --env-file docker/.env   -f docker/compose.yaml   down
 ```
 
-Per eliminare anche i volumi Docker, compresi i dati MySQL, e ricreare
-completamente il database al successivo avvio:
+## Database e aggiornamenti durante lo sviluppo
+
+`database/schema.sql` viene eseguito automaticamente da MySQL **solo quando il
+volume del database viene creato per la prima volta**.
+
+Quindi una modifica a `database/schema.sql` non aggiorna un database già
+inizializzato.
+
+### Ricreare completamente il database
+
+Usare questa procedura solo quando i dati locali possono essere eliminati:
 
 ```bash
-docker compose \
-  --env-file docker/.env \
-  -f docker/compose.yaml \
-  down -v
+docker compose   --env-file docker/.env   -f docker/compose.yaml   down -v
 ```
 
-## Nota sul database
-
-Lo schema `database/schema.sql` viene montato nella directory
-`/docker-entrypoint-initdb.d/` del container MySQL.
-
-Gli script presenti in quella directory vengono eseguiti automaticamente
-soltanto quando il volume dati MySQL viene inizializzato per la prima volta.
-
-Di conseguenza, modificare `database/schema.sql` non aggiorna automaticamente
-un database già inizializzato. Durante lo sviluppo, quando è necessario
-ricreare completamente lo schema, eseguire:
+Poi riavviare:
 
 ```bash
-docker compose \
-  --env-file docker/.env \
-  -f docker/compose.yaml \
-  down -v
+docker compose   --env-file docker/.env   -f docker/compose.yaml   up
 ```
 
-e successivamente riavviare il progetto con il comando di avvio indicato sopra.
+e rieseguire il seed:
 
-## Troubleshooting Docker
+```bash
+docker compose   --env-file docker/.env   -f docker/compose.yaml   exec app npm run db:seed:templates
+```
 
-Se Docker restituisce errori relativi alla comunicazione con il daemon o alla
-versione dell'API, verificare prima che Docker Desktop sia avviato correttamente:
+`down -v` elimina il volume MySQL e quindi tutti i dati presenti.
+
+### Aggiornare un database mantenendo i dati
+
+Se i dati devono essere conservati, non eseguire `schema.sql` sopra il database
+esistente e non usare `down -v`.
+
+Prima effettuare un backup, quindi aprire il client MySQL del container:
+
+```bash
+docker compose   --env-file docker/.env   -f docker/compose.yaml   exec db sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"'
+```
+
+Applicare solo le istruzioni `ALTER TABLE`, `UPDATE` o gli eventuali script di
+migrazione necessari alla modifica in corso. Terminato l'aggiornamento, se sono
+cambiati i template contrattuali, rieseguire anche:
+
+```bash
+docker compose   --env-file docker/.env   -f docker/compose.yaml   exec app npm run db:seed:templates
+```
+
+## Struttura principale
+
+```text
+public/                 frontend HTML, CSS e JavaScript
+public/js/workers/      Web Worker client
+src/                    backend Node.js / Express
+src/db/                 connessione MySQL
+database/schema.sql     schema per nuove installazioni
+database/seed/          template contrattuali JSON
+database/migrate/       script di supporto al seed/migrazione
+storage/                file generati o di esempio
+docker/                 configurazione Docker Compose
+```
+
+Le immagini caricate dagli utenti vengono salvate sotto `storage/immobili/`,
+directory esclusa dal versionamento Git.
+
+## Troubleshooting
+
+Verificare che Docker Desktop sia avviato:
 
 ```bash
 docker version
 docker info
 ```
 
-Se il problema riguarda il download di un'immagine, provare direttamente:
+Per controllare i container:
 
 ```bash
-docker pull mysql:8.4
+docker compose   --env-file docker/.env   -f docker/compose.yaml   ps
 ```
 
-Questi controlli permettono di distinguere un problema dell'ambiente Docker
-da un problema della configurazione del progetto.
-
-## Template contrattuali JSON
-
-I template di canone libero e canone concordato sono in
-`database/seed/templates/`. Contengono denominazione, durata, rinnovo e articoli;
-i placeholder nelle descrizioni vengono conservati senza essere renderizzati.
-
-Prima di caricare i template e usare i contratti, applicare lo schema aggiornato
-`database/schema.sql`, che aggiunge tipologie e articoli, il collegamento dalla
-tabella contratti alla tipologia e il limite del giorno di pagamento a 28.
-
-Con Node.js e le variabili di connessione MySQL già configurati:
+Per consultare i log dell'applicazione:
 
 ```bash
-npm run db:seed:templates
+docker compose   --env-file docker/.env   -f docker/compose.yaml   logs -f app
 ```
 
-Con i servizi Docker avviati:
+Per consultare i log di MySQL:
 
 ```bash
-docker compose --env-file docker/.env -f docker/compose.yaml exec app npm run db:seed:templates
+docker compose   --env-file docker/.env   -f docker/compose.yaml   logs -f db
 ```
-
-Il comando valida tutti i JSON e li carica in un'unica transazione. Può essere
-rieseguito: aggiorna le tipologie per denominazione e sostituisce i rispettivi
-articoli; in caso di errore annulla tutte le modifiche.
-
-Se il volume MySQL Docker esiste già, `schema.sql` **non viene riapplicato
-automaticamente**. Prima del seed occorre aggiornare manualmente lo schema,
-associando anche gli eventuali contratti esistenti a una tipologia coerente e
-verificandone date e giorno di pagamento, oppure ricreare un database di sviluppo
-sacrificabile come descritto nella nota sul database. La ricreazione elimina i
-dati del volume: non è necessaria se si effettua un aggiornamento conservativo.
-
-
-## Pagamenti per competenza mensile
-
-La dashboard registra la prima competenza non pagata della coppia immobile/inquilino,
-considerando tutti i suoi contratti non archiviati e fermandosi al mese corrente.
-Anche i contratti scaduti possono avere arretrati; i rinnovi non sono automatici.
-Gli inquilini archiviati restano selezionabili per pagare i loro contratti storici.
-
-Il canone mensile deriva da `canone_annuale / 12`. Il prorata usa l'intersezione
-inclusiva fra mese e periodo contrattuale, anche per contratti interamente nello
-stesso mese, con arrotondamento finale a due decimali. Date e confronto con oggi
-usano il calendario UTC del server, come nel progetto di riferimento.
-
-- `GET /api/pagamenti/anteprima?immobileId=…&inquilinoId=…`: restituisce competenza,
-  importo, scadenza e indicatori relativi alla scadenza; HTTP 404 se non pagabile.
-- `POST /api/pagamenti`: accetta solo come dati del pagamento `contrattoId`
-  (stringa), `annoCompetenza` e `meseCompetenza` (interi). Importo e data vengono
-  ricalcolati; inviarli nel body produce HTTP 400. Una competenza non più corrente,
-  duplicata o che salta arretrati produce HTTP 409.
-
-La conferma usa una transazione e blocca l'immobile prima di rileggere contratti e
-pagamenti. Il vincolo UNIQUE protegge anche da duplicati concorrenti. Non esiste
-un endpoint per cancellare pagamenti; eventuali record già archiviati mantengono
-riservata la competenza, coerentemente con il vincolo UNIQUE richiesto.
-
-### Aggiornamento manuale di un database esistente
-
-`database/schema.sql` inizializza solo database nuovi. Il cambio di branch e il
-riavvio dei container **non aggiornano le tabelle esistenti**. Non eseguire
-`schema.sql` sul database già popolato e non cancellare il volume per applicare
-questo incremento.
-
-Prima dell'aggiornamento effettuare un backup e sospendere le scritture. Verificare
-con `SHOW COLUMNS FROM pagamenti` se le colonne sono già presenti. Se mancano:
-
-```sql
-ALTER TABLE pagamenti
-  ADD COLUMN anno_competenza SMALLINT UNSIGNED NULL AFTER contratto_id,
-  ADD COLUMN mese_competenza TINYINT UNSIGNED NULL AFTER anno_competenza;
-```
-
-Se la tabella contiene pagamenti, attribuire manualmente anno e mese corretti a
-**ogni** riga, compresi gli archiviati, verificando il periodo del contratto.
-Non dedurre automaticamente la competenza da `data_pagamento`: un pagamento
-può riferirsi a un arretrato. Controllare i dati prima di rendere obbligatori i campi:
-
-```sql
-SELECT id, contratto_id, anno_competenza, mese_competenza
-FROM pagamenti
-WHERE anno_competenza IS NULL OR anno_competenza NOT BETWEEN 1000 AND 9999
-   OR mese_competenza IS NULL OR mese_competenza NOT BETWEEN 1 AND 12;
-
-SELECT contratto_id, anno_competenza, mese_competenza, COUNT(*) AS duplicati
-FROM pagamenti
-GROUP BY contratto_id, anno_competenza, mese_competenza
-HAVING COUNT(*) > 1;
-```
-
-Risolvere eventuali anomalie in base ai dati effettivi, senza cancellazioni
-indiscriminate. Solo quando entrambe le query non restituiscono righe:
-
-```sql
-ALTER TABLE pagamenti
-  MODIFY COLUMN anno_competenza SMALLINT UNSIGNED NOT NULL,
-  MODIFY COLUMN mese_competenza TINYINT UNSIGNED NOT NULL,
-  ADD CONSTRAINT chk_pagamenti_mese CHECK (mese_competenza BETWEEN 1 AND 12),
-  ADD CONSTRAINT uq_pagamenti_competenza
-    UNIQUE (contratto_id, anno_competenza, mese_competenza);
-```
-
-Se la tabella è vuota, il passaggio di attribuzione delle competenze non serve.
-In alternativa è possibile ricreare consapevolmente un database di sviluppo
-sacrificabile dopo aver salvato ciò che occorre: la ricreazione del volume elimina
-tutti i dati e non viene eseguita automaticamente.
