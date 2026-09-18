@@ -12,6 +12,15 @@ function normalizeIban(value) {
     : '';
 }
 
+function adultBirthDateLimit() {
+  const today = new Date();
+  return new Date(Date.UTC(
+    today.getUTCFullYear() - 18,
+    today.getUTCMonth(),
+    today.getUTCDate() - 1
+  )).toISOString().slice(0, 10);
+}
+
 function validateRegistration(input) {
   const data = {};
   const fields = {};
@@ -49,10 +58,16 @@ function validateRegistration(input) {
   }
 
   const date = new Date(`${data.dataNascita}T00:00:00.000Z`);
-  if (data.dataNascita && (!/^\d{4}-\d{2}-\d{2}$/.test(data.dataNascita)
-      || Number(data.dataNascita.slice(0, 4)) < 1000 || Number.isNaN(date.getTime())
-      || date.toISOString().slice(0, 10) !== data.dataNascita)) {
+  const validBirthDate = data.dataNascita
+    && /^\d{4}-\d{2}-\d{2}$/.test(data.dataNascita)
+    && Number(data.dataNascita.slice(0, 4)) >= 1000
+    && !Number.isNaN(date.getTime())
+    && date.toISOString().slice(0, 10) === data.dataNascita;
+
+  if (data.dataNascita && !validBirthDate) {
     fields.dataNascita = 'Inserisci una data valida.';
+  } else if (validBirthDate && data.dataNascita > adultBirthDateLimit()) {
+    fields.dataNascita = 'Il proprietario deve avere almeno 18 anni e 1 giorno.';
   }
 
   if (typeof input?.password !== 'string' || !input.password.trim()

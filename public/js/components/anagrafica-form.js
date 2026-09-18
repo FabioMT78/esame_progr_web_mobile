@@ -28,6 +28,15 @@ function validDate(value) {
     && date.toISOString().slice(0, 10) === value;
 }
 
+function adultBirthDateLimit() {
+  const today = new Date();
+  return new Date(Date.UTC(
+    today.getUTCFullYear() - 18,
+    today.getUTCMonth(),
+    today.getUTCDate() - 1
+  )).toISOString().slice(0, 10);
+}
+
 function createField(definition) {
   const wrapper = document.createElement('div');
   wrapper.className = 'field';
@@ -147,7 +156,7 @@ export function createAnagraficaForm({ container, datiObbligatori = false, visib
 
     const data = getData();
     const errors = {};
-    const today = new Date().toISOString().slice(0, 10);
+    const maxBirthDate = adultBirthDateLimit();
 
     for (const definition of fieldsDefinition) {
       const value = data[definition.name];
@@ -165,8 +174,8 @@ export function createAnagraficaForm({ container, datiObbligatori = false, visib
     if (data.dataNascita) {
       if (!validDate(data.dataNascita)) {
         errors.dataNascita = 'Inserisci una data valida.';
-      } else if (data.dataNascita > today) {
-        errors.dataNascita = 'La data di nascita non può essere futura.';
+      } else if (data.dataNascita > maxBirthDate) {
+        errors.dataNascita = 'Deve avere almeno 18 anni e 1 giorno.';
       }
     }
 
@@ -181,7 +190,6 @@ export function createAnagraficaForm({ container, datiObbligatori = false, visib
     container.querySelector('[aria-invalid="true"]')?.focus();
   }
 
-  input('dataNascita').max = new Date().toISOString().slice(0, 10);
   setRequired(required);
   setVisible(visible);
 

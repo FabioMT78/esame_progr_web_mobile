@@ -112,10 +112,9 @@ export function createDocumentoIdentitaForm({
     }
   }
 
-  function syncDateLimits() {
-    const today = new Date().toISOString().slice(0, 10);
-    input('dataRilascioDocumento').max = today;
-    input('dataScadenzaDocumento').min = input('dataRilascioDocumento').value || '1000-01-01';
+  function syncExpiryMin() {
+    input('dataScadenzaDocumento').min =
+      input('dataRilascioDocumento').value || '1000-01-01';
   }
 
   function setRequired(value) {
@@ -167,7 +166,7 @@ export function createDocumentoIdentitaForm({
   function setData(data = null) {
     input('tipoDocumento').value = data?.tipoDocumento || 'CARTA_IDENTITA';
     for (const { name } of fieldDefinitions) input(name).value = data?.[name] ?? '';
-    syncDateLimits();
+    syncExpiryMin();
     clearErrors();
   }
 
@@ -205,12 +204,16 @@ export function createDocumentoIdentitaForm({
     if (data.dataRilascioDocumento) {
       if (!validDate(data.dataRilascioDocumento)) {
         errors.dataRilascioDocumento = 'Inserisci una data valida.';
-      } else if (data.dataRilascioDocumento > today) {
-        errors.dataRilascioDocumento = 'La data di rilascio non può essere futura.';
+      } else if (data.dataRilascioDocumento >= today) {
+        errors.dataRilascioDocumento = 'La data di rilascio deve essere anteriore a oggi.';
       }
     }
-    if (data.dataScadenzaDocumento && !validDate(data.dataScadenzaDocumento)) {
-      errors.dataScadenzaDocumento = 'Inserisci una data valida.';
+    if (data.dataScadenzaDocumento) {
+      if (!validDate(data.dataScadenzaDocumento)) {
+        errors.dataScadenzaDocumento = 'Inserisci una data valida.';
+      } else if (data.dataScadenzaDocumento <= today) {
+        errors.dataScadenzaDocumento = 'La data di scadenza deve essere posteriore a oggi.';
+      }
     }
     if (validDate(data.dataRilascioDocumento) && validDate(data.dataScadenzaDocumento)
         && data.dataScadenzaDocumento < data.dataRilascioDocumento) {
@@ -229,14 +232,14 @@ export function createDocumentoIdentitaForm({
   }
 
   input('dataRilascioDocumento').addEventListener('change', () => {
-    syncDateLimits();
+    syncExpiryMin();
     const expiry = input('dataScadenzaDocumento');
     if (expiry.value && expiry.value < input('dataRilascioDocumento').value) expiry.value = '';
   });
 
   setRequired(required);
   setVisible(visible);
-  syncDateLimits();
+  syncExpiryMin();
 
   return {
     getData,

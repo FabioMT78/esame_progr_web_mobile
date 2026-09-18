@@ -27,6 +27,19 @@ function validDate(value) {
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
+function todayDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function adultBirthDateLimit() {
+  const today = new Date();
+  return new Date(Date.UTC(
+    today.getUTCFullYear() - 18,
+    today.getUTCMonth(),
+    today.getUTCDate() - 1
+  )).toISOString().slice(0, 10);
+}
+
 function text(input, key, max, fields, required = false) {
   const raw = input?.[key];
   if (raw != null && typeof raw !== 'string') {
@@ -40,7 +53,7 @@ function text(input, key, max, fields, required = false) {
   return value || null;
 }
 
-function dateValue(input, key, fields, { required = false, notFuture = false } = {}) {
+function dateValue(input, key, fields, { required = false } = {}) {
   const raw = input?.[key];
   if (raw != null && typeof raw !== 'string') {
     fields[key] = 'Inserisci una data valida.';
@@ -57,11 +70,6 @@ function dateValue(input, key, fields, { required = false, notFuture = false } =
     fields[key] = 'Inserisci una data valida.';
     return null;
   }
-  if (notFuture && value > new Date().toISOString().slice(0, 10)) {
-    fields[key] = key === 'dataNascita'
-      ? 'La data di nascita non può essere futura.'
-      : 'La data di rilascio non può essere futura.';
-  }
   return value;
 }
 
@@ -72,7 +80,7 @@ function validateInput(input) {
     nome: text(input, 'nome', 100, fields, true),
     cognome: text(input, 'cognome', 100, fields, true),
     codiceFiscale: text(input, 'codiceFiscale', 16, fields, true),
-    dataNascita: dateValue(input, 'dataNascita', fields, { required: true, notFuture: true }),
+    dataNascita: dateValue(input, 'dataNascita', fields, { required: true }),
 
     indirizzo: text(input, 'indirizzo', 150, fields),
     civico: text(input, 'civico', 20, fields),
@@ -83,9 +91,7 @@ function validateInput(input) {
     tipoDocumento: text(input, 'tipoDocumento', 20, fields),
     numeroDocumento: text(input, 'numeroDocumento', 50, fields),
     organoRilascioDocumento: text(input, 'organoRilascioDocumento', 150, fields),
-    dataRilascioDocumento: dateValue(
-      input, 'dataRilascioDocumento', fields, { notFuture: true }
-    ),
+    dataRilascioDocumento: dateValue(input, 'dataRilascioDocumento', fields),
     dataScadenzaDocumento: dateValue(input, 'dataScadenzaDocumento', fields)
   };
 
@@ -110,6 +116,17 @@ function validateInput(input) {
     fields.tipoDocumento = 'Seleziona un tipo di documento valido.';
   }
   data.numeroDocumento = data.numeroDocumento?.toUpperCase() ?? null;
+
+  const today = todayDate();
+  if (data.dataNascita && data.dataNascita > adultBirthDateLimit()) {
+    fields.dataNascita = 'L’inquilino deve avere almeno 18 anni e 1 giorno.';
+  }
+  if (data.dataRilascioDocumento && data.dataRilascioDocumento >= today) {
+    fields.dataRilascioDocumento = 'La data di rilascio deve essere anteriore a oggi.';
+  }
+  if (data.dataScadenzaDocumento && data.dataScadenzaDocumento <= today) {
+    fields.dataScadenzaDocumento = 'La data di scadenza deve essere posteriore a oggi.';
+  }
 
   if (data.dataRilascioDocumento && data.dataScadenzaDocumento
       && data.dataScadenzaDocumento < data.dataRilascioDocumento) {
