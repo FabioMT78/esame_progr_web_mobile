@@ -5,11 +5,9 @@ import {
   readIdParameter
 } from './common.js';
 import { createAuthenticatedApi } from './api.js';
-import { createIndirizzoForm } from './forms/indirizzo.js';
-import { createDatiCatastaliForm } from './forms/dati-catastali.js';
-import { createAnagraficaForm } from './forms/anagrafica.js';
-import { createDocumentoIdentitaForm } from './forms/documento.js';
 import { renderContrattoPreview } from './components/contratto-preview.js';
+import { createImmobileStep } from './contratto/immobile-step.js';
+import { createInquilinoStep } from './contratto/inquilino-step.js';
 import { createDatiContrattualiStep } from './contratto/dati-contrattuali.js';
 
 const content = document.querySelector('#protected-content');
@@ -25,73 +23,11 @@ const newContract = document.querySelector('#new-contract');
 const previewContainer = document.querySelector('#contract-preview');
 const previewMessage = document.querySelector('#contract-preview-message');
 
-const immobileSelect = form.elements.immobileId;
-const tenantSelect = form.elements.inquilinoId;
-const immobileSelectorBlock = document.querySelector('#immobile-selector-block');
-const immobiliEmpty = document.querySelector('#immobili-empty');
-const immobileEditor = document.querySelector('#immobile-editor');
-const immobileAddressSection = document.querySelector('#immobile-address-section');
-
-const tenantEditor = document.querySelector('#tenant-editor');
-const tenantAnagraficaSection = document.querySelector('#tenant-anagrafica-section');
-const tenantAddressSection = document.querySelector('#tenant-address-section');
-const tenantDocumentSection = document.querySelector('#tenant-document-section');
-
-
-const cadastralRequired = ['foglio', 'particella', 'subalterno', 'categoria', 'rendita'];
-const tenantAnagraficaRequired = ['nome', 'cognome', 'codiceFiscale', 'dataNascita'];
-const tenantAddressRequired = ['indirizzo', 'civico', 'cap', 'provincia', 'comune'];
-const tenantDocumentRequired = [
-  'tipoDocumento',
-  'numeroDocumento',
-  'organoRilascioDocumento',
-  'dataRilascioDocumento',
-  'dataScadenzaDocumento'
-];
-
 const query = new URLSearchParams(window.location.search);
 const queryHasImmobile = query.has('immobileId');
 const queryHasTenant = query.has('inquilinoId');
 const queryImmobileId = readIdParameter('immobileId');
 const queryTenantId = readIdParameter('inquilinoId');
-
-const immobileAddress = createIndirizzoForm({
-  container: document.querySelector('#wizard-immobile-address-fields'),
-  datiObbligatori: true,
-  mostraTitolo: true,
-  idPrefix: 'wizard-immobile-',
-  visibile: false
-});
-
-const immobileCatasto = createDatiCatastaliForm({
-  container: document.querySelector('#wizard-immobile-cadastral-fields'),
-  datiObbligatori: true,
-  visibile: false
-});
-
-const tenantAnagrafica = createAnagraficaForm({
-  container: document.querySelector('#wizard-tenant-anagrafica-fields'),
-  datiObbligatori: true,
-  visibile: false
-});
-
-const tenantAddress = createIndirizzoForm({
-  container: document.querySelector('#wizard-tenant-address-fields'),
-  datiObbligatori: true,
-  civicoObbligatorio: true,
-  idPrefix: 'wizard-inquilino-',
-  visibile: false
-});
-
-const tenantDocument = createDocumentoIdentitaForm({
-  container: document.querySelector('#wizard-tenant-document-fields'),
-  datiObbligatori: true,
-  visibile: false
-});
-
-const datiContrattuali = createDatiContrattualiStep({
-  container: document.querySelector('[data-step="3"]')
-});
 
 let prerequisites = { immobili: [], inquilini: [], tipologie: [] };
 let draft = null;
@@ -101,10 +37,6 @@ let busy = false;
 let completed = false;
 let previewReady = false;
 let request;
-let immobileEditorMode = null;
-let tenantEditorMode = null;
-let lockedImmobile = false;
-let lockedTenant = false;
 
 function logout() {
   request?.abort();
@@ -121,78 +53,31 @@ const api = createAuthenticatedApi({
   getSignal: () => request?.signal
 });
 
-function present(value) {
-  return value !== null && value !== undefined && String(value).trim() !== '';
+function clearContractErrors() {
+  clearFieldErrors(form);
+  formMessage.textContent = '';
 }
 
-function allPresent(object, fields) {
-  return Boolean(object && fields.every((name) => present(object[name])));
+function handleEntityStepStateChange() {
+  clearContractErrors();
+  syncControls();
 }
 
-function hasCadastralData(immobile) {
-  return allPresent(immobile?.datiCatastali, cadastralRequired);
-}
+const immobileStep = createImmobileStep({
+  api,
+  messageElement: formMessage,
+  onStateChange: handleEntityStepStateChange
+});
 
-function hasTenantAnagrafica(tenant) {
-  return allPresent(tenant, tenantAnagraficaRequired);
-}
+const inquilinoStep = createInquilinoStep({
+  api,
+  messageElement: formMessage,
+  onStateChange: handleEntityStepStateChange
+});
 
-function hasTenantAddress(tenant) {
-  return allPresent(tenant, tenantAddressRequired);
-}
-
-function hasTenantDocument(tenant) {
-  return allPresent(tenant, tenantDocumentRequired);
-}
-
-function hasCompleteTenant(tenant) {
-  return hasTenantAnagrafica(tenant)
-    && hasTenantAddress(tenant)
-    && hasTenantDocument(tenant);
-}
-
-function editorRequiredFieldsComplete(editor) {
-  const fields = [
-    ...editor.querySelectorAll(
-      'input[required]:not(:disabled), select[required]:not(:disabled), textarea[required]:not(:disabled)'
-    )
-  ];
-
-  return fields.length > 0
-    && fields.every((field) => present(field.value) && field.validity.valid);
-}
-
-function immobileStepReady() {
-  return immobileEditorMode
-    ? editorRequiredFieldsComplete(immobileEditor)
-    : hasCadastralData(selectedImmobile());
-}
-
-function tenantStepReady() {
-  return tenantEditorMode
-    ? editorRequiredFieldsComplete(tenantEditor)
-      && tenantAnagrafica.isBirthDateValid()
-      && tenantDocument.areDocumentDatesValid()
-    : hasCompleteTenant(selectedTenant());
-}
-
-function selectedImmobile() {
-  return prerequisites.immobili.find((item) => item.id === immobileSelect.value);
-}
-
-function selectedTenant() {
-  return prerequisites.inquilini.find((item) => item.id === tenantSelect.value);
-}
-
-
-function immobileLabel(immobile) {
-  const street = [immobile.indirizzo, immobile.civico].filter(Boolean).join(' ');
-  return `${immobile.titolo} — ${street}, ${immobile.comune}`;
-}
-
-function tenantLabel(tenant) {
-  return `${tenant.nome} ${tenant.cognome} — ${tenant.codiceFiscale}`;
-}
+const datiContrattuali = createDatiContrattualiStep({
+  container: document.querySelector('[data-step="3"]')
+});
 
 function safeReferrerPath() {
   try {
@@ -210,47 +95,6 @@ function formatDate(value) {
   return value ? value.split('-').reverse().join('/') : '—';
 }
 
-
-function fillSelect(select, items, label) {
-  const previousValue = select.value;
-  const placeholder = select.options[0]?.cloneNode(true)
-    || new Option('Seleziona', '');
-
-  select.replaceChildren(placeholder);
-  for (const item of items) select.add(new Option(label(item), item.id));
-
-  select.value = items.some((item) => item.id === previousValue)
-    ? previousValue
-    : '';
-}
-
-function setEmbeddedServerErrors(editor, error) {
-  for (const [name, message] of Object.entries(error.fields || {})) {
-    const candidates = [...editor.querySelectorAll(`[name="${CSS.escape(name)}"]`)];
-    const field = candidates.find((item) => !item.disabled) || candidates[0];
-    if (!field) continue;
-
-    field.setAttribute('aria-invalid', 'true');
-    const hint = field.closest('.field')?.querySelector('.field-error');
-    if (hint) hint.textContent = message;
-  }
-}
-
-function showEmbeddedError(editor, error) {
-  formMessage.textContent = `Errore: ${
-    error instanceof TypeError
-      ? 'Impossibile contattare il server. Riprova.'
-      : error.message
-  }`;
-  setEmbeddedServerErrors(editor, error);
-  (editor.querySelector('[aria-invalid="true"]') || formMessage).focus();
-}
-
-function clearContractErrors() {
-  clearFieldErrors(form);
-  formMessage.textContent = '';
-}
-
 function validateContractData() {
   const errors = datiContrattuali.validate();
   if (!Object.keys(errors).length) return true;
@@ -260,13 +104,10 @@ function validateContractData() {
   return false;
 }
 
-
-
-
-
 function completedSteps() {
-  const immobileComplete = hasCadastralData(selectedImmobile());
-  const tenantComplete = immobileComplete && hasCompleteTenant(selectedTenant());
+  const immobileComplete = immobileStep.isComplete();
+  const tenantComplete = immobileComplete && inquilinoStep.isComplete();
+
   return [
     immobileComplete,
     tenantComplete,
@@ -290,14 +131,20 @@ function syncStepper() {
       button.className = 'contract-stepper-link';
       button.dataset.stepTarget = String(number);
       button.textContent = `✓ ${number}. ${labels[index]}`;
-      button.setAttribute('aria-label', `Torna al passaggio ${number}: ${labels[index]}`);
+      button.setAttribute(
+        'aria-label',
+        `Torna al passaggio ${number}: ${labels[index]}`
+      );
       item.append(button);
     } else {
       item.textContent = `${complete[index] ? '✓ ' : ''}${number}. ${labels[index]}`;
     }
 
-    if (number === step && !completed) item.setAttribute('aria-current', 'step');
-    else item.removeAttribute('aria-current');
+    if (number === step && !completed) {
+      item.setAttribute('aria-current', 'step');
+    } else {
+      item.removeAttribute('aria-current');
+    }
   });
 }
 
@@ -310,13 +157,19 @@ function syncControls() {
     fieldset.disabled = unavailable || !active;
   }
 
-  immobileSelect.disabled = unavailable || step !== 1 || lockedImmobile;
-  tenantSelect.disabled = unavailable || step !== 2 || lockedTenant;
+  immobileStep.syncDisabled({
+    unavailable,
+    active: step === 1
+  });
+  inquilinoStep.syncDisabled({
+    unavailable,
+    active: step === 2
+  });
 
   next.hidden = step === 4 || completed;
   next.disabled = unavailable
-    || (step === 1 && !immobileStepReady())
-    || (step === 2 && !tenantStepReady())
+    || (step === 1 && !immobileStep.isReady())
+    || (step === 2 && !inquilinoStep.isReady())
     || (step === 3 && !datiContrattuali.hasTipologie());
 
   confirm.hidden = step !== 4 || completed;
@@ -334,208 +187,33 @@ function syncControls() {
 function showStep(value, focus = true) {
   step = value;
   syncControls();
-  if (focus) document.querySelector(`#step${step}-title`)?.focus();
-}
 
-function renderImmobileDetail() {
-  const immobile = selectedImmobile();
-  const detail = document.querySelector('#immobile-detail');
-  const error = document.querySelector('#immobileId-error');
-
-  if (!immobile) {
-    detail.textContent = '';
-    if (!error.textContent) error.textContent = '';
-    return;
+  if (focus) {
+    document.querySelector(`#step${step}-title`)?.focus();
   }
-
-  const data = immobile.datiCatastali || {};
-  const parts = [];
-  if (present(data.foglio)) parts.push(`Foglio ${data.foglio}`);
-  if (present(data.particella)) parts.push(`Particella ${data.particella}`);
-  if (present(data.subalterno)) parts.push(`Sub ${data.subalterno}`);
-  if (present(data.categoria)) parts.push(`Categoria ${data.categoria}`);
-  if (present(data.rendita)) parts.push(`Rendita € ${data.rendita}`);
-
-  detail.textContent = parts.length ? '' : 'Dati catastali da completare.';
-
-  error.textContent = hasCadastralData(immobile)
-    ? ''
-    : 'Completa foglio, particella, subalterno, categoria e rendita.';
-}
-
-function renderTenantDetail() {
-  const tenant = selectedTenant();
-  const error = document.querySelector('#inquilinoId-error');
-
-  const missing = [];
-  if (!hasTenantAnagrafica(tenant)) missing.push('dati anagrafici');
-  if (!hasTenantAddress(tenant)) missing.push('residenza');
-  if (!hasTenantDocument(tenant)) missing.push('documento');
-
-  error.textContent = missing.length
-    ? `Completa: ${missing.join(', ')}.`
-    : '';
-}
-
-function closeImmobileEditor() {
-  immobileEditorMode = null;
-  immobileEditor.hidden = true;
-  immobileAddressSection.hidden = true;
-  immobileAddress.setVisible(false);
-  immobileCatasto.setVisible(false);
-  immobileAddress.clearErrors();
-  immobileCatasto.clearErrors();
-}
-
-function openNewImmobile() {
-  immobileEditorMode = 'new';
-  document.querySelector('#immobile-editor-title').textContent = 'Nuovo immobile';
-  document.querySelector('#immobile-editor-help').textContent = '';
-
-  immobileAddressSection.hidden = false;
-  immobileAddress.setVisible(true);
-  immobileAddress.setRequired(true);
-  immobileAddress.clear();
-
-  immobileCatasto.setVisible(true);
-  immobileCatasto.setRequired(true);
-  immobileCatasto.clear();
-
-  immobileEditor.hidden = false;
-  immobileEditor.scrollIntoView({ block: 'nearest' });  syncControls();
-}
-
-function openImmobileCompletion(immobile) {
-  if (!immobile) return;
-
-  immobileEditorMode = 'existing';
-  document.querySelector('#immobile-editor-title').textContent =
-    `Completa dati catastali — ${immobile.titolo}`;
-  document.querySelector('#immobile-editor-help').textContent =
-    'L’indirizzo rimane invariato. Completa i dati necessari alla registrazione del contratto.';
-
-  immobileAddressSection.hidden = true;
-  immobileAddress.setVisible(false);
-
-  immobileCatasto.setVisible(true);
-  immobileCatasto.setRequired(true);
-  immobileCatasto.setData(immobile.datiCatastali);
-
-  immobileEditor.hidden = false;
-  immobileEditor.scrollIntoView({ block: 'nearest' });  syncControls();
-}
-
-function closeTenantEditor() {
-  tenantEditorMode = null;
-  tenantEditor.hidden = true;
-
-  for (const [section, component] of [
-    [tenantAnagraficaSection, tenantAnagrafica],
-    [tenantAddressSection, tenantAddress],
-    [tenantDocumentSection, tenantDocument]
-  ]) {
-    section.hidden = true;
-    component.setVisible(false);
-    component.clearErrors();
-  }
-}
-
-function setTenantSection(section, component, visible) {
-  section.hidden = !visible;
-  component.setVisible(visible);
-  component.setRequired(visible);
-}
-
-function openNewTenant() {
-  tenantEditorMode = 'new';
-  document.querySelector('#tenant-editor-title').textContent = 'Nuovo inquilino';
-
-  tenantAnagrafica.clear();
-  tenantAddress.clear();
-  tenantDocument.clear();
-
-  setTenantSection(tenantAnagraficaSection, tenantAnagrafica, true);
-  setTenantSection(tenantAddressSection, tenantAddress, true);
-  setTenantSection(tenantDocumentSection, tenantDocument, true);
-
-  tenantEditor.hidden = false;
-  tenantEditor.scrollIntoView({ block: 'nearest' });  syncControls();
-}
-
-function openTenantCompletion(tenant) {
-  if (!tenant) return;
-
-  tenantEditorMode = 'existing';
-  document.querySelector('#tenant-editor-title').textContent =
-    `Completa inquilino — ${tenant.nome} ${tenant.cognome}`;
-
-  tenantAnagrafica.setData(tenant);
-  tenantAddress.setData(tenant);
-  tenantDocument.setData(tenant);
-
-  setTenantSection(
-    tenantAnagraficaSection,
-    tenantAnagrafica,
-    !hasTenantAnagrafica(tenant)
-  );
-  setTenantSection(
-    tenantAddressSection,
-    tenantAddress,
-    !hasTenantAddress(tenant)
-  );
-  setTenantSection(
-    tenantDocumentSection,
-    tenantDocument,
-    !hasTenantDocument(tenant)
-  );
-
-  tenantEditor.hidden = false;
-  tenantEditor.scrollIntoView({ block: 'nearest' });  syncControls();
 }
 
 function renderPrerequisites({ preserveSelection = true } = {}) {
-  const currentImmobile = preserveSelection ? immobileSelect.value : '';
-  const currentTenant = preserveSelection ? tenantSelect.value : '';
-
-  fillSelect(immobileSelect, prerequisites.immobili, immobileLabel);
-  fillSelect(tenantSelect, prerequisites.inquilini, tenantLabel);
+  immobileStep.setItems(
+    prerequisites.immobili,
+    { preserveSelection }
+  );
+  inquilinoStep.setItems(
+    prerequisites.inquilini,
+    { preserveSelection }
+  );
   datiContrattuali.setTipologie(prerequisites.tipologie);
-
-  if (currentImmobile && prerequisites.immobili.some((x) => x.id === currentImmobile)) {
-    immobileSelect.value = currentImmobile;
-  }
-  if (currentTenant && prerequisites.inquilini.some((x) => x.id === currentTenant)) {
-    tenantSelect.value = currentTenant;
-  }
-
-  immobiliEmpty.hidden = prerequisites.immobili.length > 0;
-  immobileSelectorBlock.hidden = prerequisites.immobili.length === 0;
-  renderImmobileDetail();
-  renderTenantDetail();
 }
 
 async function refreshPrerequisites() {
-  const currentImmobile = immobileSelect.value;
-  const currentTenant = tenantSelect.value;
-
   prerequisites = await api('/api/contratti/prerequisiti');
   renderPrerequisites();
-
-  if (currentImmobile && prerequisites.immobili.some((x) => x.id === currentImmobile)) {
-    immobileSelect.value = currentImmobile;
-  }
-  if (currentTenant && prerequisites.inquilini.some((x) => x.id === currentTenant)) {
-    tenantSelect.value = currentTenant;
-  }
-
-  renderImmobileDetail();
-  renderTenantDetail();
 }
 
 function draftPayload(requestedStep = draft?.stepCompletato ?? 0) {
   return {
-    immobileId: immobileSelect.value || null,
-    inquilinoId: tenantSelect.value || null,
+    immobileId: immobileStep.getSelectedId() || null,
+    inquilinoId: inquilinoStep.getSelectedId() || null,
     stepCompletato: requestedStep,
     dati: datiContrattuali.getData(),
     paginaProvenienza: draft?.paginaProvenienza || safeReferrerPath()
@@ -547,63 +225,71 @@ async function saveDraft(requestedStep) {
     method: 'PUT',
     body: JSON.stringify(draftPayload(requestedStep))
   });
+
   syncStepper();
   return draft;
 }
-
 
 async function applyInitialContext() {
   const draftImmobile = draft?.immobileId;
   const draftTenant = draft?.inquilinoId;
 
   const validQueryImmobile = queryImmobileId
-    && prerequisites.immobili.some((item) => item.id === queryImmobileId);
+    && immobileStep.hasId(queryImmobileId);
   const validQueryTenant = queryTenantId
-    && prerequisites.inquilini.some((item) => item.id === queryTenantId);
+    && inquilinoStep.hasId(queryTenantId);
 
-  lockedImmobile = Boolean(queryHasImmobile && validQueryImmobile);
-  lockedTenant = Boolean(queryHasTenant && validQueryTenant);
+  immobileStep.setLocked(Boolean(queryHasImmobile && validQueryImmobile));
+  inquilinoStep.setLocked(Boolean(queryHasTenant && validQueryTenant));
 
   if (queryHasImmobile) {
-    immobileSelect.value = validQueryImmobile ? queryImmobileId : '';
+    immobileStep.setSelectedId(validQueryImmobile ? queryImmobileId : '');
+
     if (!validQueryImmobile) {
-      document.querySelector('#immobileId-error').textContent =
-        'L’immobile indicato non è disponibile per il tuo account.';
+      immobileStep.setSelectionError(
+        'L’immobile indicato non è disponibile per il tuo account.'
+      );
     }
-  } else if (draftImmobile
-      && prerequisites.immobili.some((item) => item.id === draftImmobile)) {
-    immobileSelect.value = draftImmobile;
+  } else if (draftImmobile && immobileStep.hasId(draftImmobile)) {
+    immobileStep.setSelectedId(draftImmobile);
   }
 
   if (queryHasTenant) {
-    tenantSelect.value = validQueryTenant ? queryTenantId : '';
+    inquilinoStep.setSelectedId(validQueryTenant ? queryTenantId : '');
+
     if (!validQueryTenant) {
-      document.querySelector('#inquilinoId-error').textContent =
-        'L’inquilino indicato non è disponibile per il tuo account.';
+      inquilinoStep.setSelectionError(
+        'L’inquilino indicato non è disponibile per il tuo account.'
+      );
     }
-  } else if (draftTenant
-      && prerequisites.inquilini.some((item) => item.id === draftTenant)) {
-    tenantSelect.value = draftTenant;
+  } else if (draftTenant && inquilinoStep.hasId(draftTenant)) {
+    inquilinoStep.setSelectedId(draftTenant);
   }
 
   datiContrattuali.setData(draft?.dati);
-  renderImmobileDetail();
-  renderTenantDetail();
+  immobileStep.renderDetail();
+  inquilinoStep.renderDetail();
 
-  const immobile = selectedImmobile();
-  const tenant = selectedTenant();
+  const immobile = immobileStep.getSelected();
+  const tenant = inquilinoStep.getSelected();
 
   let requestedStep = 0;
 
-  if (!immobile || !hasCadastralData(immobile)) {
+  if (!immobile || !immobileStep.isComplete(immobile)) {
     showStep(1, false);
-    if (immobile && !hasCadastralData(immobile)) openImmobileCompletion(immobile);
+
+    if (immobile && !immobileStep.isComplete(immobile)) {
+      immobileStep.openCompletion(immobile, { notify: false });
+    }
   } else {
     requestedStep = 1;
 
-    if (!tenant || !hasCompleteTenant(tenant)) {
+    if (!tenant || !inquilinoStep.isComplete(tenant)) {
       showStep(2, false);
-      if (tenant && !hasCompleteTenant(tenant)) openTenantCompletion(tenant);
+
+      if (tenant && !inquilinoStep.isComplete(tenant)) {
+        inquilinoStep.openCompletion(tenant, { notify: false });
+      }
     } else {
       requestedStep = 2;
       showStep(3, false);
@@ -624,119 +310,6 @@ async function applyInitialContext() {
   syncControls();
 }
 
-
-async function saveImmobileEditor() {
-  clearContractErrors();
-
-  const errors = {
-    ...(immobileEditorMode === 'new' ? immobileAddress.validate() : {}),
-    ...immobileCatasto.validate()
-  };
-
-  if (Object.keys(errors).length) {
-    formMessage.textContent = 'Errore: controlla i campi dell’immobile.';
-    if (immobileEditorMode === 'new') immobileAddress.focusFirstInvalid();
-    immobileCatasto.focusFirstInvalid();
-    return false;
-  }
-
-  formMessage.textContent = 'Salvataggio immobile in corso…';
-
-  try {
-    let saved;
-    if (immobileEditorMode === 'new') {
-      saved = await api('/api/immobili', {
-        method: 'POST',
-        body: JSON.stringify({
-          ...immobileAddress.getData(),
-          immagineUrl: '',
-          datiCatastali: immobileCatasto.getData()
-        })
-      });
-    } else {
-      const immobile = selectedImmobile();
-      if (!immobile) throw new Error('Seleziona un immobile.');
-      saved = await api(`/api/immobili/${encodeURIComponent(immobile.id)}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          titolo: immobile.titolo,
-          indirizzo: immobile.indirizzo,
-          civico: immobile.civico ?? '',
-          cap: immobile.cap,
-          comune: immobile.comune,
-          provincia: immobile.provincia,
-          immagineUrl: immobile.immagineUrl ?? '',
-          datiCatastali: immobileCatasto.getData()
-        })
-      });
-    }
-
-    await refreshPrerequisites();
-    immobileSelect.value = saved.id;
-    immobileEditorMode = null;
-    immobileEditor.hidden = true;
-    immobileAddressSection.hidden = true;
-    immobileAddress.setVisible(false);
-    immobileCatasto.setVisible(false);
-    renderImmobileDetail();
-    return true;
-  } catch (error) {
-    if (error.name !== 'AbortError') showEmbeddedError(immobileEditor, error);
-    return false;
-  }
-}
-
-async function saveTenantEditor() {
-  clearContractErrors();
-
-  const errors = {
-    ...tenantAnagrafica.validate(),
-    ...tenantAddress.validate(),
-    ...tenantDocument.validate()
-  };
-
-  if (Object.keys(errors).length) {
-    formMessage.textContent = 'Errore: controlla i dati dell’inquilino.';
-    tenantAnagrafica.focusFirstInvalid();
-    tenantAddress.focusFirstInvalid();
-    tenantDocument.focusFirstInvalid();
-    return false;
-  }
-
-  formMessage.textContent = 'Salvataggio inquilino in corso…';
-
-  try {
-    const existing = tenantEditorMode === 'existing' ? selectedTenant() : null;
-    const payload = {
-      ...tenantAnagrafica.getData(),
-      ...tenantAddress.getData(),
-      ...tenantDocument.getData(),
-      immagineUrl: existing?.immagineUrl ?? ''
-    };
-
-    const saved = existing
-      ? await api(`/api/inquilini/${encodeURIComponent(existing.id)}`, {
-        method: 'PUT', body: JSON.stringify(payload)
-      })
-      : await api('/api/inquilini', {
-        method: 'POST', body: JSON.stringify(payload)
-      });
-
-    await refreshPrerequisites();
-    tenantSelect.value = saved.id;
-    tenantEditorMode = null;
-    tenantEditor.hidden = true;
-    setTenantSection(tenantAnagraficaSection, tenantAnagrafica, false);
-    setTenantSection(tenantAddressSection, tenantAddress, false);
-    setTenantSection(tenantDocumentSection, tenantDocument, false);
-    renderTenantDetail();
-    return true;
-  } catch (error) {
-    if (error.name !== 'AbortError') showEmbeddedError(tenantEditor, error);
-    return false;
-  }
-}
-
 async function loadContractPreview() {
   previewReady = false;
   previewContainer.replaceChildren();
@@ -748,8 +321,8 @@ async function loadContractPreview() {
     const model = await api('/api/contratti/anteprima', {
       method: 'POST',
       body: JSON.stringify({
-        immobileId: immobileSelect.value,
-        inquilinoId: tenantSelect.value,
+        immobileId: immobileStep.getSelectedId(),
+        inquilinoId: inquilinoStep.getSelectedId(),
         ...datiContrattuali.getData()
       })
     });
@@ -808,6 +381,7 @@ async function loadPage() {
     syncControls();
   } catch (error) {
     if (error.name === 'AbortError') return;
+
     busy = false;
     ready = false;
     formMessage.textContent = `Errore: ${
@@ -820,33 +394,9 @@ async function loadPage() {
   }
 }
 
-immobileSelect.addEventListener('change', () => {
-  closeImmobileEditor();
-  clearContractErrors();
-  renderImmobileDetail();
-
-  const immobile = selectedImmobile();
-  if (immobile && !hasCadastralData(immobile)) openImmobileCompletion(immobile);
-  syncControls();
-});
-
-tenantSelect.addEventListener('change', () => {
-  closeTenantEditor();
-  clearContractErrors();
-  renderTenantDetail();
-
-  const tenant = selectedTenant();
-  if (tenant && !hasCompleteTenant(tenant)) openTenantCompletion(tenant);
-  syncControls();
-});
-
-document.querySelector('#open-new-immobile').addEventListener('click', openNewImmobile);
-document.querySelector('#open-new-immobile-empty').addEventListener('click', openNewImmobile);
-
-document.querySelector('#open-new-tenant').addEventListener('click', openNewTenant);
-
 form.addEventListener('input', (event) => {
   const field = event.target.closest('[name]');
+
   if (field) {
     field.removeAttribute('aria-invalid');
     const localError = field.closest('.field')?.querySelector('.field-error');
@@ -865,48 +415,61 @@ form.addEventListener('change', () => {
 
 next.addEventListener('click', async () => {
   if (next.disabled || busy) return;
-  clearContractErrors();
 
+  clearContractErrors();
   busy = true;
   syncControls();
 
   try {
     if (step === 1) {
-      if (immobileEditorMode) {
-        const saved = await saveImmobileEditor();
+      if (immobileStep.hasEditorOpen()) {
+        const saved = await immobileStep.saveEditor();
         if (!saved) return;
+
+        await refreshPrerequisites();
+        immobileStep.setSelectedId(saved.id);
       }
 
-      const immobile = selectedImmobile();
+      const immobile = immobileStep.getSelected();
+
       if (!immobile) {
-        document.querySelector('#immobileId-error').textContent = 'Seleziona un immobile.';
+        immobileStep.setSelectionError('Seleziona un immobile.');
         return;
       }
-      if (!hasCadastralData(immobile)) {
-        openImmobileCompletion(immobile);
+
+      if (!immobileStep.isComplete(immobile)) {
+        immobileStep.openCompletion(immobile);
         return;
       }
 
       await saveDraft(1);
       showStep(2);
-      const tenant = selectedTenant();
-      if (tenant && !hasCompleteTenant(tenant)) openTenantCompletion(tenant);
+
+      const tenant = inquilinoStep.getSelected();
+      if (tenant && !inquilinoStep.isComplete(tenant)) {
+        inquilinoStep.openCompletion(tenant);
+      }
       return;
     }
 
     if (step === 2) {
-      if (tenantEditorMode) {
-        const saved = await saveTenantEditor();
+      if (inquilinoStep.hasEditorOpen()) {
+        const saved = await inquilinoStep.saveEditor();
         if (!saved) return;
+
+        await refreshPrerequisites();
+        inquilinoStep.setSelectedId(saved.id);
       }
 
-      const tenant = selectedTenant();
+      const tenant = inquilinoStep.getSelected();
+
       if (!tenant) {
-        document.querySelector('#inquilinoId-error').textContent = 'Seleziona un inquilino.';
+        inquilinoStep.setSelectionError('Seleziona un inquilino.');
         return;
       }
-      if (!hasCompleteTenant(tenant)) {
-        openTenantCompletion(tenant);
+
+      if (!inquilinoStep.isComplete(tenant)) {
+        inquilinoStep.openCompletion(tenant);
         return;
       }
 
@@ -917,38 +480,58 @@ next.addEventListener('click', async () => {
 
     if (step === 3) {
       if (!validateContractData()) return;
+
       await saveDraft(3);
       showStep(4);
       await loadContractPreview();
     }
   } catch (error) {
-    if (error.name !== 'AbortError') showFormError(form, formMessage, error);
+    if (error.name !== 'AbortError') {
+      showFormError(form, formMessage, error);
+    }
   } finally {
     busy = false;
     syncControls();
   }
 });
 
-
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
-  if (busy || !ready || completed || step !== 4 || event.submitter !== confirm || !previewReady) return;
+
+  if (
+    busy
+    || !ready
+    || completed
+    || step !== 4
+    || event.submitter !== confirm
+    || !previewReady
+  ) {
+    return;
+  }
 
   clearContractErrors();
 
-  const immobile = selectedImmobile();
-  const tenant = selectedTenant();
+  const immobile = immobileStep.getSelected();
+  const tenant = inquilinoStep.getSelected();
 
-  if (!hasCadastralData(immobile)) {
+  if (!immobileStep.isComplete(immobile)) {
     showStep(1);
-    openImmobileCompletion(immobile);
+
+    if (immobile) {
+      immobileStep.openCompletion(immobile);
+    }
     return;
   }
-  if (!hasCompleteTenant(tenant)) {
+
+  if (!inquilinoStep.isComplete(tenant)) {
     showStep(2);
-    openTenantCompletion(tenant);
+
+    if (tenant) {
+      inquilinoStep.openCompletion(tenant);
+    }
     return;
   }
+
   if (!validateContractData()) {
     showStep(3, false);
     return;
@@ -1022,13 +605,17 @@ document.querySelector('#contract-stepper').addEventListener('click', async (eve
   if (!completedSteps()[target - 1]) return;
 
   clearContractErrors();
+
   try {
     busy = true;
     syncControls();
+
     await saveDraft(draft?.stepCompletato ?? 0);
     showStep(target);
   } catch (error) {
-    if (error.name !== 'AbortError') formMessage.textContent = `Errore: ${error.message}`;
+    if (error.name !== 'AbortError') {
+      formMessage.textContent = `Errore: ${error.message}`;
+    }
   } finally {
     busy = false;
     syncControls();
