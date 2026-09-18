@@ -205,8 +205,12 @@ function renderPrerequisites({ preserveSelection = true } = {}) {
   datiContrattuali.setTipologie(prerequisites.tipologie);
 }
 
-async function refreshPrerequisites() {
-  prerequisites = await api('/api/contratti/prerequisiti');
+async function refreshPrerequisites(immobileId = immobileStep.getSelectedId()) {
+  const query = immobileId
+    ? `?immobileId=${encodeURIComponent(immobileId)}`
+    : '';
+
+  prerequisites = await api(`/api/contratti/prerequisiti${query}`);
   renderPrerequisites();
 }
 
@@ -236,11 +240,8 @@ async function applyInitialContext() {
 
   const validQueryImmobile = queryImmobileId
     && immobileStep.hasId(queryImmobileId);
-  const validQueryTenant = queryTenantId
-    && inquilinoStep.hasId(queryTenantId);
 
   immobileStep.setLocked(Boolean(queryHasImmobile && validQueryImmobile));
-  inquilinoStep.setLocked(Boolean(queryHasTenant && validQueryTenant));
 
   if (queryHasImmobile) {
     immobileStep.setSelectedId(validQueryImmobile ? queryImmobileId : '');
@@ -253,6 +254,18 @@ async function applyInitialContext() {
   } else if (draftImmobile && immobileStep.hasId(draftImmobile)) {
     immobileStep.setSelectedId(draftImmobile);
   }
+
+  const selectedImmobileId = immobileStep.getSelectedId();
+
+  if (selectedImmobileId) {
+    await refreshPrerequisites(selectedImmobileId);
+    immobileStep.setSelectedId(selectedImmobileId);
+  }
+
+  const validQueryTenant = queryTenantId
+    && inquilinoStep.hasId(queryTenantId);
+
+  inquilinoStep.setLocked(Boolean(queryHasTenant && validQueryTenant));
 
   if (queryHasTenant) {
     inquilinoStep.setSelectedId(validQueryTenant ? queryTenantId : '');
@@ -422,13 +435,22 @@ next.addEventListener('click', async () => {
 
   try {
     if (step === 1) {
+      let selectedImmobileId = immobileStep.getSelectedId();
+
       if (immobileStep.hasEditorOpen()) {
         const saved = await immobileStep.saveEditor();
         if (!saved) return;
 
-        await refreshPrerequisites();
-        immobileStep.setSelectedId(saved.id);
+        selectedImmobileId = saved.id;
       }
+
+      if (!selectedImmobileId) {
+        immobileStep.setSelectionError('Seleziona un immobile.');
+        return;
+      }
+
+      await refreshPrerequisites(selectedImmobileId);
+      immobileStep.setSelectedId(selectedImmobileId);
 
       const immobile = immobileStep.getSelected();
 
@@ -457,7 +479,7 @@ next.addEventListener('click', async () => {
         const saved = await inquilinoStep.saveEditor();
         if (!saved) return;
 
-        await refreshPrerequisites();
+        await refreshPrerequisites(immobileStep.getSelectedId());
         inquilinoStep.setSelectedId(saved.id);
       }
 
@@ -613,13 +635,12 @@ document.querySelector('#contract-stepper').addEventListener('click', async (eve
     await saveDraft(draft?.stepCompletato ?? 0);
     showStep(target);
   } catch (error) {
-    if (error.name !== 'AbortError') {
+    if (error.name !== 'AbortEror') {
       formMessage.textContent = `Errore: ${error.message}`;
     }
   } finally {
     busy = false;
-    syncControls();
-  }
+    syncControls();  }
 });
 
 retry.addEventListener('click', loadPage);
