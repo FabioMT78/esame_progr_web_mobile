@@ -6,11 +6,28 @@ const immobiliRoutes = require('./routes/immobili-routes');
 const inquiliniRoutes = require('./routes/inquilini-routes');
 const contrattiRoutes = require('./routes/contratti-routes');
 const pagamentiRoutes = require('./routes/pagamenti-routes');
+const {
+  securityHeaders,
+  requestSecurity
+} = require('./middleware/request-security-middleware');
 
 const app = express();
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.disable('x-powered-by');
+app.use(securityHeaders);
+
+app.use(express.json({
+  limit: '100kb'
+}));
+app.use(express.urlencoded({
+  extended: false,
+  limit: '100kb',
+  parameterLimit: 100
+}));
+
+// Controllo trasversale di query string e body per tutte le API.
+// Le regole di dominio specifiche restano nei service.
+app.use('/api', requestSecurity);
 
 app.use(
   '/uploads/immobili',
@@ -61,17 +78,26 @@ app.use((error, _req, res, _next) => {
       error: 'Il corpo della richiesta deve contenere JSON valido.'
     });
   }
+
   if (error.type === 'entity.too.large') {
     return res.status(413).json({
       error: 'La richiesta contiene troppi dati.'
     });
   }
+
+  if (error.type === 'parameters.too.many') {
+    return res.status(413).json({
+      error: 'La richiesta contiene troppi parametri.'
+    });
+  }
+
   if ([400, 401, 404, 409, 413, 415].includes(error.status)) {
     return res.status(error.status).json({
       error: error.message,
       fields: error.fields
     });
   }
+
   console.error('Errore API inatteso:', error);
   return res.status(500).json({
     error: 'Errore interno del server. Riprova più tardi.'
