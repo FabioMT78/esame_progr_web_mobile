@@ -9,8 +9,8 @@ const contrattoJoins = `FROM contratti c
   JOIN immobili i ON i.id = c.immobile_id AND i.proprietario_id = c.proprietario_id
   JOIN inquilini q ON q.id = c.inquilino_id AND q.proprietario_id = c.proprietario_id`;
 
-async function findCoppia(immobileId, inquilinoId, proprietarioId) {
-  const [rows] = await pool.execute(
+async function findCoppia(immobileId, inquilinoId, proprietarioId, db = pool) {
+  const [rows] = await db.execute(
     `SELECT i.id FROM immobili i
      JOIN inquilini q ON q.id = ? AND q.proprietario_id = i.proprietario_id
      WHERE i.id = ? AND i.proprietario_id = ? AND i.deleted_at IS NULL`,

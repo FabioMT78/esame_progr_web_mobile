@@ -1,5 +1,6 @@
 import { clearToken } from './common.js';
 import { createAuthenticatedApi } from './api.js';
+import { createImageWorkerClient } from './components/image-worker-client.js';
 import {
   createIcon,
   createContractPreviewDialog,
@@ -8,6 +9,7 @@ import {
   paymentDescription
 } from './dashboard-dialogs.js';
 
+const PLACEHOLDER_IMAGE = '/assets/img/segnaposto_immobile.jpg';
 const content = document.querySelector('#protected-content');
 const message = document.querySelector('#session-message');
 const retry = document.querySelector('#retry');
@@ -30,6 +32,13 @@ const paymentsDialog = createPaymentsDialog(
   (property) => {
     paymentsDialog.close();
     tenantsDialog.open(property);
+  },
+  (result) => {
+    const count = result.importedCount || 0;
+    feedback.textContent = `${count} ${count === 1 ? 'movimento importato' : 'movimenti importati'} e associati ai pagamenti.`;
+    if (activePaymentImmobileId && request?.signal && !request.signal.aborted) {
+      refreshPaymentStatus(activePaymentImmobileId, request.signal);
+    }
   }
 );
 
@@ -37,12 +46,86 @@ let request;
 let activePaymentImmobileId = null;
 let contractsByImmobile = new Map();
 const paymentStatusElements = new Map();
+let imageWorkerClient = null;
+let imageGeneration = 0;
+const imageObjectUrls = new Map();
+
+function releaseImageObjectUrls() {
+  for (const url of imageObjectUrls.values()) URL.revokeObjectURL(url);
+  imageObjectUrls.clear();
+}
+
+function resetImageWorker() {
+  imageWorkerClient?.terminate();
+  imageWorkerClient = createImageWorkerClient();
+  imageGeneration += 1;
+  releaseImageObjectUrls();
+}
+
+function previewUrlFromFull(url) {
+  if (typeof url !== 'string') return null;
+  const dot = url.lastIndexOf('.');
+  const slash = url.lastIndexOf('/');
+  if (dot <= slash) return null;
+  return `${url.slice(0, dot)}.preview.webp`;
+}
+
+function setBlobImage(image, blob, generation) {
+  if (generation !== imageGeneration || !(blob instanceof Blob)) return;
+  const nextUrl = URL.createObjectURL(blob);
+  const previousUrl = imageObjectUrls.get(image);
+  imageObjectUrls.set(image, nextUrl);
+  image.src = nextUrl;
+  if (previousUrl) URL.revokeObjectURL(previousUrl);
+}
+
+function showDirectImage(image, url, alt, generation) {
+  if (generation !== imageGeneration) return;
+  const previousUrl = imageObjectUrls.get(image);
+  if (previousUrl) {
+    URL.revokeObjectURL(previousUrl);
+    imageObjectUrls.delete(image);
+  }
+
+  image.alt = alt;
+  image.src = url;
+  image.addEventListener('error', () => {
+    if (generation !== imageGeneration) return;
+    image.src = PLACEHOLDER_IMAGE;
+    image.alt = 'Nessuna immagine disponibile';
+  }, { once: true });
+}
+
+function loadProgressiveImage(image, immobile, alt) {
+  const generation = imageGeneration;
+  const client = imageWorkerClient;
+  if (!client || !immobile.immagineUrl) return;
+
+  image.alt = alt;
+  client.loadProgressive({
+    previewUrl: previewUrlFromFull(immobile.immagineUrl),
+    fullUrl: immobile.immagineUrl,
+    maxDimension: 1200
+  }, (stage) => {
+    if (stage.stage === 'preview') setBlobImage(image, stage.blob, generation);
+  }).then((result) => {
+    setBlobImage(image, result.blob, generation);
+  }).catch((error) => {
+    if (error.name === 'AbortError' || generation !== imageGeneration) return;
+    if (!imageObjectUrls.has(image)) {
+      showDirectImage(image, immobile.immagineUrl, alt, generation);
+    }
+  });
+}
 
 function logout() {
   tenantsDialog.close();
   paymentsDialog.close();
   contractPreviewDialog.close();
   request?.abort();
+  imageWorkerClient?.terminate();
+  imageWorkerClient = null;
+  releaseImageObjectUrls();
   content.hidden = true;
   try {
     clearToken();
@@ -131,20 +214,16 @@ function createCard(immobile) {
   media.className = 'property-card-media';
 
   const image = document.createElement('img');
-  if (immobile.immagineUrl) {
-    image.alt = `Immobile ${title.textContent}`;
-    image.decoding = 'async';
-    image.addEventListener('load', () => {
-      image.hidden = false;
-    }, { once: true });
-    image.addEventListener('error', () => {
-      image.remove();
-    }, { once: true });
-    image.src = immobile.immagineUrl;
-  } else {
-    image.src = '/assets/img/segnaposto_immobile.jpg';
-  }
+  image.src = PLACEHOLDER_IMAGE;
+  image.alt = immobile.immagineUrl
+    ? `Immobile ${title.textContent}`
+    : 'Nessuna immagine disponibile';
+  image.decoding = 'async';
   media.append(image);
+
+  if (immobile.immagineUrl) {
+    loadProgressiveImage(image, immobile, `Immobile ${title.textContent}`);
+  }
 
   const edit = document.createElement('a');
   edit.className = 'icon-button property-card-edit';
@@ -224,6 +303,7 @@ async function loadDashboard() {
   paymentsDialog.close();
   contractPreviewDialog.close();
   request?.abort();
+  resetImageWorker();
   feedback.textContent = '';
   activePaymentImmobileId = null;
   contractsByImmobile = new Map();
@@ -275,5 +355,9 @@ window.addEventListener('pagehide', () => {
   paymentsDialog.close();
   contractPreviewDialog.close();
   request?.abort();
+  imageWorkerClient?.terminate();
+  imageWorkerClient = null;
+  imageGeneration += 1;
+  releaseImageObjectUrls();
   content.hidden = true;
 });

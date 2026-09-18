@@ -36,6 +36,19 @@ router.put(
   }
 );
 
+router.put(
+  '/:id/immagine-preview',
+  express.raw({ type: () => true, limit: '512kb' }),
+  async (req, res) => {
+    res.status(200).json(await immagini.replacePreview(
+      req.params.id,
+      req.proprietarioId,
+      req.headers['content-type'],
+      req.body
+    ));
+  }
+);
+
 router.put('/:id', async (req, res) => {
   res.status(200).json(await immobili.update(
     req.params.id,

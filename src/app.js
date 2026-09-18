@@ -6,6 +6,7 @@ const immobiliRoutes = require('./routes/immobili-routes');
 const inquiliniRoutes = require('./routes/inquilini-routes');
 const contrattiRoutes = require('./routes/contratti-routes');
 const pagamentiRoutes = require('./routes/pagamenti-routes');
+const movimentiRoutes = require('./routes/movimenti-routes');
 const {
   securityHeaders,
   requestSecurity
@@ -17,7 +18,7 @@ app.disable('x-powered-by');
 app.use(securityHeaders);
 
 app.use(express.json({
-  limit: '100kb'
+  limit: '512kb'
 }));
 app.use(express.urlencoded({
   extended: false,
@@ -43,6 +44,7 @@ app.use('/api/immobili', immobiliRoutes);
 app.use('/api/inquilini', inquiliniRoutes);
 app.use('/api/contratti', contrattiRoutes);
 app.use('/api/pagamenti', pagamentiRoutes);
+app.use('/api/movimenti', movimentiRoutes);
 
 app.get('/api/health', async (_req, res) => {
   try {

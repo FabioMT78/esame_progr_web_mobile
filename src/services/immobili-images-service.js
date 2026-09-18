@@ -52,33 +52,70 @@ function localStoredImagePath(url) {
   return resolved;
 }
 
+function previewPath(filePath) {
+  const extension = path.extname(filePath);
+  return `${filePath.slice(0, -extension.length)}.preview.webp`;
+}
+
+function previewUrl(url) {
+  const extensionIndex = typeof url === 'string' ? url.lastIndexOf('.') : -1;
+  const slashIndex = typeof url === 'string' ? url.lastIndexOf('/') : -1;
+  if (extensionIndex <= slashIndex) return null;
+  return `${url.slice(0, extensionIndex)}.preview.webp`;
+}
+
+async function unlinkIfPresent(filePath) {
+  if (!filePath) return;
+  try {
+    await fs.unlink(filePath);
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+}
+
 async function removePreviousLocalImage(url) {
   const filePath = localStoredImagePath(url);
   if (!filePath) return;
 
   try {
-    await fs.unlink(filePath);
+    await Promise.all([
+      unlinkIfPresent(filePath),
+      unlinkIfPresent(previewPath(filePath))
+    ]);
   } catch (error) {
-    if (error.code !== 'ENOENT') {
-      console.warn('Impossibile eliminare la vecchia immagine immobile:', error);
-    }
+    console.warn('Impossibile eliminare la vecchia immagine immobile:', error);
   }
 }
 
-async function replace(immobileId, proprietarioId, contentType, body) {
-  const immobile = await immobili.get(immobileId, proprietarioId);
+function validateImage(contentType, body, allowedTypes) {
   const mime = String(contentType || '').split(';', 1)[0].trim().toLowerCase();
-  const definition = imageTypes[mime];
-
-  if (!definition) {
-    throw inputError(415, 'Formato foto non supportato. Usa JPG, PNG o WebP.');
+  if (!allowedTypes.has(mime)) {
+    throw inputError(
+      415,
+      allowedTypes.size === 1
+        ? 'La preview deve essere in formato WebP.'
+        : 'Formato foto non supportato. Usa JPG, PNG o WebP.'
+    );
   }
+
+  const definition = imageTypes[mime];
   if (!Buffer.isBuffer(body) || body.length === 0) {
     throw inputError(400, 'La foto inviata è vuota.');
   }
   if (!definition.valid(body)) {
     throw inputError(400, 'Il contenuto del file non corrisponde al formato dichiarato.');
   }
+
+  return { mime, definition };
+}
+
+async function replace(immobileId, proprietarioId, contentType, body) {
+  const immobile = await immobili.get(immobileId, proprietarioId);
+  const { definition } = validateImage(
+    contentType,
+    body,
+    new Set(Object.keys(imageTypes))
+  );
 
   const ownerDirectory = path.join(storageRoot, String(proprietarioId));
   await fs.mkdir(ownerDirectory, { recursive: true });
@@ -107,4 +144,28 @@ async function replace(immobileId, proprietarioId, contentType, body) {
   return { immagineUrl: publicUrl };
 }
 
-module.exports = { replace };
+async function replacePreview(immobileId, proprietarioId, contentType, body) {
+  const immobile = await immobili.get(immobileId, proprietarioId);
+  validateImage(contentType, body, new Set(['image/webp']));
+
+  const fullPath = localStoredImagePath(immobile.immagineUrl);
+  const publicPreviewUrl = previewUrl(immobile.immagineUrl);
+  if (!fullPath || !publicPreviewUrl) {
+    throw inputError(409, 'Salva prima la foto principale dell’immobile.');
+  }
+
+  const filePath = previewPath(fullPath);
+  const temporaryPath = `${filePath}.${crypto.randomUUID()}.tmp`;
+  await fs.writeFile(temporaryPath, body, { flag: 'wx' });
+
+  try {
+    await fs.rename(temporaryPath, filePath);
+  } catch (error) {
+    await fs.unlink(temporaryPath).catch(() => {});
+    throw error;
+  }
+
+  return { immaginePreviewUrl: publicPreviewUrl };
+}
+
+module.exports = { replace, replacePreview };

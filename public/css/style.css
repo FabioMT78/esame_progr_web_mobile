@@ -622,6 +622,10 @@ textarea[aria-invalid="true"] {
   overflow-wrap: anywhere;
 }
 
+.payment-dialog {
+  width: min(100% - 2rem, 58rem);
+}
+
 .dashboard-dialog::backdrop {
   background: rgb(15 30 50 / 60%);
 }
@@ -701,6 +705,16 @@ body:has(.dashboard-dialog[open]) {
   font: inherit;
 }
 
+.payment-manual {
+  margin-top: 1.25rem;
+}
+
+.payment-manual h3 {
+  margin: 0 0 0.75rem;
+  color: #15385f;
+  font-size: 1rem;
+}
+
 .payment-amount-label {
   margin-bottom: 0.25rem;
   font-weight: 700;
@@ -712,13 +726,90 @@ body:has(.dashboard-dialog[open]) {
   font-weight: 700;
 }
 
+.payment-import {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dbe2ea;
+}
+
+.payment-import summary {
+  width: fit-content;
+  color: #15385f;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.payment-import fieldset {
+  min-width: 0;
+  margin: 1rem 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.payment-import input[type="file"] {
+  margin-top: 0.35rem;
+}
+
+.payment-import .message {
+  margin-top: 1rem;
+}
+
+.payment-import-table-wrap {
+  width: 100%;
+  max-height: 20rem;
+  margin-top: 1rem;
+  overflow: auto;
+  border: 1px solid #dbe2ea;
+  border-radius: 0.35rem;
+}
+
+.payment-import-table {
+  width: 100%;
+  min-width: 50rem;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.payment-import-table th,
+.payment-import-table td {
+  padding: 0.65rem;
+  border-bottom: 1px solid #dbe2ea;
+  text-align: left;
+  vertical-align: top;
+}
+
+.payment-import-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #eef2f7;
+  color: #15385f;
+}
+
+.import-status {
+  display: block;
+  text-transform: capitalize;
+}
+
+.import-status-reason {
+  display: block;
+  margin-top: 0.3rem;
+  color: #526174;
+  font-weight: 400;
+}
+
+.payment-import-actions {
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
 .required-help {
   font-style: italic;
 }
 
 #contract-preview-dialog {
-    width: 80%;
-  }
+  width: 80%;
+}
 
 /* Tablet. */
 @media (min-width: 40rem) and (max-width: 62rem) {
@@ -783,7 +874,13 @@ body:has(.dashboard-dialog[open]) {
     width: 100%;
   }
 
-  .dashboard-dialog {
+  .dashboard-dialog,
+  .payment-dialog {
+    width: calc(100% - 1rem);
     padding: 1rem;
+  }
+
+  .payment-import-table-wrap {
+    max-height: 16rem;
   }
 }

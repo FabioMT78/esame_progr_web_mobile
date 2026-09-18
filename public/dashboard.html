@@ -48,7 +48,7 @@
     </div>
   </dialog>
 
-  <dialog id="payment-dialog" class="dashboard-dialog" aria-labelledby="payment-dialog-title">
+  <dialog id="payment-dialog" class="dashboard-dialog payment-dialog" aria-labelledby="payment-dialog-title">
     <div class="dialog-heading">
       <h2 id="payment-dialog-title">Registrazione pagamento</h2>
       <button type="button" class="icon-button" data-close aria-label="Chiudi registrazione pagamento"><span aria-hidden="true">×</span></button>
@@ -65,9 +65,52 @@
       <select id="payment-tenant" disabled>
         <option value="">Seleziona un inquilino</option>
       </select>
-      <p class="payment-amount-label">Importo</p>
-      <p id="payment-amount" class="payment-amount">—</p>
-      <p id="payment-period" class="field-hint"></p>
+
+      <section class="payment-manual" aria-labelledby="payment-manual-title">
+        <h3 id="payment-manual-title">Registrazione manuale</h3>
+        <p class="payment-amount-label">Importo</p>
+        <p id="payment-amount" class="payment-amount">—</p>
+        <p id="payment-period" class="field-hint"></p>
+      </section>
+
+      <details id="payment-import-details" class="payment-import">
+        <summary>Importa movimenti da CSV</summary>
+        <fieldset id="payment-import-fields" disabled>
+          <p class="field-hint">
+            Formato: data_movimento, importo, descrizione, riferimento_esterno.
+            Le ultime due colonne possono essere vuote. Massimo 200 movimenti per file.
+          </p>
+          <label for="payment-import-file">File CSV</label>
+          <input
+            id="payment-import-file"
+            type="file"
+            accept=".csv,text/csv"
+            aria-describedby="payment-import-file-name payment-import-message"
+          >
+          <p id="payment-import-file-name" class="field-hint"></p>
+          <p id="payment-import-message" class="message" role="status" aria-live="polite" aria-atomic="true"></p>
+
+          <div id="payment-import-preview" hidden>
+            <div class="payment-import-table-wrap" tabindex="0" aria-label="Anteprima movimenti importati">
+              <table class="payment-import-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Data</th>
+                    <th scope="col">Importo</th>
+                    <th scope="col">Descrizione / riferimento</th>
+                    <th scope="col">Competenza proposta</th>
+                    <th scope="col">Stato</th>
+                  </tr>
+                </thead>
+                <tbody id="payment-import-body"></tbody>
+              </table>
+            </div>
+            <div class="actions payment-import-actions">
+              <button id="payment-import-confirm" type="button" disabled>Conferma importazione</button>
+            </div>
+          </div>
+        </fieldset>
+      </details>
     </div>
     <div class="dialog-actions">
       <button type="button" class="button-cancel" data-close>Annulla</button>

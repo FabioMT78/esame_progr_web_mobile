@@ -1,4 +1,5 @@
 import { renderContrattoPreview } from './components/contratto-preview.js';
+import { createMovimentiImport } from './components/movimenti-import.js';
 
 const euro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
 const months = new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric', timeZone: 'UTC' });
@@ -296,7 +297,12 @@ export function createTenantsDialog(api, openContractPreview) {
   };
 }
 
-export function createPaymentsDialog(api, onRegistered, openTenantsDialog) {
+export function createPaymentsDialog(
+  api,
+  onRegistered,
+  openTenantsDialog,
+  onImportedMovements = () => {}
+) {
   const dialog = document.querySelector('#payment-dialog');
   const title = document.querySelector('#payment-dialog-title');
   const message = document.querySelector('#payment-message');
@@ -319,6 +325,8 @@ export function createPaymentsDialog(api, onRegistered, openTenantsDialog) {
   };
   let preview = null;
   let sending = false;
+  let importBusy = false;
+  let movimentiImport;
 
   function resetPreview() {
     preview = null;
@@ -327,20 +335,53 @@ export function createPaymentsDialog(api, onRegistered, openTenantsDialog) {
     confirm.disabled = true;
   }
 
+  function syncControls() {
+    const busy = sending || importBusy;
+    select.disabled = busy || fields.hidden;
+    confirm.disabled = busy || !preview;
+    retry.disabled = busy;
+    dialog.querySelectorAll('[data-close]').forEach((button) => {
+      button.disabled = busy;
+    });
+    createContract.disabled = busy;
+    movimentiImport?.setDisabled(sending || fields.hidden || !select.value);
+  }
+
   function setSending(value) {
     sending = value;
-    select.disabled = value;
-    confirm.disabled = value || !preview;
-    retry.disabled = value;
-    dialog.querySelectorAll('[data-close]').forEach((button) => {
-      button.disabled = value;
-    });
-    createContract.disabled = value;
+    syncControls();
   }
+
+  function setImportBusy(value) {
+    importBusy = value;
+    syncControls();
+  }
+
+  movimentiImport = createMovimentiImport({
+    api,
+    details: document.querySelector('#payment-import-details'),
+    fieldset: document.querySelector('#payment-import-fields'),
+    fileInput: document.querySelector('#payment-import-file'),
+    fileName: document.querySelector('#payment-import-file-name'),
+    message: document.querySelector('#payment-import-message'),
+    preview: document.querySelector('#payment-import-preview'),
+    tableBody: document.querySelector('#payment-import-body'),
+    confirmButton: document.querySelector('#payment-import-confirm'),
+    getContext: () => immobile && select.value
+      ? { immobileId: immobile.id, inquilinoId: select.value }
+      : null,
+    onBusyChange: setImportBusy,
+    onImported(result) {
+      if (dialog.open) dialog.close();
+      onImportedMovements(result);
+    }
+  });
 
   function showEmptyState(kind) {
     empty.hidden = false;
     fields.hidden = true;
+    movimentiImport.reset();
+    movimentiImport.setDisabled(true);
 
     const noTenants = kind === 'no-tenants';
     emptyMessage.textContent = noTenants
@@ -349,6 +390,7 @@ export function createPaymentsDialog(api, onRegistered, openTenantsDialog) {
 
     newTenant.hidden = !noTenants;
     createContract.hidden = noTenants;
+    syncControls();
   }
 
   async function loadPreview(notice = '') {
@@ -362,6 +404,7 @@ export function createPaymentsDialog(api, onRegistered, openTenantsDialog) {
 
     if (!select.value) {
       message.textContent = 'Seleziona un inquilino.';
+      syncControls();
       return;
     }
 
@@ -383,12 +426,13 @@ export function createPaymentsDialog(api, onRegistered, openTenantsDialog) {
           1
         )))}. Scadenza: ${formatDate(data.scadenza)}.`;
       message.textContent = notice;
-      confirm.disabled = sending;
     } catch (error) {
       if (signal.aborted) return;
       message.textContent =
         `${notice}${error.status === 404 ? '' : 'Errore: '}${errorText(error)}`;
       retry.hidden = error.status === 404;
+    } finally {
+      if (!signal.aborted) syncControls();
     }
   }
 
@@ -399,6 +443,7 @@ export function createPaymentsDialog(api, onRegistered, openTenantsDialog) {
     const { signal } = requestState.controller;
 
     resetPreview();
+    movimentiImport.reset();
     fields.hidden = true;
     empty.hidden = true;
     retry.hidden = true;
@@ -430,12 +475,16 @@ export function createPaymentsDialog(api, onRegistered, openTenantsDialog) {
 
       empty.hidden = true;
       fields.hidden = false;
-      select.disabled = false;
       message.textContent = 'Seleziona un inquilino.';
 
       if (paymentTenants.length === 1) {
         select.value = paymentTenants[0].id;
+        movimentiImport.setDisabled(false);
+        syncControls();
         await loadPreview();
+      } else {
+        movimentiImport.setDisabled(true);
+        syncControls();
       }
     } catch (error) {
       if (signal.aborted) return;
@@ -445,7 +494,7 @@ export function createPaymentsDialog(api, onRegistered, openTenantsDialog) {
   }
 
   async function registerPayment() {
-    if (sending || !preview
+    if (sending || importBusy || !preview
         || !window.confirm(`Confermi il pagamento di ${paymentDescription(preview)}?`)) {
       return;
     }
@@ -477,7 +526,12 @@ export function createPaymentsDialog(api, onRegistered, openTenantsDialog) {
     }
   }
 
-  select.addEventListener('change', () => loadPreview());
+  select.addEventListener('change', () => {
+    movimentiImport.reset({ closeDetails: false });
+    movimentiImport.setDisabled(!select.value);
+    syncControls();
+    loadPreview();
+  });
   retry.addEventListener(
     'click',
     () => requestState.retryPreview ? loadPreview() : loadPaymentTenants()
@@ -485,7 +539,7 @@ export function createPaymentsDialog(api, onRegistered, openTenantsDialog) {
   confirm.addEventListener('click', registerPayment);
 
   createContract.addEventListener('click', () => {
-    if (sending || !immobile) return;
+    if (sending || importBusy || !immobile) return;
     dialog.close();
     openTenantsDialog(immobile);
   });
@@ -494,11 +548,12 @@ export function createPaymentsDialog(api, onRegistered, openTenantsDialog) {
     (button) => button.addEventListener('click', () => dialog.close())
   );
   dialog.addEventListener('cancel', (event) => {
-    if (sending) event.preventDefault();
+    if (sending || importBusy) event.preventDefault();
   });
   dialog.addEventListener('close', () => {
     requestState.controller?.abort();
     requestState.previewController?.abort();
+    movimentiImport.reset();
     resetPreview();
   });
 
@@ -507,13 +562,15 @@ export function createPaymentsDialog(api, onRegistered, openTenantsDialog) {
       immobile = property;
       title.textContent = `Registrazione pagamento — ${property.titolo}`;
       newTenant.href = contextUrl(property.id);
-      setSending(false);
+      sending = false;
+      importBusy = false;
       dialog.showModal();
       loadPaymentTenants();
     },
     close() {
       requestState.controller?.abort();
       requestState.previewController?.abort();
+      movimentiImport.reset();
       if (dialog.open) dialog.close();
     }
   };

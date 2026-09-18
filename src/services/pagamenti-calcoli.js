@@ -32,6 +32,44 @@ function calcolaScadenzaCompetenza(contratto, anno, mese) {
   return `${anno}-${String(mese).padStart(2, '0')}-${String(contratto.giornoPagamento).padStart(2, '0')}`;
 }
 
+function chiavePagamento(contrattoId, anno, mese) {
+  return `${contrattoId}:${anno * 12 + mese - 1}`;
+}
+
+function competenzeNonPagate(contratti, pagamenti, finoA) {
+  const pagate = new Set(pagamenti.map((pagamento) =>
+    chiavePagamento(
+      pagamento.contrattoId,
+      pagamento.annoCompetenza,
+      pagamento.meseCompetenza
+    )));
+  const limite = indiceMese(finoA);
+  const result = [];
+
+  for (const contratto of contratti) {
+    const ultimo = Math.min(indiceMese(contratto.dataFine), limite);
+
+    for (let indice = indiceMese(contratto.dataInizio); indice <= ultimo; indice += 1) {
+      const anno = Math.floor(indice / 12);
+      const mese = indice % 12 + 1;
+      if (pagate.has(chiavePagamento(contratto.id, anno, mese))) continue;
+
+      result.push({
+        key: chiavePagamento(contratto.id, anno, mese),
+        indice,
+        contrattoId: contratto.id,
+        annoCompetenza: anno,
+        meseCompetenza: mese,
+        importo: calcolaImportoCompetenza(contratto, anno, mese),
+        scadenza: calcolaScadenzaCompetenza(contratto, anno, mese)
+      });
+    }
+  }
+
+  return result.sort((a, b) => a.indice - b.indice
+    || (BigInt(a.contrattoId) < BigInt(b.contrattoId) ? -1 : 1));
+}
+
 function primaCompetenzaNonPagata(contratti, pagamenti, oggi) {
   const pagate = new Set(pagamenti.map((pagamento) =>
     `${pagamento.contrattoId}:${pagamento.annoCompetenza * 12 + pagamento.meseCompetenza - 1}`));
@@ -59,4 +97,9 @@ function primaCompetenzaNonPagata(contratti, pagamenti, oggi) {
   };
 }
 
-module.exports = { calcolaImportoCompetenza, calcolaScadenzaCompetenza, primaCompetenzaNonPagata };
+module.exports = {
+  calcolaImportoCompetenza,
+  calcolaScadenzaCompetenza,
+  competenzeNonPagate,
+  primaCompetenzaNonPagata
+};
