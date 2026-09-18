@@ -1,3 +1,5 @@
+import { enableDialogBackdropClose } from './components/dialog-backdrop.js';
+
 let pageShowOccurred = false;
 
 window.addEventListener('pageshow', () => {
@@ -108,6 +110,8 @@ async function bootstrap() {
     );
     return;
   }
+
+  enableDialogBackdropClose();
 
   const pageScript = document.body.dataset.pageScript;
 
