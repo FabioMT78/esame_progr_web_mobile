@@ -1,5 +1,4 @@
 .contract-document {
-  max-width: 52rem;
   margin: 1.5rem auto 0;
   padding: clamp(1.25rem, 3vw, 2.5rem);
   border: 1px solid #cbd5e1;
@@ -116,6 +115,7 @@
   border-bottom: 1px solid #111827;
 }
 
+/* Cellulare. */
 @media (max-width: 40rem) {
   .contract-document {
     padding: 1rem;
