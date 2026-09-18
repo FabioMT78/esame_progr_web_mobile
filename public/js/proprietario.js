@@ -25,7 +25,7 @@ function validateBirthDate() {
   dataNascitaError.textContent = '';
 
   if (dataNascita.value && dataNascita.value > adultBirthDateLimit()) {
-    const error = 'Il proprietario deve avere almeno 18 anni e 1 giorno.';
+    const error = 'il proprietario deve essere maggiorenne';
     dataNascita.setCustomValidity(error);
     dataNascitaError.textContent = error;
     return false;

@@ -112,6 +112,50 @@ export function createDocumentoIdentitaForm({
     }
   }
 
+  function setFieldError(name, message = '') {
+    const field = input(name);
+    const error = errorElement(name);
+
+    if (message) {
+      field.setAttribute('aria-invalid', 'true');
+      error.textContent = message;
+    } else {
+      field.removeAttribute('aria-invalid');
+      error.textContent = '';
+    }
+  }
+
+  function validateField(name, { showError = true } = {}) {
+    if (name !== 'dataRilascioDocumento' && name !== 'dataScadenzaDocumento') {
+      return true;
+    }
+
+    const value = input(name).value;
+    if (!value || !validDate(value)) {
+      if (showError) setFieldError(name);
+      return true;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    if (name === 'dataRilascioDocumento' && value >= today) {
+      if (showError) {
+        setFieldError(name, 'il rilascio del documento deve essere anteriore ad oggi');
+      }
+      return false;
+    }
+
+    if (name === 'dataScadenzaDocumento' && value <= today) {
+      if (showError) {
+        setFieldError(name, 'la scadenza del documento deve essere posteriore ad oggi');
+      }
+      return false;
+    }
+
+    if (showError) setFieldError(name);
+    return true;
+  }
+
   function syncExpiryMin() {
     input('dataScadenzaDocumento').min =
       input('dataRilascioDocumento').value || '1000-01-01';
@@ -205,14 +249,14 @@ export function createDocumentoIdentitaForm({
       if (!validDate(data.dataRilascioDocumento)) {
         errors.dataRilascioDocumento = 'Inserisci una data valida.';
       } else if (data.dataRilascioDocumento >= today) {
-        errors.dataRilascioDocumento = 'La data di rilascio deve essere anteriore a oggi.';
+        errors.dataRilascioDocumento = 'il rilascio del documento deve essere anteriore ad oggi';
       }
     }
     if (data.dataScadenzaDocumento) {
       if (!validDate(data.dataScadenzaDocumento)) {
         errors.dataScadenzaDocumento = 'Inserisci una data valida.';
       } else if (data.dataScadenzaDocumento <= today) {
-        errors.dataScadenzaDocumento = 'La data di scadenza deve essere posteriore a oggi.';
+        errors.dataScadenzaDocumento = 'la scadenza del documento deve essere posteriore ad oggi';
       }
     }
     if (validDate(data.dataRilascioDocumento) && validDate(data.dataScadenzaDocumento)
@@ -250,6 +294,7 @@ export function createDocumentoIdentitaForm({
     clearErrors,
     focusFirstInvalid,
     setRequired,
-    setVisible
+    setVisible,
+    validateField
   };
 }

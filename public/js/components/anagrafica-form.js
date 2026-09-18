@@ -110,6 +110,37 @@ export function createAnagraficaForm({ container, datiObbligatori = false, visib
     }
   }
 
+  function setFieldError(name, message = '') {
+    const field = input(name);
+    const error = errorElement(name);
+
+    if (message) {
+      field.setAttribute('aria-invalid', 'true');
+      error.textContent = message;
+    } else {
+      field.removeAttribute('aria-invalid');
+      error.textContent = '';
+    }
+  }
+
+  function validateField(name, { showError = true } = {}) {
+    if (name !== 'dataNascita') return true;
+
+    const value = input(name).value;
+    if (!value || !validDate(value)) {
+      if (showError) setFieldError(name);
+      return true;
+    }
+
+    if (value > adultBirthDateLimit()) {
+      if (showError) setFieldError(name, "l'inquilino deve essere maggiorenne");
+      return false;
+    }
+
+    if (showError) setFieldError(name);
+    return true;
+  }
+
   function setRequired(value) {
     required = Boolean(value);
     for (const { name } of fieldsDefinition) {
@@ -175,7 +206,7 @@ export function createAnagraficaForm({ container, datiObbligatori = false, visib
       if (!validDate(data.dataNascita)) {
         errors.dataNascita = 'Inserisci una data valida.';
       } else if (data.dataNascita > maxBirthDate) {
-        errors.dataNascita = 'Deve avere almeno 18 anni e 1 giorno.';
+        errors.dataNascita = "l'inquilino deve essere maggiorenne";
       }
     }
 
@@ -202,6 +233,7 @@ export function createAnagraficaForm({ container, datiObbligatori = false, visib
     clearErrors,
     focusFirstInvalid,
     setRequired,
-    setVisible
+    setVisible,
+    validateField
   };
 }

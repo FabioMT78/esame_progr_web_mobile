@@ -67,7 +67,7 @@ function validateRegistration(input) {
   if (data.dataNascita && !validBirthDate) {
     fields.dataNascita = 'Inserisci una data valida.';
   } else if (validBirthDate && data.dataNascita > adultBirthDateLimit()) {
-    fields.dataNascita = 'Il proprietario deve avere almeno 18 anni e 1 giorno.';
+    fields.dataNascita = 'il proprietario deve essere maggiorenne';
   }
 
   if (typeof input?.password !== 'string' || !input.password.trim()

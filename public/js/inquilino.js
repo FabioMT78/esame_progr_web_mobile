@@ -250,6 +250,17 @@ async function loadEditor() {
   syncControls();
 }
 
+function validateLiveDateField(name) {
+  if (name === 'dataNascita') {
+    anagrafica.validateField(name);
+    return;
+  }
+
+  if (name === 'dataRilascioDocumento' || name === 'dataScadenzaDocumento') {
+    documento.validateField(name);
+  }
+}
+
 async function loadPage() {
   request?.abort();
   const controller = new AbortController();
@@ -298,6 +309,8 @@ form.addEventListener('input', (event) => {
   field.removeAttribute('aria-invalid');
   const error = document.getElementById(`${field.name}-error`);
   if (error) error.textContent = '';
+
+  validateLiveDateField(field.name);
 });
 
 form.addEventListener('change', (event) => {
@@ -307,6 +320,8 @@ form.addEventListener('change', (event) => {
   field.removeAttribute('aria-invalid');
   const error = document.getElementById(`${field.name}-error`);
   if (error) error.textContent = '';
+
+  validateLiveDateField(field.name);
 });
 
 form.addEventListener('submit', async (event) => {

@@ -119,13 +119,13 @@ function validateInput(input) {
 
   const today = todayDate();
   if (data.dataNascita && data.dataNascita > adultBirthDateLimit()) {
-    fields.dataNascita = 'L’inquilino deve avere almeno 18 anni e 1 giorno.';
+    fields.dataNascita = "l'inquilino deve essere maggiorenne";
   }
   if (data.dataRilascioDocumento && data.dataRilascioDocumento >= today) {
-    fields.dataRilascioDocumento = 'La data di rilascio deve essere anteriore a oggi.';
+    fields.dataRilascioDocumento = 'il rilascio del documento deve essere anteriore ad oggi';
   }
   if (data.dataScadenzaDocumento && data.dataScadenzaDocumento <= today) {
-    fields.dataScadenzaDocumento = 'La data di scadenza deve essere posteriore a oggi.';
+    fields.dataScadenzaDocumento = 'la scadenza del documento deve essere posteriore ad oggi';
   }
 
   if (data.dataRilascioDocumento && data.dataScadenzaDocumento
