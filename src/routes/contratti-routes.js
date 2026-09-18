@@ -13,7 +13,10 @@ router.use((_req, res, next) => {
 router.use(requireAuth);
 
 router.get('/prerequisiti', async (req, res) => {
-  res.status(200).json(await contratti.prerequisiti(req.proprietarioId));
+  res.status(200).json(await contratti.prerequisiti(
+    req.proprietarioId,
+    req.query.immobileId ?? null
+  ));
 });
 
 router.get('/bozza', async (req, res) => {

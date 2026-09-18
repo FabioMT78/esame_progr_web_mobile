@@ -71,13 +71,32 @@ function validateInput(input) {
   return data;
 }
 
-async function prerequisiti(proprietarioId) {
-  const [immobiliAttivi, inquiliniAttivi, tipologieContrattuali] =
-    await Promise.all([
-      immobili.list(proprietarioId),
-      inquilini.list(proprietarioId),
-      tipologie.list()
-    ]);
+async function prerequisiti(proprietarioId, immobileId = null) {
+  const [immobiliAttivi, tipologieContrattuali] = await Promise.all([
+    immobili.list(proprietarioId),
+    tipologie.list()
+  ]);
+
+  let inquiliniAttivi = [];
+
+  if (immobileId != null && immobileId !== '') {
+    if (!validId(immobileId)) {
+      throw inputError(400, 'Immobile non valido.', {
+        immobileId: 'Seleziona un immobile valido.'
+      });
+    }
+
+    if (!immobiliAttivi.some((item) => item.id === immobileId)) {
+      throw inputError(404, 'Immobile non disponibile.', {
+        immobileId: 'Seleziona un tuo immobile attivo.'
+      });
+    }
+
+    inquiliniAttivi = await inquilini.listAvailableForContract(
+      proprietarioId,
+      immobileId
+    );
+  }
 
   return {
     immobili: immobiliAttivi,
@@ -125,6 +144,15 @@ async function resolvePreviewEntities(proprietarioId, data) {
   if (inquilino.immobileId && inquilino.immobileId !== immobile.id) {
     throw inputError(400, 'L’inquilino non è associato all’immobile selezionato.', {
       inquilinoId: 'Seleziona un inquilino associato a questo immobile.'
+    });
+  }
+  if (await inquilini.hasContractForImmobile(
+    inquilino.id,
+    proprietarioId,
+    immobile.id
+  )) {
+    throw inputError(409, 'L’inquilino ha già un contratto registrato per questo immobile.', {
+      inquilinoId: 'Seleziona un inquilino che non abbia già un contratto per questo immobile.'
     });
   }
   if (!tipologia) {
@@ -244,6 +272,16 @@ async function create(proprietarioId, body) {
   if (inquilino.immobileId !== immobile.id) {
     throw inputError(400, 'L’inquilino non è associato all’immobile selezionato.', {
       inquilinoId: 'Seleziona un inquilino associato a questo immobile.'
+    });
+  }
+
+  if (await inquilini.hasContractForImmobile(
+    inquilino.id,
+    proprietarioId,
+    immobile.id
+  )) {
+    throw inputError(409, 'L’inquilino ha già un contratto registrato per questo immobile.', {
+      inquilinoId: 'Seleziona un inquilino che non abbia già un contratto per questo immobile.'
     });
   }
 

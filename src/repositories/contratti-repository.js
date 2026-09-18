@@ -192,7 +192,15 @@ async function create(proprietarioId, data) {
          AND q.organo_rilascio_documento IS NOT NULL
              AND TRIM(q.organo_rilascio_documento) <> ''
          AND q.data_rilascio_documento IS NOT NULL
-         AND q.data_scadenza_documento IS NOT NULL`,
+         AND q.data_scadenza_documento IS NOT NULL
+         AND NOT EXISTS (
+           SELECT 1
+           FROM contratti esistente
+           WHERE esistente.proprietario_id = ?
+             AND esistente.immobile_id = i.id
+             AND esistente.inquilino_id = q.id
+             AND esistente.deleted_at IS NULL
+         )`,
       [
         proprietarioId,
         data.dataInizio,
@@ -202,6 +210,7 @@ async function create(proprietarioId, data) {
         data.inquilinoId,
         data.tipologiaId,
         data.immobileId,
+        proprietarioId,
         proprietarioId
       ]
     );

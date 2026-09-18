@@ -22,6 +22,27 @@ async function list(ownerId, immobileId = null) {
   return rows;
 }
 
+async function listAvailableForContract(ownerId, immobileId) {
+  const [rows] = await pool.execute(
+    `SELECT ${columns}
+     FROM inquilini
+     WHERE proprietario_id = ?
+       AND immobile_id = ?
+       AND deleted_at IS NULL
+       AND NOT EXISTS (
+         SELECT 1
+         FROM contratti c
+         WHERE c.proprietario_id = inquilini.proprietario_id
+           AND c.immobile_id = inquilini.immobile_id
+           AND c.inquilino_id = inquilini.id
+           AND c.deleted_at IS NULL
+       )
+     ORDER BY cognome, nome, id`,
+    [ownerId, immobileId]
+  );
+  return rows;
+}
+
 async function findActive(id, ownerId) {
   const [rows] = await pool.execute(
     `SELECT ${columns} FROM inquilini
@@ -91,6 +112,21 @@ async function hasActiveContract(id, ownerId) {
   return Boolean(rows[0].hasActiveContract);
 }
 
+async function hasContractForImmobile(id, ownerId, immobileId) {
+  const [rows] = await pool.execute(
+    `SELECT EXISTS(
+       SELECT 1
+       FROM contratti
+       WHERE inquilino_id = ?
+         AND proprietario_id = ?
+         AND immobile_id = ?
+         AND deleted_at IS NULL
+     ) AS hasContract`,
+    [id, ownerId, immobileId]
+  );
+  return Boolean(rows[0].hasContract);
+}
+
 async function assignImmobile(id, ownerId, immobileId) {
   const [result] = await pool.execute(
     `UPDATE inquilini SET immobile_id = ?
@@ -109,4 +145,14 @@ async function archive(id, ownerId) {
   return result.affectedRows > 0;
 }
 
-module.exports = { list, findActive, create, update, hasActiveContract, assignImmobile, archive };
+module.exports = {
+  list,
+  listAvailableForContract,
+  findActive,
+  create,
+  update,
+  hasActiveContract,
+  hasContractForImmobile,
+  assignImmobile,
+  archive
+};

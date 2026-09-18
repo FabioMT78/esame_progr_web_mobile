@@ -239,6 +239,12 @@ function formatDate(value) {
 }
 
 
+function prerequisitesUrl(immobileId = '') {
+  return immobileId
+    ? `/api/contratti/prerequisiti?immobileId=${encodeURIComponent(immobileId)}`
+    : '/api/contratti/prerequisiti';
+}
+
 function fillSelect(select, items, label) {
   const previousValue = select.value;
   const placeholder = select.options[0]?.cloneNode(true)
@@ -378,6 +384,9 @@ function syncControls() {
   immobileSelect.disabled = unavailable || step !== 1 || lockedImmobile;
   tenantSelect.disabled = unavailable || step !== 2 || lockedTenant;
 
+  // previous.hidden = step === 1 || completed;
+  // previous.disabled = unavailable;
+
   next.hidden = step === 4 || completed;
   next.disabled = unavailable
     || (step === 1 && !immobileStepReady())
@@ -431,6 +440,11 @@ function renderImmobileDetail() {
 function renderTenantDetail() {
   const tenant = selectedTenant();
   const error = document.querySelector('#inquilinoId-error');
+
+  if (!tenant) {
+    error.textContent = '';
+    return;
+  }
 
   const missing = [];
   if (!hasTenantAnagrafica(tenant)) missing.push('dati anagrafici');
@@ -587,22 +601,28 @@ function renderPrerequisites({ preserveSelection = true } = {}) {
   updateContractDerivedValues();
 }
 
-async function refreshPrerequisites() {
-  const currentImmobile = immobileSelect.value;
+async function refreshPrerequisites(immobileId = immobileSelect.value) {
+  const targetImmobile = immobileId || '';
   const currentTenant = tenantSelect.value;
 
-  prerequisites = await api('/api/contratti/prerequisiti');
-  renderPrerequisites();
+  prerequisites = await api(prerequisitesUrl(targetImmobile));
+  renderPrerequisites({ preserveSelection: false });
 
-  if (currentImmobile && prerequisites.immobili.some((x) => x.id === currentImmobile)) {
-    immobileSelect.value = currentImmobile;
+  if (targetImmobile
+      && prerequisites.immobili.some((item) => item.id === targetImmobile)) {
+    immobileSelect.value = targetImmobile;
   }
-  if (currentTenant && prerequisites.inquilini.some((x) => x.id === currentTenant)) {
+
+  if (currentTenant
+      && prerequisites.inquilini.some((item) => item.id === currentTenant)) {
     tenantSelect.value = currentTenant;
+  } else {
+    tenantSelect.value = '';
   }
 
   renderImmobileDetail();
   renderTenantDetail();
+  syncControls();
 }
 
 function draftPayload(requestedStep = draft?.stepCompletato ?? 0) {
@@ -788,7 +808,7 @@ async function saveImmobileEditor() {
       });
     }
 
-    await refreshPrerequisites();
+    await refreshPrerequisites(saved.id);
     immobileSelect.value = saved.id;
     immobileEditorMode = null;
     immobileEditor.hidden = true;
@@ -839,7 +859,7 @@ async function saveTenantEditor() {
         method: 'POST', body: JSON.stringify(payload)
       });
 
-    await refreshPrerequisites();
+    await refreshPrerequisites(immobileSelect.value);
     tenantSelect.value = saved.id;
     tenantEditorMode = null;
     tenantEditor.hidden = true;
@@ -908,10 +928,18 @@ async function loadPage() {
     await api('/api/auth/me');
     formMessage.textContent = 'Caricamento dati del contratto…';
 
-    const [loadedPrerequisites, loadedDraft] = await Promise.all([
+    let [loadedPrerequisites, loadedDraft] = await Promise.all([
       api('/api/contratti/prerequisiti'),
       api('/api/contratti/bozza')
     ]);
+
+    const contextualImmobileId = queryImmobileId || loadedDraft?.immobileId || '';
+    if (contextualImmobileId
+        && loadedPrerequisites.immobili.some(
+          (item) => item.id === contextualImmobileId
+        )) {
+      loadedPrerequisites = await api(prerequisitesUrl(contextualImmobileId));
+    }
 
     prerequisites = loadedPrerequisites;
     draft = loadedDraft;
@@ -939,8 +967,16 @@ async function loadPage() {
 
 immobileSelect.addEventListener('change', () => {
   closeImmobileEditor();
+  closeTenantEditor();
   clearContractErrors();
+
+  prerequisites.inquilini = [];
+  fillSelect(tenantSelect, [], tenantLabel);
+  tenantSelect.value = '';
+  lockedTenant = false;
+
   renderImmobileDetail();
+  renderTenantDetail();
 
   const immobile = selectedImmobile();
   if (immobile && !hasCadastralData(immobile)) openImmobileCompletion(immobile);
@@ -1006,8 +1042,10 @@ next.addEventListener('click', async () => {
         return;
       }
 
+      await refreshPrerequisites(immobile.id);
       await saveDraft(1);
       showStep(2);
+
       const tenant = selectedTenant();
       if (tenant && !hasCompleteTenant(tenant)) openTenantCompletion(tenant);
       return;
