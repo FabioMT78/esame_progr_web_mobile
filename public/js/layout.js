@@ -57,6 +57,52 @@ function configureMenu(nav) {
   });
 }
 
+function configureMobileMenu(header, nav) {
+  const toggle = header.querySelector('#menu-toggle');
+  const icon = toggle?.querySelector('[aria-hidden="true"]');
+
+  if (!toggle || !icon) {
+    return;
+  }
+
+  function setMenuOpen(isOpen) {
+    nav.classList.toggle('is-open', isOpen);
+    toggle.setAttribute('aria-expanded', String(isOpen));
+    toggle.setAttribute(
+      'aria-label',
+      isOpen ? 'Chiudi menu di navigazione' : 'Apri menu di navigazione'
+    );
+    icon.textContent = isOpen ? '×' : '☰';
+  }
+
+  toggle.addEventListener('click', () => {
+    setMenuOpen(toggle.getAttribute('aria-expanded') !== 'true');
+  });
+
+  nav.addEventListener('click', (event) => {
+    if (event.target.closest('a, button')) {
+      setMenuOpen(false);
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || toggle.getAttribute('aria-expanded') !== 'true') {
+      return;
+    }
+
+    setMenuOpen(false);
+    toggle.focus();
+  });
+
+  const mobileMedia = window.matchMedia('(max-width: 40rem)');
+
+  mobileMedia.addEventListener('change', (event) => {
+    if (!event.matches) {
+      setMenuOpen(false);
+    }
+  });
+}
+
 async function loadLayout() {
   const header = document.querySelector('#site-header');
   const footer = document.querySelector('#site-footer');
@@ -84,6 +130,7 @@ async function loadLayout() {
 
   nav.innerHTML = menuHtml;
   configureMenu(nav);
+  configureMobileMenu(header, nav);
 }
 
 function showBootstrapError(message) {
