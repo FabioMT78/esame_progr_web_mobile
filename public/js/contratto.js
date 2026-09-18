@@ -10,6 +10,7 @@ import { createDatiCatastaliForm } from './forms/dati-catastali.js';
 import { createAnagraficaForm } from './forms/anagrafica.js';
 import { createDocumentoIdentitaForm } from './forms/documento.js';
 import { renderContrattoPreview } from './components/contratto-preview.js';
+import { createDatiContrattualiStep } from './contratto/dati-contrattuali.js';
 
 const content = document.querySelector('#protected-content');
 const form = document.querySelector('#contract-form');
@@ -86,6 +87,10 @@ const tenantDocument = createDocumentoIdentitaForm({
   container: document.querySelector('#wizard-tenant-document-fields'),
   datiObbligatori: true,
   visibile: false
+});
+
+const datiContrattuali = createDatiContrattualiStep({
+  container: document.querySelector('[data-step="3"]')
 });
 
 let prerequisites = { immobili: [], inquilini: [], tipologie: [] };
@@ -179,11 +184,6 @@ function selectedTenant() {
   return prerequisites.inquilini.find((item) => item.id === tenantSelect.value);
 }
 
-function selectedTipologia() {
-  return prerequisites.tipologie.find(
-    (item) => item.id === form.elements.tipologiaId.value
-  );
-}
 
 function immobileLabel(immobile) {
   const street = [immobile.indirizzo, immobile.civico].filter(Boolean).join(' ');
@@ -251,55 +251,18 @@ function clearContractErrors() {
   formMessage.textContent = '';
 }
 
-function previewDataFine() {
-  const tipologia = selectedTipologia();
-  const value = form.elements.dataInizio.value;
+function validateContractData() {
+  const errors = datiContrattuali.validate();
+  if (!Object.keys(errors).length) return true;
 
-  if (!tipologia || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return '';
-
-  const date = new Date(`${value}T00:00:00.000Z`);
-  if (Number.isNaN(date.getTime())
-      || date.getUTCFullYear() < 1000
-      || date.toISOString().slice(0, 10) !== value) {
-    return '';
-  }
-
-  date.setUTCFullYear(date.getUTCFullYear() + Number(tipologia.durata));
-  date.setUTCDate(date.getUTCDate() - 1);
-  return date.getUTCFullYear() <= 9999 ? date.toISOString().slice(0, 10) : '';
+  formMessage.textContent = 'Errore: controlla i campi indicati.';
+  datiContrattuali.focusFirstInvalid();
+  return false;
 }
 
-function updateContractDerivedValues() {
-  const tipologia = selectedTipologia();
-  document.querySelector('#tipologia-detail').textContent = tipologia
-    ? `Durata: ${tipologia.durata} anni. Rinnovo indicato dal template: ${tipologia.rinnovo} anni.`
-    : '';
 
-  form.elements.dataFine.value = previewDataFine();
 
-  const annuale = Number(form.elements.canoneAnnuale.value);
-  form.elements.canoneMensile.value =
-    Number.isFinite(annuale) && annuale > 0
-      ? (annuale / 12).toLocaleString('it-IT', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })
-      : '';
-}
 
-function contractStepData() {
-  return {
-    tipologiaId: form.elements.tipologiaId.value,
-    dataInizio: form.elements.dataInizio.value,
-    canoneAnnuale: form.elements.canoneAnnuale.value,
-    giornoPagamento: form.elements.giornoPagamento.value
-  };
-}
-
-function contractFieldsComplete() {
-  const fields = validateStep3(false);
-  return Object.keys(fields).length === 0;
-}
 
 function completedSteps() {
   const immobileComplete = hasCadastralData(selectedImmobile());
@@ -354,7 +317,7 @@ function syncControls() {
   next.disabled = unavailable
     || (step === 1 && !immobileStepReady())
     || (step === 2 && !tenantStepReady())
-    || (step === 3 && !prerequisites.tipologie.length);
+    || (step === 3 && !datiContrattuali.hasTipologie());
 
   confirm.hidden = step !== 4 || completed;
   confirm.disabled = unavailable || !previewReady;
@@ -536,11 +499,7 @@ function renderPrerequisites({ preserveSelection = true } = {}) {
 
   fillSelect(immobileSelect, prerequisites.immobili, immobileLabel);
   fillSelect(tenantSelect, prerequisites.inquilini, tenantLabel);
-  fillSelect(
-    form.elements.tipologiaId,
-    prerequisites.tipologie,
-    (item) => item.denominazione
-  );
+  datiContrattuali.setTipologie(prerequisites.tipologie);
 
   if (currentImmobile && prerequisites.immobili.some((x) => x.id === currentImmobile)) {
     immobileSelect.value = currentImmobile;
@@ -551,12 +510,8 @@ function renderPrerequisites({ preserveSelection = true } = {}) {
 
   immobiliEmpty.hidden = prerequisites.immobili.length > 0;
   immobileSelectorBlock.hidden = prerequisites.immobili.length === 0;
-  document.querySelector('#tipologie-empty').hidden =
-    prerequisites.tipologie.length > 0;
-
   renderImmobileDetail();
   renderTenantDetail();
-  updateContractDerivedValues();
 }
 
 async function refreshPrerequisites() {
@@ -582,7 +537,7 @@ function draftPayload(requestedStep = draft?.stepCompletato ?? 0) {
     immobileId: immobileSelect.value || null,
     inquilinoId: tenantSelect.value || null,
     stepCompletato: requestedStep,
-    dati: contractStepData(),
+    dati: datiContrattuali.getData(),
     paginaProvenienza: draft?.paginaProvenienza || safeReferrerPath()
   };
 }
@@ -596,16 +551,6 @@ async function saveDraft(requestedStep) {
   return draft;
 }
 
-function restoreContractData(data = {}) {
-  form.elements.tipologiaId.value = prerequisites.tipologie.some(
-    (item) => item.id === data.tipologiaId
-  ) ? data.tipologiaId : '';
-
-  form.elements.dataInizio.value = data.dataInizio || '';
-  form.elements.canoneAnnuale.value = data.canoneAnnuale || '';
-  form.elements.giornoPagamento.value = data.giornoPagamento || '';
-  updateContractDerivedValues();
-}
 
 async function applyInitialContext() {
   const draftImmobile = draft?.immobileId;
@@ -641,7 +586,7 @@ async function applyInitialContext() {
     tenantSelect.value = draftTenant;
   }
 
-  restoreContractData(draft?.dati);
+  datiContrattuali.setData(draft?.dati);
   renderImmobileDetail();
   renderTenantDetail();
 
@@ -679,40 +624,6 @@ async function applyInitialContext() {
   syncControls();
 }
 
-function validateStep3(showErrors = true) {
-  const errors = {};
-
-  if (!selectedTipologia()) {
-    errors.tipologiaId = 'Seleziona una tipologia.';
-  }
-
-  const date = form.elements.dataInizio;
-  if (!date.value || !date.validity.valid) {
-    errors.dataInizio = 'Inserisci una data iniziale valida.';
-  } else if (!errors.tipologiaId && !previewDataFine()) {
-    errors.dataInizio = 'La scadenza deve essere compresa entro il 31/12/9999.';
-  }
-
-  const annuale = form.elements.canoneAnnuale;
-  if (!annuale.value || !annuale.validity.valid) {
-    errors.canoneAnnuale =
-      'Inserisci un importo tra 0,01 e 99.999.999,99 euro, con massimo 2 decimali.';
-  }
-
-  const giorno = form.elements.giornoPagamento;
-  if (!giorno.value || !giorno.validity.valid) {
-    errors.giornoPagamento = 'Inserisci un giorno intero tra 1 e 28.';
-  }
-
-  if (showErrors && Object.keys(errors).length) {
-    showFormError(form, formMessage, {
-      message: 'Controlla i campi indicati.',
-      fields: errors
-    });
-  }
-
-  return errors;
-}
 
 async function saveImmobileEditor() {
   clearContractErrors();
@@ -839,7 +750,7 @@ async function loadContractPreview() {
       body: JSON.stringify({
         immobileId: immobileSelect.value,
         inquilinoId: tenantSelect.value,
-        ...contractStepData()
+        ...datiContrattuali.getData()
       })
     });
 
@@ -944,13 +855,11 @@ form.addEventListener('input', (event) => {
 
   formMessage.textContent = '';
   if (step === 3) previewReady = false;
-  updateContractDerivedValues();
   syncControls();
 });
 
 form.addEventListener('change', () => {
   if (step === 3) previewReady = false;
-  updateContractDerivedValues();
   syncControls();
 });
 
@@ -1007,7 +916,7 @@ next.addEventListener('click', async () => {
     }
 
     if (step === 3) {
-      if (Object.keys(validateStep3(true)).length) return;
+      if (!validateContractData()) return;
       await saveDraft(3);
       showStep(4);
       await loadContractPreview();
@@ -1040,7 +949,7 @@ form.addEventListener('submit', async (event) => {
     openTenantCompletion(tenant);
     return;
   }
-  if (Object.keys(validateStep3(true)).length) {
+  if (!validateContractData()) {
     showStep(3, false);
     return;
   }
@@ -1055,7 +964,7 @@ form.addEventListener('submit', async (event) => {
       body: JSON.stringify({
         immobileId: immobile.id,
         inquilinoId: tenant.id,
-        ...contractStepData()
+        ...datiContrattuali.getData()
       })
     });
 
