@@ -174,12 +174,6 @@ nav,
   transform: rotate(180deg);
 }
 
-.nav-user-toggle {
-  width: 2.75rem;
-  padding: 0.45rem;
-  border-radius: 50%;
-}
-
 .nav-user-toggle svg {
   display: block;
 }
