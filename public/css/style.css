@@ -911,6 +911,38 @@ body:has(.dashboard-dialog[open]) {
   width: 80%;
 }
 
+/* Home pubblica e autenticazione. */
+.home-main {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: url('/assets/img/home.jpeg') center / cover no-repeat;
+}
+
+.home-actions {
+  display: flex;
+  width: min(100% - 2rem, 18rem);
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2rem;
+  margin-top: -7%;
+}
+
+.home-actions button {
+  width: 100%;
+  min-height: 3rem;
+  margin: 0;
+  border: 1px solid #fff;
+}
+
+.home-actions .button-secondary {
+  border: 1px solid #15385f;
+}
+
+.auth-dialog--register {
+  width: min(100% - 2rem, 48rem);
+}
+
 /* Tablet. */
 @media (min-width: 40rem) and (max-width: 62rem) {
   .immobili-grid {

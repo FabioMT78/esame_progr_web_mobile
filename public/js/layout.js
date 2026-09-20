@@ -64,6 +64,19 @@ function configureMenu(nav, menuScope) {
   });
 }
 
+function configureMenuVisibility(header, nav) {
+  const hasMenuItems = nav.children.length > 0;
+  const toggle = header.querySelector('#menu-toggle');
+
+  nav.hidden = !hasMenuItems;
+
+  if (toggle) {
+    toggle.hidden = !hasMenuItems;
+  }
+
+  return hasMenuItems;
+}
+
 function configureDropdowns(nav) {
   const dropdowns = [
     ...nav.querySelectorAll('.nav-dropdown')
@@ -259,8 +272,11 @@ async function loadLayout() {
 
   nav.innerHTML = menuHtml;
   configureMenu(nav, menuScope);
-  configureDropdowns(nav);
-  configureMobileMenu(header, nav);
+
+  if (configureMenuVisibility(header, nav)) {
+    configureDropdowns(nav);
+    configureMobileMenu(header, nav);
+  }
 }
 
 function showBootstrapError(message) {

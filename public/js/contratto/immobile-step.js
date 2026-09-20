@@ -106,10 +106,11 @@ export function createImmobileStep({
     if (present(data.categoria)) parts.push(`Categoria ${data.categoria}`);
     if (present(data.rendita)) parts.push(`Rendita € ${data.rendita}`);
 
-    detail.textContent = parts.length ? '' : 'Dati catastali da completare.';
+    // detail.textContent = parts.length ? '' : 'Dati catastali da completare.';
+    detail.textContent = '';
     selectionError.textContent = isComplete(immobile)
       ? ''
-      : 'Completa foglio, particella, subalterno, categoria e rendita.';
+      : 'COMPLETA I DATI CATASTALI: foglio, particella, subalterno, categoria e rendita.';
   }
 
   function setItems(nextItems = [], { preserveSelection = true } = {}) {
@@ -166,9 +167,8 @@ export function createImmobileStep({
     if (!immobile) return;
 
     editorMode = 'existing';
-    editorTitle.textContent = `Completa dati catastali — ${immobile.titolo}`;
-    editorHelp.textContent =
-      'L’indirizzo rimane invariato. Completa i dati necessari alla registrazione del contratto.';
+    editorTitle.textContent = '';
+    editorHelp.textContent = '';
 
     addressSection.hidden = true;
     indirizzo.setVisible(false);

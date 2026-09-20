@@ -11,6 +11,13 @@ import { createAnagraficaForm } from './forms/anagrafica.js';
 import { createIndirizzoForm } from './forms/indirizzo.js';
 
 const editing = Boolean(readToken());
+const embeddedRegistration = Boolean(
+  document.querySelector('#register-dialog')
+);
+
+if (!editing && !embeddedRegistration) {
+  window.location.replace('/?dialog=register');
+}
 
 const form = document.querySelector('#owner-form');
 const fields = document.querySelector('#owner-fields');
@@ -104,15 +111,23 @@ function configureMode() {
     return;
   }
 
-  document.title = 'Registrazione — Gestionale Affitti';
+  if (!embeddedRegistration) {
+    document.title = 'Registrazione — Gestionale Affitti';
+  }
+
   title.textContent = 'Registrazione proprietario';
   intro.hidden = false;
   intro.textContent =
     'Crea il tuo account. Tutti i campi contrassegnati con * sono obbligatori.';
   saveButton.textContent = 'Crea account';
   cancelLink.hidden = false;
-  cancelLink.textContent = 'Torna alla Home';
-  cancelLink.href = '/';
+  cancelLink.textContent = embeddedRegistration
+    ? 'Annulla'
+    : 'Torna alla Home';
+
+  if (cancelLink instanceof HTMLAnchorElement) {
+    cancelLink.href = '/';
+  }
 
   password.required = true;
   password.setAttribute('aria-required', 'true');
