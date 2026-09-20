@@ -165,7 +165,8 @@ async function resolvePreviewEntities(proprietarioId, data) {
   }
   if (!hasRequiredCadastralData(immobile)) {
     throw inputError(400, 'Completa i dati catastali necessari.', {
-      immobileId: 'Servono foglio, particella, subalterno, categoria e rendita.'
+      immobileId:
+        'Servono codice comunale, foglio, particella, subalterno, categoria e rendita.'
     });
   }
   if (!hasCompleteTenantData(inquilino)) {
@@ -297,7 +298,7 @@ async function create(proprietarioId, body) {
       'Completa i dati catastali necessari prima di registrare il contratto.',
       {
         immobileId:
-          'Servono foglio, particella, subalterno, categoria e rendita.'
+          'Servono codice comunale, foglio, particella, subalterno, categoria e rendita.'
       }
     );
   }

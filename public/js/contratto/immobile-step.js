@@ -2,13 +2,13 @@ import { createIndirizzoForm } from '../forms/indirizzo.js';
 import { createDatiCatastaliForm } from '../forms/dati-catastali.js';
 import {
   allPresent,
-  editorRequiredFieldsComplete,
   fillSelect,
   present,
   showEmbeddedError
 } from './step-utils.js';
 
 const cadastralRequired = [
+  'codiceComunale',
   'foglio',
   'particella',
   'subalterno',
@@ -100,17 +100,17 @@ export function createImmobileStep({
 
     const data = immobile.datiCatastali || {};
     const parts = [];
+    if (present(data.codiceComunale)) parts.push(`Codice comunale ${data.codiceComunale}`);
     if (present(data.foglio)) parts.push(`Foglio ${data.foglio}`);
     if (present(data.particella)) parts.push(`Particella ${data.particella}`);
     if (present(data.subalterno)) parts.push(`Sub ${data.subalterno}`);
     if (present(data.categoria)) parts.push(`Categoria ${data.categoria}`);
     if (present(data.rendita)) parts.push(`Rendita € ${data.rendita}`);
 
-    // detail.textContent = parts.length ? '' : 'Dati catastali da completare.';
     detail.textContent = '';
     selectionError.textContent = isComplete(immobile)
       ? ''
-      : 'COMPLETA I DATI CATASTALI: foglio, particella, subalterno, categoria e rendita.';
+      : 'COMPLETA I DATI CATASTALI: codice comunale, foglio, particella, subalterno, categoria e rendita.';
   }
 
   function setItems(nextItems = [], { preserveSelection = true } = {}) {
@@ -184,9 +184,9 @@ export function createImmobileStep({
   }
 
   function isReady() {
-    return editorMode
-      ? editorRequiredFieldsComplete(editor)
-      : isComplete();
+    if (!editorMode) return isComplete();
+
+    return indirizzo.isValid() && catasto.isValid();
   }
 
   async function saveEditor() {

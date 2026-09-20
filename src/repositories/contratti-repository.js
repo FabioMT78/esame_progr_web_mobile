@@ -173,6 +173,7 @@ async function create(proprietarioId, data) {
        WHERE i.id = ? AND i.proprietario_id = ?
          AND i.deleted_at IS NULL
          AND q.deleted_at IS NULL
+         AND i.codice_comunale IS NOT NULL AND TRIM(i.codice_comunale) <> ''
          AND i.foglio IS NOT NULL
          AND i.particella IS NOT NULL
          AND i.subalterno IS NOT NULL

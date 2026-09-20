@@ -1,4 +1,5 @@
 const requiredCadastralFields = [
+  'codiceComunale',
   'foglio',
   'particella',
   'subalterno',

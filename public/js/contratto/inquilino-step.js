@@ -3,7 +3,6 @@ import { createIndirizzoForm } from '../forms/indirizzo.js';
 import { createDocumentoIdentitaForm } from '../forms/documento.js';
 import {
   allPresent,
-  editorRequiredFieldsComplete,
   fillSelect,
   showEmbeddedError
 } from './step-utils.js';
@@ -208,11 +207,11 @@ export function createInquilinoStep({
   }
 
   function isReady() {
-    return editorMode
-      ? editorRequiredFieldsComplete(editor)
-        && anagrafica.isBirthDateValid()
-        && documento.areDocumentDatesValid()
-      : isComplete();
+    if (!editorMode) return isComplete();
+
+    return anagrafica.isValid()
+      && indirizzo.isValid()
+      && documento.isValid();
   }
 
   async function saveEditor() {
