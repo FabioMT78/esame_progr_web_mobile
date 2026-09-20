@@ -60,6 +60,13 @@ function clearContractErrors() {
 
 function handleEntityStepStateChange() {
   clearContractErrors();
+
+  if (step === 1 && immobileStep.getSelected()) {
+    immobileStep.renderDetail();
+  } else if (step === 2 && inquilinoStep.getSelected()) {
+    inquilinoStep.renderDetail();
+  }
+
   syncControls();
 }
 
