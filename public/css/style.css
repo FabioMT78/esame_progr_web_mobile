@@ -393,6 +393,12 @@ textarea[aria-invalid="true"] {
   background: #eef2f7;
 }
 
+.message:has(> .message-error-content) {
+  border-left-color: #9f1c1c;
+  background: #fff1f1;
+  color: #7f1d1d;
+}
+
 .immobili-list,
 .tenant-list {
   margin: 0;

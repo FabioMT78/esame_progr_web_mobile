@@ -65,10 +65,25 @@ export function clearFieldErrors(form) {
   );
 }
 
+export function showErrorMessage(element, text) {
+  if (!(element instanceof Element)) {
+    throw new TypeError('Elemento messaggio non valido.');
+  }
+
+  const content = document.createElement('span');
+  content.className = 'message-error-content';
+  content.textContent = typeof text === 'string' ? text : '';
+
+  element.replaceChildren(content);
+}
+
 export function showFormError(form, message, error) {
-  message.textContent = `Errore: ${error?.networkError
-    ? 'Impossibile contattare il server. Riprova tra poco.'
-    : error.message}`;
+  showErrorMessage(
+    message,
+    `Errore: ${error?.networkError
+      ? 'Impossibile contattare il server. Riprova tra poco.'
+      : error.message}`
+  );
 
   for (const [name, text] of Object.entries(error.fields || {})) {
     const field = form.elements.namedItem(name);
