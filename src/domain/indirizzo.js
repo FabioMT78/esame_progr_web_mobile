@@ -2,9 +2,9 @@ const FIELD_RULES = Object.freeze({
   indirizzo: Object.freeze({ maxLength: 150 }),
   civico: Object.freeze({ maxLength: 20 }),
   cap: Object.freeze({
-    maxLength: 5,
-    pattern: /^\d{5}$/,
-    message: 'Il CAP deve contenere esattamente 5 cifre.'
+    maxLength: 10,
+    // pattern: /^\d{10}$/,
+    message: 'Il CAP deve contenere al massimo 10 cifre.'
   }),
   comune: Object.freeze({ maxLength: 100 }),
   provincia: Object.freeze({

@@ -27,7 +27,7 @@ CREATE TABLE immobili (
   titolo VARCHAR(150) NOT NULL,
   indirizzo VARCHAR(150) NOT NULL,
   civico VARCHAR(20) NULL,
-  cap CHAR(5) NOT NULL,
+  cap CHAR(10) NOT NULL,
   comune VARCHAR(100) NOT NULL,
   provincia CHAR(2) NOT NULL,
   codice_comunale VARCHAR(20) NULL,
@@ -42,8 +42,6 @@ CREATE TABLE immobili (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL DEFAULT NULL,
-  CONSTRAINT chk_immobili_cap
-    CHECK (CHAR_LENGTH(cap) = 5),
   CONSTRAINT chk_immobili_provincia
     CHECK (CHAR_LENGTH(provincia) = 2),
   CONSTRAINT fk_immobili_proprietario
