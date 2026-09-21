@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const repository = require('../repositories/proprietario-repository');
+const { validateIndirizzo } = require('../domain/indirizzo');
 const { hashPassword, verifyPassword } = require('./password');
 
 function authError(status, message, fields) {
@@ -69,9 +70,7 @@ function validateProfile(input, { passwordRequired = false } = {}) {
     nome: 100,
     cognome: 100,
     codiceFiscale: 16,
-    dataNascita: 10,
-    indirizzoResidenza: 255,
-    comuneResidenza: 100
+    dataNascita: 10
   };
 
   for (const [key, max] of Object.entries(limits)) {
@@ -86,6 +85,26 @@ function validateProfile(input, { passwordRequired = false } = {}) {
       fields[key] =
         `Inserisci al massimo ${max} caratteri.`;
     }
+  }
+
+  const address = validateIndirizzo(
+    {
+      indirizzo: input?.indirizzoResidenza,
+      comune: input?.comuneResidenza
+    },
+    {
+      includedFields: ['indirizzo', 'comune'],
+      requiredFields: ['indirizzo', 'comune']
+    }
+  );
+
+  data.indirizzoResidenza = address.data.indirizzo;
+  data.comuneResidenza = address.data.comune;
+  if (address.fields.indirizzo) {
+    fields.indirizzoResidenza = address.fields.indirizzo;
+  }
+  if (address.fields.comune) {
+    fields.comuneResidenza = address.fields.comune;
   }
 
   data.email = data.email.toLowerCase();

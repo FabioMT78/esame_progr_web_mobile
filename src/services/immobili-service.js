@@ -1,4 +1,5 @@
 const repository = require('../repositories/immobili-repository');
+const { validateIndirizzo } = require('../domain/indirizzo');
 
 const MAX_UINT32 = 4294967295;
 const MAX_DECIMAL_10_2 = 99999999.99;
@@ -106,43 +107,25 @@ function validateCadastralData(input, fields) {
 }
 
 function validate(input) {
-  const data = {};
   const fields = {};
-  const requiredAddress = {
-    titolo: 150,
-    indirizzo: 150,
-    cap: 5,
-    comune: 100,
-    provincia: 2
+  const titolo = typeof input?.titolo === 'string' ? input.titolo.trim() : '';
+
+  if (!titolo) {
+    fields.titolo = 'Questo campo è obbligatorio.';
+  } else if (titolo.length > 150) {
+    fields.titolo = 'Inserisci al massimo 150 caratteri.';
+  }
+
+  const address = validateIndirizzo(input, {
+    requiredFields: ['indirizzo', 'cap', 'comune', 'provincia']
+  });
+  Object.assign(fields, address.fields);
+
+  const data = {
+    titolo,
+    ...address.data,
+    datiCatastali: validateCadastralData(input?.datiCatastali, fields)
   };
-
-  for (const [key, max] of Object.entries(requiredAddress)) {
-    data[key] = typeof input?.[key] === 'string' ? input[key].trim() : '';
-    if (!data[key]) fields[key] = 'Questo campo è obbligatorio.';
-    else if (data[key].length > max) {
-      fields[key] = `Inserisci al massimo ${max} caratteri.`;
-    }
-  }
-
-  data.provincia = data.provincia.toUpperCase();
-  if (data.cap && !/^\d{5}$/.test(data.cap)) {
-    fields.cap = 'Il CAP deve contenere esattamente 5 cifre.';
-  }
-  if (data.provincia && !/^[A-Z]{2}$/.test(data.provincia)) {
-    fields.provincia = 'Inserisci la sigla della provincia di 2 lettere.';
-  }
-
-  if (input?.civico != null && typeof input.civico !== 'string') {
-    fields.civico = 'Inserisci un testo valido.';
-  }
-  data.civico = typeof input?.civico === 'string'
-    ? input.civico.trim() || null
-    : null;
-  if (data.civico && data.civico.length > 20) {
-    fields.civico = 'Inserisci al massimo 20 caratteri.';
-  }
-
-  data.datiCatastali = validateCadastralData(input?.datiCatastali, fields);
 
   if (Object.keys(fields).length) {
     throw Object.assign(

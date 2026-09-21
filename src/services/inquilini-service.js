@@ -1,5 +1,6 @@
 const repository = require('../repositories/inquilini-repository');
 const immobili = require('../repositories/immobili-repository');
+const { validateIndirizzo } = require('../domain/indirizzo');
 const bozze = require('./bozze-contratto-service');
 
 function inputError(status, message, fields) {
@@ -75,6 +76,9 @@ function dateValue(input, key, fields, { required = false } = {}) {
 
 function validateInput(input) {
   const fields = {};
+  const address = validateIndirizzo(input);
+  Object.assign(fields, address.fields);
+
   const data = {
     immobileId: input?.immobileId,
     nome: text(input, 'nome', 100, fields, true),
@@ -82,11 +86,7 @@ function validateInput(input) {
     codiceFiscale: text(input, 'codiceFiscale', 16, fields, true),
     dataNascita: dateValue(input, 'dataNascita', fields, { required: true }),
 
-    indirizzo: text(input, 'indirizzo', 150, fields),
-    civico: text(input, 'civico', 20, fields),
-    cap: text(input, 'cap', 5, fields),
-    provincia: text(input, 'provincia', 2, fields),
-    comune: text(input, 'comune', 100, fields),
+    ...address.data,
 
     tipoDocumento: text(input, 'tipoDocumento', 20, fields),
     numeroDocumento: text(input, 'numeroDocumento', 50, fields),
@@ -102,14 +102,6 @@ function validateInput(input) {
   data.codiceFiscale = data.codiceFiscale?.toUpperCase() ?? null;
   if (data.codiceFiscale && !/^[A-Z0-9]{16}$/.test(data.codiceFiscale)) {
     fields.codiceFiscale = 'Il codice fiscale deve contenere esattamente 16 caratteri alfanumerici.';
-  }
-
-  data.provincia = data.provincia?.toUpperCase() ?? null;
-  if (data.cap && !/^\d{5}$/.test(data.cap)) {
-    fields.cap = 'Il CAP deve contenere esattamente 5 cifre.';
-  }
-  if (data.provincia && !/^[A-Z]{2}$/.test(data.provincia)) {
-    fields.provincia = 'Inserisci la sigla della provincia di 2 lettere.';
   }
 
   if (data.tipoDocumento && !['CARTA_IDENTITA', 'PASSAPORTO'].includes(data.tipoDocumento)) {

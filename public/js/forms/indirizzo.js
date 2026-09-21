@@ -29,8 +29,8 @@ const commonFields = [
     name: 'cap',
     label: 'CAP',
     type: 'text',
-    minLength: 5,
-    maxLength: 10,
+    // minLength: 5,
+    maxLength: 15,
     inputMode: 'numeric',
     autocomplete: 'postal-code',
     hint: ''
@@ -323,9 +323,9 @@ export function createIndirizzoForm({
       }
     }
 
-    if (data.cap && !/^\d{5}$/.test(data.cap)) {
-      errors.cap = 'Il CAP deve contenere esattamente 5 cifre.';
-    }
+    // if (data.cap && !/^\d{5}$/.test(data.cap)) {
+    //   errors.cap = 'Il CAP deve contenere esattamente 5 cifre.';
+    // }
 
     if (data.provincia && !/^[A-Z]{2}$/.test(data.provincia)) {
       errors.provincia =

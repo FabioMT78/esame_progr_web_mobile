@@ -12,7 +12,7 @@ CREATE TABLE proprietari (
   cognome VARCHAR(100) NOT NULL,
   codice_fiscale CHAR(16) NOT NULL UNIQUE,
   data_nascita DATE NOT NULL,
-  indirizzo_residenza VARCHAR(255) NOT NULL,
+  indirizzo_residenza VARCHAR(150) NOT NULL,
   comune_residenza VARCHAR(100) NOT NULL,
   iban VARCHAR(34) NOT NULL,
   immagine_url VARCHAR(500) NULL,
@@ -27,9 +27,9 @@ CREATE TABLE immobili (
   titolo VARCHAR(150) NOT NULL,
   indirizzo VARCHAR(150) NOT NULL,
   civico VARCHAR(20) NULL,
-  cap VARCHAR(10) NOT NULL,
+  cap CHAR(5) NOT NULL,
   comune VARCHAR(100) NOT NULL,
-  provincia VARCHAR(100) NOT NULL,
+  provincia CHAR(2) NOT NULL,
   codice_comunale VARCHAR(20) NULL,
   foglio INT UNSIGNED NULL,
   particella INT UNSIGNED NULL,
@@ -42,6 +42,10 @@ CREATE TABLE immobili (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL DEFAULT NULL,
+  CONSTRAINT chk_immobili_cap
+    CHECK (CHAR_LENGTH(cap) = 5),
+  CONSTRAINT chk_immobili_provincia
+    CHECK (CHAR_LENGTH(provincia) = 2),
   CONSTRAINT fk_immobili_proprietario
     FOREIGN KEY (proprietario_id) REFERENCES proprietari(id)
 );
