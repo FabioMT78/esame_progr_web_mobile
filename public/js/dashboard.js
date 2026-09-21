@@ -4,14 +4,14 @@ import {
   showTransientMessage
 } from './common.js';
 import { createAuthenticatedApi } from './api.js';
+import { createIcon } from './components/icon.js';
 import { createImageWorkerClient } from './components/image-worker-client.js';
+import { createContractPreviewDialog } from './dashboard/contract-preview-dialog.js';
+import { createTenantsDialog } from './dashboard/tenants-dialog.js';
 import {
-  createIcon,
-  createContractPreviewDialog,
-  createTenantsDialog,
   createPaymentsDialog,
   paymentDescription
-} from './dashboard-dialogs.js';
+} from './dashboard/payments-dialog.js';
 
 const PLACEHOLDER_IMAGE = '/assets/img/segnaposto_immobile.jpg';
 const content = document.querySelector('#protected-content');
