@@ -12,7 +12,11 @@ const fieldsDefinition = [
   }
 ];
 
-const requiredWhenEnabled = new Set(fieldsDefinition.map(({ name }) => name));
+export const anagraficaRequiredFields = Object.freeze(
+  fieldsDefinition.map(({ name }) => name)
+);
+
+const requiredWhenEnabled = new Set(anagraficaRequiredFields);
 
 function assertContainer(container) {
   if (!(container instanceof Element)) {

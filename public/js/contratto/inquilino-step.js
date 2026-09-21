@@ -1,34 +1,24 @@
-import { createAnagraficaForm } from '../forms/anagrafica.js';
-import { createIndirizzoForm } from '../forms/indirizzo.js';
-import { createDocumentoIdentitaForm } from '../forms/documento.js';
+import {
+  anagraficaRequiredFields,
+  createAnagraficaForm
+} from '../forms/anagrafica.js';
+import {
+  createIndirizzoForm,
+  indirizzoRequiredFields
+} from '../forms/indirizzo.js';
+import {
+  createDocumentoIdentitaForm,
+  documentoRequiredFields
+} from '../forms/documento.js';
 import {
   allPresent,
   fillSelect,
   showEmbeddedError
 } from './step-utils.js';
 
-const anagraficaRequired = [
-  'nome',
-  'cognome',
-  'codiceFiscale',
-  'dataNascita'
-];
-
-const addressRequired = [
-  'indirizzo',
-  'civico',
-  'cap',
-  'provincia',
-  'comune'
-];
-
-const documentRequired = [
-  'tipoDocumento',
-  'numeroDocumento',
-  'organoRilascioDocumento',
-  'dataRilascioDocumento',
-  'dataScadenzaDocumento'
-];
+const addressRequired = indirizzoRequiredFields({
+  civicoObbligatorio: true
+});
 
 export function createInquilinoStep({
   api,
@@ -99,7 +89,7 @@ export function createInquilinoStep({
   }
 
   function hasAnagrafica(tenant) {
-    return allPresent(tenant, anagraficaRequired);
+    return allPresent(tenant, anagraficaRequiredFields);
   }
 
   function hasAddress(tenant) {
@@ -107,7 +97,7 @@ export function createInquilinoStep({
   }
 
   function hasDocument(tenant) {
-    return allPresent(tenant, documentRequired);
+    return allPresent(tenant, documentoRequiredFields);
   }
 
   function isComplete(tenant = getSelected()) {

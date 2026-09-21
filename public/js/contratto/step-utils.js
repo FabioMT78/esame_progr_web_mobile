@@ -6,17 +6,6 @@ export function allPresent(object, fields) {
   return Boolean(object && fields.every((name) => present(object[name])));
 }
 
-export function editorRequiredFieldsComplete(editor) {
-  const fields = [
-    ...editor.querySelectorAll(
-      'input[required]:not(:disabled), select[required]:not(:disabled), textarea[required]:not(:disabled)'
-    )
-  ];
-
-  return fields.length > 0
-    && fields.every((field) => present(field.value) && field.validity.valid);
-}
-
 export function fillSelect(select, items, label, preserveSelection = true) {
   const previousValue = preserveSelection ? select.value : '';
   const placeholder = select.options[0]?.cloneNode(true)

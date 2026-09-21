@@ -5,6 +5,11 @@ const fieldDefinitions = [
   { name: 'dataScadenzaDocumento', label: 'Data scadenza documento', type: 'date', min: '1000-01-01' }
 ];
 
+export const documentoRequiredFields = Object.freeze([
+  'tipoDocumento',
+  ...fieldDefinitions.map(({ name }) => name)
+]);
+
 function assertContainer(container) {
   if (!(container instanceof Element)) {
     throw new TypeError('Il container del componente documento non è valido.');
@@ -104,7 +109,7 @@ export function createDocumentoIdentitaForm({
   for (const definition of fieldDefinitions) grid.append(createInputField(definition, idPrefix));
   container.replaceChildren(grid);
 
-  const names = ['tipoDocumento', ...fieldDefinitions.map(({ name }) => name)];
+  const names = documentoRequiredFields;
   let required = Boolean(datiObbligatori);
   let visible = Boolean(visibile);
 

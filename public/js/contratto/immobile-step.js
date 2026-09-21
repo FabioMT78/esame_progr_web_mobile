@@ -1,20 +1,14 @@
 import { createIndirizzoForm } from '../forms/indirizzo.js';
-import { createDatiCatastaliForm } from '../forms/dati-catastali.js';
+import {
+  createDatiCatastaliForm,
+  datiCatastaliRequiredFields
+} from '../forms/dati-catastali.js';
 import {
   allPresent,
   fillSelect,
   present,
   showEmbeddedError
 } from './step-utils.js';
-
-const cadastralRequired = [
-  'codiceComunale',
-  'foglio',
-  'particella',
-  'subalterno',
-  'categoria',
-  'rendita'
-];
 
 export function createImmobileStep({
   api,
@@ -86,7 +80,10 @@ export function createImmobileStep({
   }
 
   function isComplete(immobile = getSelected()) {
-    return allPresent(immobile?.datiCatastali, cadastralRequired);
+    return allPresent(
+      immobile?.datiCatastali,
+      datiCatastaliRequiredFields
+    );
   }
 
   function renderDetail() {

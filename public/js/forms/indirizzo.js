@@ -45,13 +45,24 @@ const titleField = {
   hint: 'Un nome breve per riconoscere facilmente l’immobile.'
 };
 
-const baseRequiredFields = new Set([
-  'titolo',
+const baseRequiredFields = Object.freeze([
   'indirizzo',
   'cap',
   'comune',
   'provincia'
 ]);
+
+export function indirizzoRequiredFields({
+  mostraTitolo = false,
+  civicoObbligatorio = false
+} = {}) {
+  const fields = [...baseRequiredFields];
+
+  if (mostraTitolo) fields.unshift('titolo');
+  if (civicoObbligatorio) fields.push('civico');
+
+  return fields;
+}
 
 function assertContainer(container, name = 'container') {
   if (!(container instanceof Element)) {
@@ -153,9 +164,10 @@ export function createIndirizzoForm({
   }
 
   const selectedCommonFields = resolveCommonFields(campiInclusi);
-  const requiredFields = new Set(baseRequiredFields);
-
-  if (civicoObbligatorio) requiredFields.add('civico');
+  const requiredFields = new Set(indirizzoRequiredFields({
+    mostraTitolo,
+    civicoObbligatorio
+  }));
 
   const commonGrid = document.createElement('div');
   commonGrid.className = 'form-grid address-form-grid';

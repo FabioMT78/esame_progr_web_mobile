@@ -9,7 +9,7 @@ const fieldsDefinition = [
   { name: 'rendita', label: 'Rendita (€)', type: 'text', maxLength: 20, inputMode: 'decimal', placeholder: 'es. 825,40' }
 ];
 
-const requiredWhenEnabled = new Set([
+export const datiCatastaliRequiredFields = Object.freeze([
   'codiceComunale',
   'foglio',
   'particella',
@@ -17,6 +17,8 @@ const requiredWhenEnabled = new Set([
   'categoria',
   'rendita'
 ]);
+
+const requiredWhenEnabled = new Set(datiCatastaliRequiredFields);
 
 const integerFields = new Set([
   'foglio',
