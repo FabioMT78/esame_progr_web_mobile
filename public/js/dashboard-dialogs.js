@@ -40,7 +40,7 @@ function iconButton(label, icon, cancelButton = false) {
 }
 
 function errorText(error) {
-  return error instanceof TypeError
+  return error?.networkError
     ? 'Impossibile contattare il server. Riprova.'
     : error.message;
 }
@@ -66,8 +66,8 @@ function formatDate(value) {
 async function loadPropertyContext(api, signal, immobileId) {
   const params = new URLSearchParams({ immobileId });
   const [tenants, contracts] = await Promise.all([
-    api(`/api/inquilini?${params}`, signal),
-    api('/api/contratti', signal)
+    api(`/api/inquilini?${params}`, { signal }),
+    api('/api/contratti', { signal })
   ]);
   signal.throwIfAborted();
 
@@ -122,7 +122,7 @@ export function createContractPreviewDialog(api) {
     try {
       const documentModel = await api(
         `/api/contratti/${encodeURIComponent(contractId)}/anteprima`,
-        signal
+        { signal }
       );
       signal.throwIfAborted();
       title.textContent = `Anteprima contratto #${contractId}`;
@@ -257,7 +257,10 @@ export function createTenantsDialog(api, openContractPreview) {
     message.textContent = 'Archiviazione in corso…';
 
     try {
-      await api(`/api/inquilini/${encodeURIComponent(tenant.id)}`, signal, { method: 'DELETE' });
+      await api(`/api/inquilini/${encodeURIComponent(tenant.id)}`, {
+        method: 'DELETE',
+        signal
+      });
       signal.throwIfAborted();
       await loadDialogTenants('Inquilino archiviato. ');
       if (dialog.open) message.focus();
@@ -415,7 +418,7 @@ export function createPaymentsDialog(
     });
 
     try {
-      const data = await api(`/api/pagamenti/anteprima?${params}`, signal);
+      const data = await api(`/api/pagamenti/anteprima?${params}`, { signal });
       signal.throwIfAborted();
       preview = data;
       amount.textContent = euro.format(data.importo);
@@ -505,8 +508,9 @@ export function createPaymentsDialog(
     message.textContent = 'Registrazione del pagamento in corso…';
 
     try {
-      const payment = await api('/api/pagamenti', signal, {
+      const payment = await api('/api/pagamenti', {
         method: 'POST',
+        signal,
         body: JSON.stringify({ contrattoId, annoCompetenza, meseCompetenza })
       });
       signal.throwIfAborted();

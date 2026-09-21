@@ -242,11 +242,8 @@ const requestApi = createAuthenticatedApi({
     'Operazione non riuscita. Riprova.'
 });
 
-function api(path, signal, options = {}) {
-  return requestApi(
-    path,
-    { ...options, signal }
-  );
+function api(path, options = {}) {
+  return requestApi(path, options);
 }
 
 function groupContractsByImmobile(contracts) {
@@ -328,7 +325,7 @@ async function refreshPaymentStatus(
     const paymentStatus =
       await api(
         `/api/pagamenti/stato?${params}`,
-        signal
+        { signal }
       );
 
     signal.throwIfAborted();
@@ -583,7 +580,7 @@ async function loadDashboard() {
     const owner =
       await api(
         '/api/auth/me',
-        controller.signal
+        { signal: controller.signal }
       );
 
     controller.signal.throwIfAborted();
@@ -598,11 +595,11 @@ async function loadDashboard() {
       await Promise.all([
         api(
           '/api/immobili',
-          controller.signal
+          { signal: controller.signal }
         ),
         api(
           '/api/contratti',
-          controller.signal
+          { signal: controller.signal }
         )
       ]);
 
@@ -647,7 +644,7 @@ async function loadDashboard() {
 
     message.textContent =
       `Errore: ${
-        error instanceof TypeError
+        error.networkError
           ? 'Impossibile contattare il server. Riprova.'
           : 'Impossibile caricare la dashboard. Riprova.'
       }`;

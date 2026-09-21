@@ -56,25 +56,6 @@ export function showTransientMessage(element, message, duration = 3000) {
   messageTimers.set(element, timer);
 }
 
-export async function postForm(url, form) {
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(Object.fromEntries(new FormData(form)))
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw Object.assign(
-      new Error(data.error || 'Operazione non riuscita.'),
-      { fields: data.fields }
-    );
-  }
-
-  return data;
-}
-
 export function clearFieldErrors(form) {
   form.querySelectorAll('[aria-invalid]').forEach(
     (field) => field.removeAttribute('aria-invalid')
@@ -85,7 +66,7 @@ export function clearFieldErrors(form) {
 }
 
 export function showFormError(form, message, error) {
-  message.textContent = `Errore: ${error instanceof TypeError
+  message.textContent = `Errore: ${error?.networkError
     ? 'Impossibile contattare il server. Riprova tra poco.'
     : error.message}`;
 

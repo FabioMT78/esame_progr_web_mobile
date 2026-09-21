@@ -6,7 +6,7 @@ import {
   saveFlashMessage,
   showTransientMessage
 } from './common.js';
-import { createAuthenticatedApi } from './api.js';
+import { createAuthenticatedApi, requestJson } from './api.js';
 import { createAnagraficaForm } from './forms/anagrafica.js';
 import { createIndirizzoForm } from './forms/indirizzo.js';
 
@@ -263,37 +263,6 @@ function mapServerErrors(error) {
   return Object.assign(error, { fields: mapped });
 }
 
-async function register(payload) {
-  let response;
-
-  try {
-    response = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      signal: controller?.signal
-    });
-  } catch (error) {
-    if (error.name === 'AbortError') throw error;
-    if (error instanceof TypeError) error.networkError = true;
-    throw error;
-  }
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw Object.assign(
-      new Error(data.error || 'Registrazione non riuscita.'),
-      {
-        status: response.status,
-        fields: data.fields
-      }
-    );
-  }
-
-  return data;
-}
-
 async function loadProfile() {
   const profile = await api('/api/auth/me');
   fillProfile(profile);
@@ -375,7 +344,12 @@ form.addEventListener('submit', async (event) => {
       return;
     }
 
-    const result = await register(payload);
+    const result = await requestJson('/api/auth/register', {
+      method: 'POST',
+      signal: controller?.signal,
+      body: JSON.stringify(payload),
+      errorMessage: 'Registrazione non riuscita.'
+    });
 
     form.reset();
     anagrafica.clear();

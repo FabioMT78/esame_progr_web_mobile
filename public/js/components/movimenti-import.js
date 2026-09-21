@@ -7,7 +7,7 @@ const months = new Intl.DateTimeFormat('it-IT', {
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
 function errorText(error) {
-  return error instanceof TypeError
+  return error?.networkError
     ? 'Impossibile contattare il server. Riprova.'
     : error.message;
 }
@@ -181,8 +181,9 @@ export function createMovimentiImport({
     message.textContent = `${prefix}Verifica delle associazioni sul server…`;
 
     try {
-      const result = await api('/api/movimenti/anteprima', signal, {
+      const result = await api('/api/movimenti/anteprima', {
         method: 'POST',
+        signal,
         body: JSON.stringify({
           immobileId: context.immobileId,
           inquilinoId: context.inquilinoId,
@@ -309,8 +310,9 @@ export function createMovimentiImport({
     message.textContent = 'Registrazione dei movimenti in corso…';
 
     try {
-      const result = await api('/api/movimenti/importa', signal, {
+      const result = await api('/api/movimenti/importa', {
         method: 'POST',
+        signal,
         body: JSON.stringify({
           immobileId: context.immobileId,
           inquilinoId: context.inquilinoId,

@@ -1,10 +1,10 @@
 import {
   readToken,
   saveToken,
-  postForm,
   clearFieldErrors,
   showFormError
 } from './common.js';
+import { requestJson } from './api.js';
 
 if (readToken()) {
   window.location.replace('/dashboard.html');
@@ -64,7 +64,11 @@ if (readToken()) {
     message.textContent = 'Accesso in corso…';
 
     try {
-      const data = await postForm('/api/auth/login', form);
+      const data = await requestJson('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify(Object.fromEntries(new FormData(form))),
+        errorMessage: 'Accesso non riuscito.'
+      });
 
       if (typeof data.token !== 'string' || !data.token) {
         throw new Error('Risposta del server non valida.');
