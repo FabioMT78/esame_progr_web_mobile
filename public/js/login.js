@@ -5,6 +5,7 @@ import {
   showFormError
 } from './common.js';
 import { requestJson } from './api.js';
+import { startRedirectCountdown } from './components/redirect-countdown.js';
 
 if (readToken()) {
   window.location.replace('/dashboard.html');
@@ -20,6 +21,12 @@ if (readToken()) {
   const form = document.querySelector('#login-form');
   const message = document.querySelector('#login-form-message');
   const submitButton = form.querySelector('button[type="submit"]');
+  let cancelRedirectCountdown = null;
+
+  function clearRedirectCountdown() {
+    cancelRedirectCountdown?.();
+    cancelRedirectCountdown = null;
+  }
 
   function closeOtherDialog(dialog) {
     const other = dialog === loginDialog ? registerDialog : loginDialog;
@@ -58,10 +65,12 @@ if (readToken()) {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
 
+    clearRedirectCountdown();
     clearFieldErrors(form);
     submitButton.disabled = true;
     form.setAttribute('aria-busy', 'true');
     message.textContent = 'Accesso in corso…';
+    let redirecting = false;
 
     try {
       const data = await requestJson('/api/auth/login', {
@@ -82,15 +91,19 @@ if (readToken()) {
         );
       }
 
-      message.textContent =
-        'Accesso riuscito. Apertura area riservata…';
-
-      window.location.replace('/dashboard.html');
+      redirecting = true;
+      cancelRedirectCountdown = startRedirectCountdown(
+        message,
+        'Accesso riuscito. Apertura area riservata…',
+        () => window.location.replace('/dashboard.html')
+      );
     } catch (error) {
       showFormError(form, message, error);
     } finally {
-      submitButton.disabled = false;
-      form.removeAttribute('aria-busy');
+      if (!redirecting) {
+        submitButton.disabled = false;
+        form.removeAttribute('aria-busy');
+      }
     }
   });
 
@@ -111,4 +124,6 @@ if (readToken()) {
 
     window.history.replaceState(null, '', nextUrl);
   }
+
+  window.addEventListener('pagehide', clearRedirectCountdown);
 }

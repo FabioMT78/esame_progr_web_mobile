@@ -38,6 +38,25 @@
   margin-top: 0;
 }
 
+#form-message.message--redirect {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+#form-message.message--redirect > span {
+  min-width: 0;
+}
+
+.redirect-countdown {
+  flex: 0 0 auto;
+  min-width: 2ch;
+  color: #15385f;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 /*
  * Layout indirizzo su griglia a 12 colonne:
  */

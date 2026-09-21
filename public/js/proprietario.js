@@ -3,12 +3,12 @@ import {
   clearToken,
   clearFieldErrors,
   showFormError,
-  saveFlashMessage,
   showTransientMessage
 } from './common.js';
 import { createAuthenticatedApi, requestJson } from './api.js';
 import { createAnagraficaForm } from './forms/anagrafica.js';
 import { createIndirizzoForm } from './forms/indirizzo.js';
+import { startRedirectCountdown } from './components/redirect-countdown.js';
 
 const editing = Boolean(readToken());
 const embeddedRegistration = Boolean(
@@ -50,8 +50,17 @@ const residenza = createIndirizzoForm({
 
 let controller;
 let busy = false;
+let cancelRedirectCountdown = null;
+let redirecting = false;
+
+function clearRedirectCountdown() {
+  cancelRedirectCountdown?.();
+  cancelRedirectCountdown = null;
+  redirecting = false;
+}
 
 function logout() {
+  clearRedirectCountdown();
   controller?.abort();
 
   try {
@@ -269,6 +278,7 @@ async function loadProfile() {
 }
 
 async function initialize() {
+  clearRedirectCountdown();
   controller?.abort();
   controller = new AbortController();
 
@@ -325,6 +335,7 @@ form.addEventListener('submit', async (event) => {
 
   if (busy || fields.disabled || !validateForm()) return;
 
+  clearRedirectCountdown();
   setBusy(true);
   message.textContent = editing
     ? 'Salvataggio modifiche in corso…'
@@ -339,8 +350,12 @@ form.addEventListener('submit', async (event) => {
         body: JSON.stringify(payload)
       });
 
-      saveFlashMessage('Profilo aggiornato con successo.');
-      window.location.replace('/dashboard.html');
+      redirecting = true;
+      cancelRedirectCountdown = startRedirectCountdown(
+        message,
+        'Profilo aggiornato con successo.',
+        () => window.location.replace('/dashboard.html')
+      );
       return;
     }
 
@@ -369,7 +384,7 @@ form.addEventListener('submit', async (event) => {
       showFormError(form, message, mapServerErrors(error));
     }
   } finally {
-    if (!controller?.signal.aborted) setBusy(false);
+    if (!controller?.signal.aborted && !redirecting) setBusy(false);
   }
 });
 
@@ -377,4 +392,7 @@ retry.addEventListener('click', initialize);
 document.querySelector('#logout')?.addEventListener('click', logout);
 
 window.addEventListener('pageshow', initialize);
-window.addEventListener('pagehide', () => controller?.abort());
+window.addEventListener('pagehide', () => {
+  clearRedirectCountdown();
+  controller?.abort();
+});

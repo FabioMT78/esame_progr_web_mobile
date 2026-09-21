@@ -197,7 +197,7 @@ function isImageUpload(req) {
       'http://gestionale.local'
     ).pathname;
 
-    return /^\/api\/immobili\/[^/]+\/immagine$/.test(pathname);
+    return /^\/api\/immobili\/[^/]+\/immagine(?:-preview)?$/.test(pathname);
   } catch {
     return false;
   }

@@ -9,6 +9,7 @@ import { createIndirizzoForm } from './forms/indirizzo.js';
 import { createDatiCatastaliForm } from './forms/dati-catastali.js';
 import { createImmagineForm } from './components/immagine-form.js';
 import { createImageWorkerClient } from './components/image-worker-client.js';
+import { startRedirectCountdown } from './components/redirect-countdown.js';
 
 const form = document.querySelector('#immobile-form');
 const fields = document.querySelector('#form-fields');
@@ -50,13 +51,29 @@ let editingId = null;
 let busy = false;
 let controller;
 let imageProcessor = null;
+let cancelRedirectCountdown = null;
 
 function releaseImageProcessor() {
   imageProcessor?.terminate();
   imageProcessor = null;
 }
 
+function clearRedirectCountdown() {
+  cancelRedirectCountdown?.();
+  cancelRedirectCountdown = null;
+}
+
+function startDashboardRedirect(messageText) {
+  clearRedirectCountdown();
+  cancelRedirectCountdown = startRedirectCountdown(
+    formMessage,
+    messageText,
+    () => window.location.assign('/dashboard.html')
+  );
+}
+
 function logout() {
+  clearRedirectCountdown();
   controller?.abort();
   releaseImageProcessor();
   immagine.releasePreview();
@@ -143,6 +160,7 @@ function setMode(id, editing = id !== null) {
 }
 
 function clearFormState() {
+  clearRedirectCountdown();
   form.reset();
   indirizzo.clear();
   datiCatastali.clear();
@@ -189,6 +207,7 @@ function validateForm() {
 }
 
 async function loadDetail() {
+  clearRedirectCountdown();
   detailRetry.hidden = true;
   clearFieldErrors(form);
   immagine.clearError();
@@ -249,6 +268,7 @@ form.addEventListener('submit', async (event) => {
   event.preventDefault();
   if (busy || fields.disabled || !validateForm()) return;
 
+  clearRedirectCountdown();
   const data = buildPayload();
   const imageFile = immagine.getFile();
   const updating = editingId !== null;
@@ -318,14 +338,9 @@ form.addEventListener('submit', async (event) => {
       }
     }
 
-    formMessage.textContent = `${updating
+    startDashboardRedirect(`${updating
       ? 'Immobile aggiornato con successo.'
-      : 'Immobile aggiunto con successo.'}${previewWarning}`;
-    formMessage.focus();
-
-    window.setTimeout(() => {
-      window.location.assign('/dashboard.html');
-    }, 3000);
+      : 'Immobile aggiunto con successo.'}${previewWarning}`);
   } catch (error) {
     if (error.name === 'AbortError') return;
     setBusy(false);
@@ -340,6 +355,7 @@ cancelButton.addEventListener('click', () => {
 });
 
 async function initialize() {
+  clearRedirectCountdown();
   controller?.abort();
   controller = new AbortController();
 
@@ -375,6 +391,7 @@ document.querySelector('#logout').addEventListener('click', logout);
 sessionRetry.addEventListener('click', initialize);
 window.addEventListener('pageshow', initialize);
 window.addEventListener('pagehide', () => {
+  clearRedirectCountdown();
   controller?.abort();
   releaseImageProcessor();
   immagine.releasePreview();
