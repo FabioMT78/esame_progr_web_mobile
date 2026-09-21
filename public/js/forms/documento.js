@@ -1,3 +1,5 @@
+import { isValidIsoDate } from '../utils/date.js';
+
 const fieldDefinitions = [
   { name: 'numeroDocumento', label: 'Numero documento', type: 'text', maxLength: 50 },
   { name: 'organoRilascioDocumento', label: 'Organo rilascio documento', type: 'text', maxLength: 150 },
@@ -18,14 +20,6 @@ function assertContainer(container) {
 
 function fieldId(prefix, name) {
   return `${prefix}${name}`;
-}
-
-function validDate(value) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const date = new Date(`${value}T00:00:00.000Z`);
-  return !Number.isNaN(date.getTime())
-    && date.getUTCFullYear() >= 1000
-    && date.toISOString().slice(0, 10) === value;
 }
 
 function createRequiredMarker(name) {
@@ -147,7 +141,7 @@ export function createDocumentoIdentitaForm({
     }
 
     const value = input(name).value;
-    if (!value || !validDate(value)) {
+    if (!value || !isValidIsoDate(value)) {
       if (showError) setFieldError(name);
       return true;
     }
@@ -261,20 +255,20 @@ export function createDocumentoIdentitaForm({
       errors.organoRilascioDocumento = 'Inserisci al massimo 150 caratteri.';
     }
     if (data.dataRilascioDocumento) {
-      if (!validDate(data.dataRilascioDocumento)) {
+      if (!isValidIsoDate(data.dataRilascioDocumento)) {
         errors.dataRilascioDocumento = 'Inserisci una data valida.';
       } else if (data.dataRilascioDocumento >= today) {
         errors.dataRilascioDocumento = 'Il rilascio del documento deve essere anteriore ad oggi.';
       }
     }
     if (data.dataScadenzaDocumento) {
-      if (!validDate(data.dataScadenzaDocumento)) {
+      if (!isValidIsoDate(data.dataScadenzaDocumento)) {
         errors.dataScadenzaDocumento = 'Inserisci una data valida.';
       } else if (data.dataScadenzaDocumento <= today) {
         errors.dataScadenzaDocumento = 'La scadenza del documento deve essere posteriore ad oggi.';
       }
     }
-    if (validDate(data.dataRilascioDocumento) && validDate(data.dataScadenzaDocumento)
+    if (isValidIsoDate(data.dataRilascioDocumento) && isValidIsoDate(data.dataScadenzaDocumento)
         && data.dataScadenzaDocumento < data.dataRilascioDocumento) {
       errors.dataScadenzaDocumento = 'La scadenza non può precedere la data di rilascio.';
     }

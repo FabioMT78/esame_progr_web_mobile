@@ -1,3 +1,5 @@
+import { isValidIsoDate } from '../utils/date.js';
+
 function assertContainer(container) {
   if (!(container instanceof Element)) {
     throw new TypeError('Il container dei dati contrattuali non è valido.');
@@ -70,15 +72,9 @@ export function createDatiContrattualiStep({ container } = {}) {
     const tipologia = selectedTipologia();
     const value = dataInizio.value;
 
-    if (!tipologia || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return '';
+    if (!tipologia || !isValidIsoDate(value)) return '';
 
     const date = new Date(`${value}T00:00:00.000Z`);
-    if (Number.isNaN(date.getTime())
-        || date.getUTCFullYear() < 1000
-        || date.toISOString().slice(0, 10) !== value) {
-      return '';
-    }
-
     date.setUTCFullYear(date.getUTCFullYear() + Number(tipologia.durata));
     date.setUTCDate(date.getUTCDate() - 1);
     return date.getUTCFullYear() <= 9999 ? date.toISOString().slice(0, 10) : '';

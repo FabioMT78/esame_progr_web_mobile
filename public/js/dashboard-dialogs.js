@@ -1,8 +1,6 @@
 import { renderContrattoPreview } from './components/contratto-preview.js';
 import { createMovimentiImport } from './components/movimenti-import.js';
-
-const euro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
-const months = new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+import { formatEuro, formatIsoDate, formatMonthYear } from './utils/formatters.js';
 
 export function createIcon(name) {
   const paths = {
@@ -59,10 +57,6 @@ function todayDate() {
   return `${year}-${month}-${day}`;
 }
 
-function formatDate(value) {
-  return value ? value.split('-').reverse().join('/') : '—';
-}
-
 async function loadPropertyContext(api, signal, immobileId) {
   const params = new URLSearchParams({ immobileId });
   const [tenants, contracts] = await Promise.all([
@@ -93,8 +87,9 @@ async function loadPropertyContext(api, signal, immobileId) {
 }
 
 export function paymentDescription(payment) {
-  return `${euro.format(payment.importo)} per ${months.format(
-    new Date(Date.UTC(payment.annoCompetenza, payment.meseCompetenza - 1, 1))
+  return `${formatEuro(payment.importo)} per ${formatMonthYear(
+    payment.annoCompetenza,
+    payment.meseCompetenza
   )}`;
 }
 
@@ -190,7 +185,7 @@ export function createTenantsDialog(api, openContractPreview) {
       if (activeContract) {
         const hint = document.createElement('small');
         hint.className = 'field-hint';
-        hint.textContent = `Contratto attivo fino al ${formatDate(activeContract.dataFine)}.`;
+        hint.textContent = `Contratto attivo fino al ${formatIsoDate(activeContract.dataFine)}.`;
         details.append(hint);
       }
 
@@ -421,13 +416,12 @@ export function createPaymentsDialog(
       const data = await api(`/api/pagamenti/anteprima?${params}`, { signal });
       signal.throwIfAborted();
       preview = data;
-      amount.textContent = euro.format(data.importo);
+      amount.textContent = formatEuro(data.importo);
       period.textContent =
-        `Competenza: ${months.format(new Date(Date.UTC(
+        `Competenza: ${formatMonthYear(
           data.annoCompetenza,
-          data.meseCompetenza - 1,
-          1
-        )))}. Scadenza: ${formatDate(data.scadenza)}.`;
+          data.meseCompetenza
+        )}. Scadenza: ${formatIsoDate(data.scadenza)}.`;
       message.textContent = notice;
     } catch (error) {
       if (signal.aborted) return;

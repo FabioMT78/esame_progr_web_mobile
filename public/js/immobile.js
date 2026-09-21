@@ -1,4 +1,9 @@
-import { clearToken, clearFieldErrors, showFormError } from './common.js';
+import {
+  clearToken,
+  clearFieldErrors,
+  showFormError,
+  readIdParameter
+} from './common.js';
 import { createAuthenticatedApi } from './api.js';
 import { createIndirizzoForm } from './forms/indirizzo.js';
 import { createDatiCatastaliForm } from './forms/dati-catastali.js';
@@ -13,6 +18,9 @@ const sessionMessage = document.querySelector('#session-message');
 const sessionRetry = document.querySelector('#session-retry');
 const detailRetry = document.querySelector('#detail-retry');
 const cancelButton = document.querySelector('#cancel-immobile');
+const query = new URLSearchParams(window.location.search);
+const editRequested = query.has('id');
+const queryId = readIdParameter('id');
 
 const indirizzo = createIndirizzoForm({
   container: document.querySelector('#indirizzo-fields'),
@@ -124,9 +132,8 @@ function setBusy(value) {
   form.setAttribute('aria-busy', String(value));
 }
 
-function setMode(id) {
-  editingId = id;
-  const editing = id !== null;
+function setMode(id, editing = id !== null) {
+  editingId = editing && id ? id : null;
   document.querySelector('#form-title').textContent =
     editing ? 'Modifica immobile' : 'Nuovo immobile';
   document.querySelector('#save').textContent =
@@ -190,17 +197,23 @@ async function loadDetail() {
   datiCatastali.clear();
   immagine.clear();
 
-  const id = new URLSearchParams(window.location.search).get('id');
-  setMode(id === null ? null : id);
+  const id = editRequested ? queryId : null;
+  setMode(id, editRequested);
 
-  if (id === null) {
+  if (!editRequested) {
     formMessage.textContent = '';
     return true;
   }
 
+  if (!id) {
+    formMessage.textContent = 'Errore: Immobile non trovato.';
+    detailRetry.hidden = true;
+    return false;
+  }
+
   formMessage.textContent = 'Caricamento immobile…';
   try {
-    const immobile = await api(`/api/immobili/${encodeURIComponent(id || '0')}`);
+    const immobile = await api(`/api/immobili/${encodeURIComponent(id)}`);
     fillDetail(immobile);
     formMessage.textContent = 'Immobile caricato. Puoi modificare i dati.';
     return true;

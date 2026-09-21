@@ -1,9 +1,5 @@
-const euro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
-const months = new Intl.DateTimeFormat('it-IT', {
-  month: 'long',
-  year: 'numeric',
-  timeZone: 'UTC'
-});
+import { formatEuro, formatIsoDate, formatMonthYear } from '../utils/formatters.js';
+
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
 function errorText(error) {
@@ -12,20 +8,13 @@ function errorText(error) {
     : error.message;
 }
 
-function formatDate(value) {
-  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
-    ? value.split('-').reverse().join('/')
-    : (value || '—');
-}
-
 function competenceText(competence) {
   if (!competence) return '—';
-  const month = months.format(new Date(Date.UTC(
+  const month = formatMonthYear(
     competence.annoCompetenza,
-    competence.meseCompetenza - 1,
-    1
-  )));
-  return `${month} · ${euro.format(competence.importo)} · scad. ${formatDate(competence.scadenza)}`;
+    competence.meseCompetenza
+  );
+  return `${month} · ${formatEuro(competence.importo)} · scad. ${formatIsoDate(competence.scadenza)}`;
 }
 
 function detailsText(row) {
@@ -116,12 +105,12 @@ export function createMovimentiImport({
       const tr = document.createElement('tr');
 
       const dateCell = document.createElement('td');
-      dateCell.textContent = formatDate(row.dataMovimento);
+      dateCell.textContent = formatIsoDate(row.dataMovimento);
 
       const amountCell = document.createElement('td');
       const numericAmount = Number(String(row.importo ?? '').replace(',', '.'));
       amountCell.textContent = Number.isFinite(numericAmount)
-        ? euro.format(numericAmount)
+        ? formatEuro(numericAmount)
         : (row.importo || '—');
 
       const detailsCell = document.createElement('td');

@@ -22,6 +22,9 @@ const immobileSelect = document.querySelector('#immobileId');
 const tenantCreatedDialog = document.querySelector('#tenant-created-dialog');
 const tenantCreatedDashboard = document.querySelector('#tenant-created-dashboard');
 const tenantCreatedContract = document.querySelector('#tenant-created-contract');
+const query = new URLSearchParams(window.location.search);
+const editRequested = query.has('id');
+const editId = readIdParameter('id');
 const immobileContext = readIdParameter('immobileId');
 
 const anagrafica = createAnagraficaForm({
@@ -40,7 +43,6 @@ const documento = createDocumentoIdentitaForm({
   datiObbligatori: false
 });
 
-let editId = new URLSearchParams(window.location.search).get('id');
 let immobili = [];
 let hasImmobili = false;
 let lockedImmobile = false;
@@ -66,7 +68,7 @@ const api = createAuthenticatedApi({
 });
 
 function syncControls() {
-  const unavailable = busy || !editorReady || (editId === null && !hasImmobili);
+  const unavailable = busy || !editorReady || (!editRequested && !hasImmobili);
   fields.disabled = unavailable;
   immobileSelect.disabled = unavailable || lockedImmobile;
   retry.disabled = busy;
@@ -197,19 +199,19 @@ async function loadPrerequisites() {
 
 async function loadEditor() {
   document.querySelector('#form-title').textContent =
-    editId !== null ? 'Modifica inquilino' : 'Nuovo inquilino';
+    editRequested ? 'Modifica inquilino' : 'Nuovo inquilino';
   document.querySelector('#save').textContent =
-    editId !== null ? 'Salva modifiche' : 'Crea inquilino';
+    editRequested ? 'Salva modifiche' : 'Crea inquilino';
   document.title =
-    `${editId !== null ? 'Modifica inquilino' : 'Nuovo inquilino'} — Gestionale Affitti`;
+    `${editRequested ? 'Modifica inquilino' : 'Nuovo inquilino'} — Gestionale Affitti`;
 
   editorReady = false;
   lockedImmobile = false;
   syncControls();
   clearFormState();
 
-  if (editId !== null) {
-    if (!/^[1-9]\d*$/.test(editId)) throw new Error('Inquilino non trovato.');
+  if (editRequested) {
+    if (!editId) throw new Error('Inquilino non trovato.');
     const tenant = await api(`/api/inquilini/${encodeURIComponent(editId)}`);
     fillEditor(tenant);
   } else if (immobileContext && immobili.some((item) => item.id === immobileContext)) {
@@ -276,7 +278,7 @@ form.addEventListener('submit', async (event) => {
   if (fields.disabled || busy || !validateForm()) return;
 
   const input = buildPayload();
-  const creating = editId === null;
+  const creating = !editRequested;
 
   busy = true;
   syncControls();

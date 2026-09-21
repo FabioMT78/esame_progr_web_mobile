@@ -1,3 +1,5 @@
+import { isValidIsoDate } from '../utils/date.js';
+
 const fieldsDefinition = [
   { name: 'nome', label: 'Nome', type: 'text', maxLength: 100, autocomplete: 'given-name' },
   { name: 'cognome', label: 'Cognome', type: 'text', maxLength: 100, autocomplete: 'family-name' },
@@ -26,14 +28,6 @@ function assertContainer(container) {
 
 function fieldId(prefix, name) {
   return `${prefix}${name}`;
-}
-
-function validDate(value) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const date = new Date(`${value}T00:00:00.000Z`);
-  return !Number.isNaN(date.getTime())
-    && date.getUTCFullYear() >= 1000
-    && date.toISOString().slice(0, 10) === value;
 }
 
 function adultBirthDateLimit() {
@@ -144,7 +138,7 @@ export function createAnagraficaForm({
     if (name !== 'dataNascita') return true;
 
     const value = input(name).value;
-    if (!value || !validDate(value)) {
+    if (!value || !isValidIsoDate(value)) {
       if (showError) setFieldError(name);
       return true;
     }
@@ -221,7 +215,7 @@ export function createAnagraficaForm({
     }
 
     if (data.dataNascita) {
-      if (!validDate(data.dataNascita)) {
+      if (!isValidIsoDate(data.dataNascita)) {
         errors.dataNascita = 'Inserisci una data valida.';
       } else if (data.dataNascita > maxBirthDate) {
         errors.dataNascita = 'La data di nascita deve riferirsi a una persona maggiorenne.';

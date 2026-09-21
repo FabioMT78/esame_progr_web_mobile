@@ -9,6 +9,7 @@ import { renderContrattoPreview } from './components/contratto-preview.js';
 import { createImmobileStep } from './contratto/immobile-step.js';
 import { createInquilinoStep } from './contratto/inquilino-step.js';
 import { createDatiContrattualiStep } from './contratto/dati-contrattuali.js';
+import { formatIsoDate } from './utils/formatters.js';
 
 const content = document.querySelector('#protected-content');
 const form = document.querySelector('#contract-form');
@@ -96,10 +97,6 @@ function safeReferrerPath() {
   } catch {
     return null;
   }
-}
-
-function formatDate(value) {
-  return value ? value.split('-').reverse().join('/') : '—';
 }
 
 function validateContractData() {
@@ -584,8 +581,8 @@ form.addEventListener('submit', async (event) => {
     form.hidden = true;
     formMessage.textContent =
       `Contratto #${contract.id} registrato. Decorrenza dal ${
-        formatDate(contract.dataInizio)
-      } al ${formatDate(contract.dataFine)}.`;
+        formatIsoDate(contract.dataInizio)
+      } al ${formatIsoDate(contract.dataFine)}.`;
     newContract.hidden = false;
     formMessage.focus();
     syncStepper();
