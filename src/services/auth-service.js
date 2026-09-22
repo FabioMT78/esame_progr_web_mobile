@@ -3,8 +3,21 @@ const repository = require('../repositories/proprietario-repository');
 const { validateIndirizzo } = require('../domain/indirizzo');
 const { hashPassword, verifyPassword } = require('./password');
 
+const emailPattern =
+  /^[^\s@]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/;
+
 function authError(status, message, fields) {
   return Object.assign(new Error(message), { status, fields });
+}
+
+function normalizeEmail(value) {
+  return typeof value === 'string'
+    ? value.trim().toLowerCase()
+    : '';
+}
+
+function isValidEmail(value) {
+  return value.length <= 255 && emailPattern.test(value);
 }
 
 function normalizeIban(value) {
@@ -107,15 +120,13 @@ function validateProfile(input, { passwordRequired = false } = {}) {
     fields.comuneResidenza = address.fields.comune;
   }
 
-  data.email = data.email.toLowerCase();
+  data.email = normalizeEmail(data.email);
   data.codiceFiscale = data.codiceFiscale.toUpperCase();
   data.iban = normalizeIban(input?.iban);
 
-  if (
-    data.email
-    && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)
-  ) {
-    fields.email = 'Inserisci un indirizzo email valido.';
+  if (data.email && !isValidEmail(data.email)) {
+    fields.email =
+      'Inserisci un indirizzo email valido, ad esempio nome@dominio.it.';
   }
 
   if (
@@ -250,21 +261,31 @@ async function update(id, input) {
 }
 
 async function login(input) {
-  const email =
-    typeof input?.email === 'string'
-      ? input.email.trim().toLowerCase()
+  const email = normalizeEmail(input?.email);
+  const password =
+    typeof input?.password === 'string'
+      ? input.password
       : '';
+  const fields = {};
 
-  if (
-    !email
-    || email.length > 255
-    || typeof input?.password !== 'string'
-    || !input.password
-    || input.password.length > 128
-  ) {
+  if (!email) {
+    fields.email = 'Questo campo è obbligatorio.';
+  } else if (!isValidEmail(email)) {
+    fields.email =
+      'Inserisci un indirizzo email valido, ad esempio nome@dominio.it.';
+  }
+
+  if (!password) {
+    fields.password = 'Questo campo è obbligatorio.';
+  } else if (password.length > 128) {
+    fields.password = 'La password non può superare 128 caratteri.';
+  }
+
+  if (Object.keys(fields).length) {
     throw authError(
       400,
-      'Inserisci email e password valide.'
+      'Controlla i campi indicati.',
+      fields
     );
   }
 
@@ -274,7 +295,7 @@ async function login(input) {
   if (
     !owner
     || !await verifyPassword(
-      input.password,
+      password,
       owner.password_hash
     )
   ) {

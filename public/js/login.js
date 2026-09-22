@@ -7,6 +7,9 @@ import {
 import { requestJson } from './api.js';
 import { startRedirectCountdown } from './components/redirect-countdown.js';
 
+const emailPattern =
+  /^[^\s@]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/;
+
 if (readToken()) {
   window.location.replace('/dashboard.html');
 } else {
@@ -21,6 +24,8 @@ if (readToken()) {
   const form = document.querySelector('#login-form');
   const message = document.querySelector('#login-form-message');
   const submitButton = form.querySelector('button[type="submit"]');
+  const emailField = form.elements.email;
+  const passwordField = form.elements.password;
   let cancelRedirectCountdown = null;
 
   function clearRedirectCountdown() {
@@ -43,6 +48,38 @@ if (readToken()) {
     });
   }
 
+  function validateLoginForm() {
+    const fields = {};
+    const email = emailField.value.trim().toLowerCase();
+
+    emailField.value = email;
+
+    if (!email) {
+      fields.email = 'Questo campo è obbligatorio.';
+    } else if (
+      email.length > 255
+      || !emailPattern.test(email)
+    ) {
+      fields.email =
+        'Inserisci un indirizzo email valido, ad esempio nome@dominio.it.';
+    }
+
+    if (!passwordField.value) {
+      fields.password = 'Questo campo è obbligatorio.';
+    } else if (passwordField.value.length > 128) {
+      fields.password = 'La password non può superare 128 caratteri.';
+    }
+
+    if (!Object.keys(fields).length) return true;
+
+    showFormError(form, message, {
+      message: 'Controlla i campi indicati.',
+      fields
+    });
+
+    return false;
+  }
+
   document.querySelectorAll('[data-close]').forEach((button) => {
     button.addEventListener('click', () => {
       button.closest('dialog')?.close();
@@ -62,11 +99,25 @@ if (readToken()) {
     openDialog(loginDialog);
   });
 
+  form.addEventListener('input', (event) => {
+    const field = event.target.closest('[name]');
+    if (!field) return;
+
+    field.removeAttribute('aria-invalid');
+    const error = document.getElementById(`${field.name}-error`);
+    if (error) error.textContent = '';
+
+    message.textContent = '';
+  });
+
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     clearRedirectCountdown();
     clearFieldErrors(form);
+
+    if (!validateLoginForm()) return;
+
     submitButton.disabled = true;
     form.setAttribute('aria-busy', 'true');
     message.textContent = 'Accesso in corso…';
@@ -75,7 +126,10 @@ if (readToken()) {
     try {
       const data = await requestJson('/api/auth/login', {
         method: 'POST',
-        body: JSON.stringify(Object.fromEntries(new FormData(form))),
+        body: JSON.stringify({
+          email: emailField.value,
+          password: passwordField.value
+        }),
         errorMessage: 'Accesso non riuscito.'
       });
 
@@ -120,7 +174,8 @@ if (readToken()) {
     params.delete('dialog');
 
     const query = params.toString();
-    const nextUrl = `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`;
+    const nextUrl =
+      `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`;
 
     window.history.replaceState(null, '', nextUrl);
   }
