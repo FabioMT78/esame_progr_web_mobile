@@ -1,3 +1,33 @@
+
+> Questo è un progetto sviluppato per l'esame di ***"Programmazione Web e Mobile con Lab"***\
+> <small>*(16-22 settembre 2026)*</small>\
+> \
+> **Obiettivo:**\
+> Mettere in pratica le conoscenze su ***HTML5, CSS3, Javascript vanilla, Node.js, Express.js, Web Workers, MySQL***
+> avendo particolare cura alla comunicazione digitale e alla user experience (***UX***)
+>
+> **Sviluppo**\
+> Pur mantenendo uno stile di sviluppo ***AGILE***, i principi ***SOLID*** sono stati ridotti all'essenziale ed applicati solo dove realmente
+> apportano concreto valore.\
+> L'utilizzo di framework è stato ridotto al minimo lasciando spazio al puro javascript.\
+> Per l'imitare duplicazioni e ridondanza nel codice i form ed i relativi controlli sono stati resi modulari in modo da poter
+> essere inseriti in modo dinamico nella struttura statica HTML\
+> \
+> Il progetto utilizza un'***architettura client-server a livelli***.\
+> \
+> **Frontend:**\
+> realizzato con HTML, CSS e JavaScript vanilla. I JavaScript *delle singole pagine orchestrano componenti* riutilizzabili, come i moduli dei form, mentre api.js centralizza le chiamate fetch autenticate. Per le elaborazioni più pesanti, come parsing dei CSV e immagini, utilizzo ***Web Worker*** per non bloccare il main thread.
+> 
+> **Backend:**\
+> app.js configura Express e le ***route***, i ***middleware*** gestiscono aspetti trasversali come JWT e ***sicurezza*** (è stato creato un middleware apposito per gestire 10 casi di ***attacchi XSS e SQL injection***), le route traducono le richieste HTTP in chiamate applicative, i ***service*** contengono la logica di ***dominio*** e i ***repository*** isolano l'accesso ***MySQL*** mediante query parametrizzate.\
+> Il proprietario autenticato viene propagato dal ***JWT*** fino alle query, garantendo la separazione dei dati.\
+> Gli ambienti frontend, backend e database sono stati Dockerizzati per portabilità, compatibilità e mantenimento dell'host.
+>
+
+
+---
+
+
 # Gestionale Affitti
 
 Applicazione web per la gestione di immobili, inquilini, contratti e pagamenti,
